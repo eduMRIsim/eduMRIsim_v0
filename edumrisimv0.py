@@ -1,29 +1,14 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed May 24 15:35:54 2023
-
-@author: 20230077
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Tue May 23 11:26:12 2023
-
-@author: 20230077
-"""
-
-
-
 # this module provides the exit() function which we need to cleanly terminate the app
 import sys 
 from PyQt5.QtCore import QStateMachine, QState, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout, QWidget, QLabel, QFrame, QTabWidget, QProgressBar
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout, QWidget, QLabel, QFrame, QTabWidget, QProgressBar, QMessageBox
 
 # this class inherits from QMainWindow. This class will provide the app's GUI 
 class eduMRIsimMainWindow(QMainWindow):
     
     scanningMode_signal = pyqtSignal()
     viewingMode_signal = pyqtSignal()
+    selectModel_signal = pyqtSignal()
     
     def __init__(self):
         # This call allows you to properly initialize instances of this class. The parent argument is set to None because this will be the main window.
@@ -135,6 +120,8 @@ class eduMRIsimMainWindow(QMainWindow):
         framePatientInfo.setLayout(framePatientInfoLayout)
         
         buttonNewExamination = QPushButton("New Examination")
+        buttonNewExamination.clicked.connect(lambda: self.selectModel_signal.emit())
+
         framePatientInfoLayout.addWidget(buttonNewExamination, alignment=Qt.AlignmentFlag.AlignCenter)
         
         self.leftLayout.addWidget(framePatientInfo, stretch=1)
@@ -222,10 +209,12 @@ class eduMRIsimMainWindow(QMainWindow):
         # Define the states
         self.scanningMode_state = QState()
         self.viewingMode_state = QState()
-        
+        self.selectModel_state = QState()
+
         # Add the states to the state machine 
         self.state_machine.addState(self.scanningMode_state)
         self.state_machine.addState(self.viewingMode_state)
+        self.state_machine.addState(self.selectModel_state)
         
         # Set initial state
         self.state_machine.setInitialState(self.scanningMode_state)
@@ -233,17 +222,24 @@ class eduMRIsimMainWindow(QMainWindow):
         # Define actions related to states
         self.scanningMode_state.entered.connect(lambda: self.scanningMode_open())
         self.viewingMode_state.entered.connect(lambda: self.viewingMode_open())
+        self.selectModel_state.entered.connect(lambda: self.selectModel_open())
         
         
     def _setupTransitions(self):
         self.scanningMode_state.addTransition(self.viewingMode_signal, self.viewingMode_state)
         self.viewingMode_state.addTransition(self.scanningMode_signal, self.scanningMode_state)
-        
+        self.scanningMode_state.addTransition(self.selectModel_signal, self.selectModel_state)
+
     def scanningMode_open(self):
         self.rightStackedLayout.setCurrentIndex(0)
         
     def viewingMode_open(self):
         self.rightStackedLayout.setCurrentIndex(1)
+
+    def selectModel_open(self): 
+        msg_box = QMessageBox()
+        msg_box.setText("Hello, world!")
+        msg_box.exec()
         
 # having a main() function like this is best practice in Python. This function provides the apps entry point.         
 def main():
