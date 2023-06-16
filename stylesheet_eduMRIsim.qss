@@ -1,6 +1,6 @@
 font_style = 
     {
-        font-family: Sans serif;
+        font-family: Open Sans Bold;
         font-size: 12px;
         font-weight: bold;
     }

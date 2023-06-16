@@ -10,10 +10,10 @@ from PyQt5.QtWidgets import (
 # this class inherits from QMainWindow. This class will provide the app's GUI 
 class eduMRIsimMainWindow(QMainWindow):
     
-    scanningMode_signal = pyqtSignal()
-    viewingMode_signal = pyqtSignal()
-    newExam_signal = pyqtSignal()
-    loadExam_signal = pyqtSignal()
+    scanning_mode_signal = pyqtSignal()
+    viewing_mode_signal = pyqtSignal()
+    new_exam_signal = pyqtSignal()
+    load_exam_signal = pyqtSignal()
     
     def __init__(self):
         # This call allows you to properly initialize instances of this class. The parent argument is set to None because this will be the main window.
@@ -21,20 +21,20 @@ class eduMRIsimMainWindow(QMainWindow):
         self.setWindowTitle("eduMRIsim")
         
         # Initialize the state machine
-        self.state_machine = QStateMachine()
+        self.stateMachine = QStateMachine()
         
         # Set up the UI
-        self._setupUI()
+        self.setupUI()
         
         # Set up the states and transitions
-        self._setupStates()
-        self._setupTransitions()
+        self.setupStates()
+        self.setupTransitions()
         
-        # Start State Mahince
-        self.state_machine.start()
+        # Start State Machine
+        self.stateMachine.start()
     
       
-    def _setupUI(self):    
+    def setupUI(self):    
         # This will give the app's general layout
         self.generalLayout = QHBoxLayout()
         
@@ -53,6 +53,7 @@ class eduMRIsimMainWindow(QMainWindow):
         self._createPatientInfo()
         self._createExamCardInfo()
         self._createScanProgressInfo()
+        self._createStateLabel()
         
         self.generalLayout.addLayout(self.leftLayout, stretch=1)
         
@@ -73,12 +74,12 @@ class eduMRIsimMainWindow(QMainWindow):
         
         self._createScanPlanningWindow()
         
-        self.layoutTabsAndImage = QHBoxLayout()
+        self.tabsAndImageLayout = QHBoxLayout()
         
         self._createParameterTabs()
         self._createScannedImage()
         
-        self.rightScanningLayout.addLayout(self.layoutTabsAndImage,stretch = 1)
+        self.rightScanningLayout.addLayout(self.tabsAndImageLayout,stretch = 1)
         
         scanningPage.setLayout(self.rightScanningLayout)
         self.rightStackedLayout.addWidget(scanningPage)
@@ -108,8 +109,8 @@ class eduMRIsimMainWindow(QMainWindow):
         scanningModeButton = QPushButton("Scanning Mode")
         viewingModeButton = QPushButton("Viewing Mode")
         
-        scanningModeButton.clicked.connect(lambda: self.scanningMode_signal.emit())
-        viewingModeButton.clicked.connect(lambda: self.viewingMode_signal.emit())
+        scanningModeButton.clicked.connect(lambda: self.scanning_mode_signal.emit())
+        viewingModeButton.clicked.connect(lambda: self.viewing_mode_signal.emit())
         
         modeSwitchButtonsLayout.addWidget(scanningModeButton)
         modeSwitchButtonsLayout.addWidget(viewingModeButton)
@@ -118,48 +119,48 @@ class eduMRIsimMainWindow(QMainWindow):
     
         
     def _createPatientInfo(self):
-        framePatientInfo = QFrame()
-        framePatientInfo.setStyleSheet("QFrame { border: 2px solid black; }")
+        patientInfoFrame = QFrame()
+        patientInfoFrame.setStyleSheet("QFrame { border: 2px solid black; }")
         
-        framePatientInfoLayout = QHBoxLayout()
-        framePatientInfo.setLayout(framePatientInfoLayout)
+        patientInfoFrameLayout = QHBoxLayout()
+        patientInfoFrame.setLayout(patientInfoFrameLayout)
         
-        buttonNewExamination = QPushButton("New Examination")
-        buttonNewExamination.clicked.connect(lambda: self.newExam_signal.emit())
-        buttonNewExamination.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        newExaminationButton = QPushButton("New Examination")
+        newExaminationButton.clicked.connect(lambda: self.new_exam_signal.emit())
+        newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
 
-        buttonLoadExamination = QPushButton("Load Examination")
-        buttonLoadExamination.clicked.connect(lambda: self.loadExam_signal.emit())
-        buttonLoadExamination.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        loadExaminationButton = QPushButton("Load Examination")
+        #buttonLoadExamination.clicked.connect(lambda: self.loadExam_signal.emit())
+        loadExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
 
 
 
-        framePatientInfoLayout.addWidget(buttonNewExamination, alignment=Qt.AlignmentFlag.AlignCenter)
-        framePatientInfoLayout.addWidget(buttonLoadExamination, alignment=Qt.AlignmentFlag.AlignCenter)
+        patientInfoFrameLayout.addWidget(newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        patientInfoFrameLayout.addWidget(loadExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        self.leftLayout.addWidget(framePatientInfo, stretch=1)
+        self.leftLayout.addWidget(patientInfoFrame, stretch=1)
 
     def _createExamCardInfo(self):
-        frameExamCards = QFrame()
-        frameExamCards.setStyleSheet("QFrame { border: 2px solid black; }")
+        examCardsFrame = QFrame()
+        examCardsFrame.setStyleSheet("QFrame { border: 2px solid black; }")
         
-        labelExamCards = QLabel(frameExamCards)
-        labelExamCards.setText("Exam Cards")
-        labelExamCards.setStyleSheet("QLabel { color: black; }")  # Set the label style
+        examCardsLabel = QLabel(examCardsFrame)
+        examCardsLabel.setText("Exam Cards")
+        examCardsLabel.setStyleSheet("QLabel { color: black; }")  # Set the label style
         
-        self.leftLayout.addWidget(frameExamCards, stretch=2)
+        self.leftLayout.addWidget(examCardsFrame, stretch=2)
         
     def _createScanProgressInfo(self):
-        frameScanProgressInfo = QFrame()
-        frameScanProgressInfo.setStyleSheet("QFrame { border: 2px solid black; }")
+        scanProgressInfoFrame = QFrame()
+        scanProgressInfoFrame.setStyleSheet("QFrame { border: 2px solid black; }")
         
-        self.frameScanProgressInfoLayout = QVBoxLayout()
-        frameScanProgressInfo.setLayout(self.frameScanProgressInfoLayout)
+        self.scanProgressInfoFrameLayout = QVBoxLayout()
+        scanProgressInfoFrame.setLayout(self.scanProgressInfoFrameLayout)
         
         self._createProgressBar()
         self._createScanButtons()
 
-        self.leftLayout.addWidget(frameScanProgressInfo, stretch=1)
+        self.leftLayout.addWidget(scanProgressInfoFrame, stretch=1)
     
     def _createProgressBar(self):
         scanProgressBarLayout = QHBoxLayout()
@@ -172,7 +173,7 @@ class eduMRIsimMainWindow(QMainWindow):
         scanProgressBar.setValue(50)
         scanProgressBarLayout.addWidget(scanProgressBar)
         
-        self.frameScanProgressInfoLayout.addLayout(scanProgressBarLayout)
+        self.scanProgressInfoFrameLayout.addLayout(scanProgressBarLayout)
         
     def _createScanButtons(self):
         scanButtonsLayout = QHBoxLayout()
@@ -185,21 +186,26 @@ class eduMRIsimMainWindow(QMainWindow):
         #scanStopButton.setStyleSheet("QPushButton { background-color: red; color: #ffffff; }") 
         scanButtonsLayout.addWidget(scanStopButton)
         
-        self.frameScanProgressInfoLayout.addLayout(scanButtonsLayout)
+        self.scanProgressInfoFrameLayout.addLayout(scanButtonsLayout)
 
+    def _createStateLabel(self):
+        self.stateLabel = QLabel()
+        self.stateLabel.setText("Current state:")
+
+        self.leftLayout.addWidget(self.stateLabel)
     
     def _createScanPlanningWindow(self):
-        frameScanPlanning = QFrame()
-        frameScanPlanning.setStyleSheet("background-color: black; border: 1px solid black;")
+        scanPlanningFrame = QFrame()
+        scanPlanningFrame.setStyleSheet("background-color: black; border: 1px solid black;")
         
-        self.rightScanningLayout.addWidget(frameScanPlanning, stretch=1)
+        self.rightScanningLayout.addWidget(scanPlanningFrame, stretch=1)
     
     def _createParameterTabs(self):
-        tabsParameters= QTabWidget()
-        tabsParameters.addTab(self._geometryTab(), "Geometry")
-        tabsParameters.addTab(self._contrastTab(), "Contrast")
+        parametersTabs= QTabWidget()
+        parametersTabs.addTab(self._geometryTab(), "Geometry")
+        parametersTabs.addTab(self._contrastTab(), "Contrast")
         
-        self.layoutTabsAndImage.addWidget(tabsParameters,stretch=1)
+        self.tabsAndImageLayout.addWidget(parametersTabs,stretch=1)
                               
     def _geometryTab(self):
         geometryTab = QWidget()
@@ -214,79 +220,105 @@ class eduMRIsimMainWindow(QMainWindow):
         return contrastTab
         
     def _createScannedImage(self):
-        frameScannedImage = QFrame()
-        frameScannedImage.setStyleSheet("background-color: black; border: 1px solid black;")
+        scannedImageFrame = QFrame()
+        scannedImageFrame.setStyleSheet("background-color: black; border: 1px solid black;")
         
-        self.layoutTabsAndImage.addWidget(frameScannedImage, stretch = 1)
+        self.tabsAndImageLayout.addWidget(scannedImageFrame, stretch = 1)
         
-    def _setupStates(self):
+    def setupStates(self):
         # Define the states
-        self.scanningMode_state = QState()
-        self.viewingMode_state = QState()
-        self.newExam_state = QState()
-        self.loadExam_state = QState()
+        self.scanningModeState = QState()
+        self.viewingModeState = QState()
+        self.newExamState = QState()
+        self.loadExamState = QState()
 
         # Add the states to the state machine 
-        self.state_machine.addState(self.scanningMode_state)
-        self.state_machine.addState(self.viewingMode_state)
-        self.state_machine.addState(self.newExam_state)
-        self.state_machine.addState(self.loadExam_state)
+        self.stateMachine.addState(self.scanningModeState)
+        self.stateMachine.addState(self.viewingModeState)
+        self.stateMachine.addState(self.newExamState)
+        self.stateMachine.addState(self.loadExamState)
         
         # Set initial state
-        self.state_machine.setInitialState(self.scanningMode_state)
+        self.stateMachine.setInitialState(self.scanningModeState)
         
         # Define actions related to states
-        self.scanningMode_state.entered.connect(lambda: self.scanningMode_open())
-        self.viewingMode_state.entered.connect(lambda: self.viewingMode_open())
-        self.newExam_state.entered.connect(lambda: self.newExam_open())
-        self.loadExam_state.entered.connect(lambda: self.loadExam_open())
+        self.scanningModeState.entered.connect(lambda: self.openScanningMode())
+        self.viewingModeState.entered.connect(lambda: self.openViewingMode())
+        self.newExamState.entered.connect(lambda: self.openNewExam())
+        self.loadExamState.entered.connect(lambda: self.openLoadExam())
         
         
-    def _setupTransitions(self):
-        self.scanningMode_state.addTransition(self.viewingMode_signal, self.viewingMode_state)
-        self.viewingMode_state.addTransition(self.scanningMode_signal, self.scanningMode_state)
-        self.scanningMode_state.addTransition(self.newExam_signal, self.newExam_state)
-        self.scanningMode_state.addTransition(self.loadExam_signal, self.loadExam_state)
+    def setupTransitions(self):
+        self.scanningModeState.addTransition(self.viewing_mode_signal, self.viewingModeState)
+        self.viewingModeState.addTransition(self.scanning_mode_signal, self.scanningModeState)
+        self.scanningModeState.addTransition(self.new_exam_signal, self.newExamState)
+        self.scanningModeState.addTransition(self.load_exam_signal, self.loadExamState)
 
-    def scanningMode_open(self):
+        self.newExamState.addTransition(self.scanning_mode_signal, self.scanningModeState)
+
+    def openScanningMode(self):
         self.rightStackedLayout.setCurrentIndex(0)
+        self.stateLabel.setText("Current state: scanning mode")
         
-    def viewingMode_open(self):
+    def openViewingMode(self):
         self.rightStackedLayout.setCurrentIndex(1)
+        self.stateLabel.setText("Current state: viewing mode")
 
-    def newExam_open(self): 
-        dialog = QDialog()
-        dialog.setWindowTitle("New examination")
+    def openNewExam(self): 
+        self.stateLabel.setText("Current state: start new examination")
 
-        layout = QFormLayout()
+        self.dialog = QDialog()
+        self.dialog.setWindowTitle("New examination")
 
-        model_combo = QComboBox()
-        model_combo.addItems(["Brain model", "Knee model", "Cylindrical phantom"])
-        upload_button_model = QPushButton("Upload")
-        upload_button_model.setStyleSheet("QPushButton { background-color: #0987e0; color: white}")
+        layout = QVBoxLayout()
+
+        formLayout = QFormLayout()
+
+        modelCombo = QComboBox()
+        modelCombo.addItems(["Brain model", "Knee model", "Cylindrical phantom"])
+        uploadModelButton = QPushButton("Upload")
+        uploadModelButton.setStyleSheet("QPushButton { background-color: #0987e0; color: white}")
 
 
-        model_combo_layout = QHBoxLayout()
-        model_combo_layout.addWidget(model_combo)
-        model_combo_layout.addWidget(upload_button_model)
+        modelComboLayout = QHBoxLayout()
+        modelComboLayout.addWidget(modelCombo)
+        modelComboLayout.addWidget(uploadModelButton)
 
 
-        layout.addRow("Select model:", model_combo_layout)
-        layout.addRow("Exam name:", QLineEdit())
+        formLayout.addRow("Select model:", modelComboLayout)
+        formLayout.addRow("Exam name:", QLineEdit())
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
+        buttonsLayout = QHBoxLayout()
 
-        layout.addRow(button_box)
+        okButton = QPushButton("OK")
+        okButton.clicked.connect(self.newExamOkPressed)
+        cancelButton = QPushButton("Cancel")
+        cancelButton.clicked.connect(self.newExamCancelPressed)
 
-        dialog.setLayout(layout)
-        dialog.exec()
+        buttonsLayout.addWidget(okButton)
+        buttonsLayout.addWidget(cancelButton)
 
-    def loadExam_open(self):
-        msg_box = QMessageBox()
-        msg_box.setText("Hello, world!")
-        msg_box.exec()
+
+        layout.addLayout(formLayout)
+        layout.addLayout(buttonsLayout)
+
+        self.dialog.setLayout(layout)
+        self.dialog.exec()
+
+    def newExamOkPressed(self):
+        self.scanning_mode_signal.emit()  # Emit the signal
+        self.dialog.accept()  # Close the dialog
+
+    def newExamCancelPressed(self):
+        self.scanning_mode_signal.emit()  # Emit the signal
+        self.dialog.accept()  # Close the dialog
+
+    def openLoadExam(self):
+        self.stateLabel.setText("Current state: load examination")
+
+        msgBox = QMessageBox()
+        msgBox.setText("Hello, world!")
+        msgBox.exec()
 
         
 # having a main() function like this is best practice in Python. This function provides the apps entry point.         
