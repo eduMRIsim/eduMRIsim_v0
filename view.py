@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import  QMainWindow, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QProgressBar, QTabWidget
+from PyQt5.QtWidgets import  QComboBox, QDialog, QFormLayout, QFrame, QProgressBar, QPushButton, QMainWindow, QLabel, QLineEdit, QTabWidget, QVBoxLayout, QHBoxLayout, QWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -29,8 +29,8 @@ class MainWindow(QMainWindow):
         mode_switch_buttons_layout = ModeSwitchButtonsLayout()
         leftLayout.addLayout(mode_switch_buttons_layout, stretch=1)
 
-        examination_info_frame = ExaminationInfoFrame()
-        leftLayout.addWidget(examination_info_frame, stretch=1)
+        self.examination_info_frame = ExaminationInfoFrame()
+        leftLayout.addWidget(self.examination_info_frame, stretch=1)
 
         exam_card_info_frame = ExamCardInfoFrame()
         leftLayout.addWidget(exam_card_info_frame, stretch=2)
@@ -61,6 +61,11 @@ class MainWindow(QMainWindow):
 
         return rightLayout
 
+    def getNewExaminationButton(self):
+        return self.examination_info_frame.getNewExaminationButton()
+    
+    def getLoadExaminationButton(self):
+        return self.examination_info_frame.getLoadExaminationButton()
 
 class ModeSwitchButtonsLayout(QHBoxLayout):
     def __init__(self):
@@ -80,14 +85,20 @@ class ExaminationInfoFrame(QFrame):
         self._createLoadExaminationButton()
 
     def _createNewExaminationButton(self):
-        newExaminationButton = QPushButton("New Examination")
-        newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        self.layout.addWidget(newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.newExaminationButton = QPushButton("New Examination")
+        self.newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        self.layout.addWidget(self.newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def _createLoadExaminationButton(self):
-        newExaminationButton = QPushButton("Load Examination")
-        newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        self.layout.addWidget(newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.loadExaminationButton = QPushButton("Load Examination")
+        self.loadExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        self.layout.addWidget(self.loadExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def getNewExaminationButton(self):
+        return self.newExaminationButton
+    
+    def getLoadExaminationButton(self):
+        return self.loadExaminationButton
 
 class ExamCardInfoFrame(QFrame):
     def __init__(self):
@@ -164,3 +175,42 @@ class ScannedImageFrame(QFrame):
     def __init__(self):
         super().__init__()
         self.setStyleSheet("background-color: black; border: 1px solid black;")
+
+class NewExaminationDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("New examination")
+        self.layout = QVBoxLayout()
+
+        self._createModelComboBox()
+        self._createExamInfoForm()
+        self.okButton = QPushButton("OK")
+        self.cancelButton = QPushButton("Cancel")
+
+        self.layout.addLayout(self.examInfoForm)
+
+        horizontal_layout = QHBoxLayout()
+        horizontal_layout.addWidget(self.okButton)
+        horizontal_layout.addWidget(self.cancelButton)
+        self.layout.addLayout(horizontal_layout)
+
+        self.setLayout(self.layout)
+    
+    def _createModelComboBox(self):
+        self.modelComboBox = QComboBox()
+        self.modelComboBox.addItems(["Brain model", "Knee model", "Cylindrical phantom"])
+
+    def _createExamInfoForm(self):
+        self.examInfoForm = QFormLayout()
+        horizontal_layout = QHBoxLayout()
+        self.uploadModelButton = QPushButton("Upload")
+        horizontal_layout.addWidget(self.modelComboBox)
+        horizontal_layout.addWidget(self.uploadModelButton)
+        self.examInfoForm.addRow("Select model:", horizontal_layout)
+        self.examInfoForm.addRow("Exam name:", QLineEdit())
+
+
+class LoadExaminationDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Load examination")
