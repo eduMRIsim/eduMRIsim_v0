@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (
 )
 
 from view import MainWindow
+from controller import Controller
 
 # having a main() function like this is best practice in Python. This function provides the apps entry point.         
 def main():
@@ -22,6 +23,8 @@ def main():
     eduMRIsimWindow.setStyleSheet(style_sheet)
     
     eduMRIsimWindow.show()
+
+    controller = Controller(eduMRIsimWindow)
     
     # runs application's event loop with .exec() 
     sys.exit(eduMRIsimApp.exec())
