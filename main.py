@@ -6,6 +6,10 @@ from PyQt5.QtWidgets import (
 
 from view import MainWindow
 from controller import Controller
+from scanner import Scanner
+
+SCANNER_NAME = "test"
+SCANNER_FIELD_STRENGTH = 3
 
 # having a main() function like this is best practice in Python. This function provides the apps entry point.         
 def main():
@@ -13,9 +17,10 @@ def main():
     # creates QApplication object
     eduMRIsimApp = QApplication([])
 
-    
+    scanner = Scanner(SCANNER_NAME,SCANNER_FIELD_STRENGTH)
+
     # creates instance of app's window and shows GUI
-    eduMRIsimWindow = MainWindow()
+    eduMRIsimWindow = MainWindow(scanner)
     
     # Set the QSS stylesheet
     with open("stylesheet_eduMRIsim.qss", "r") as f:
@@ -24,7 +29,7 @@ def main():
     
     eduMRIsimWindow.show()
 
-    controller = Controller(eduMRIsimWindow)
+    controller = Controller(eduMRIsimWindow, scanner)
     
     # runs application's event loop with .exec() 
     sys.exit(eduMRIsimApp.exec())
