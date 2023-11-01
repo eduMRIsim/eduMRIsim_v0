@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import  QComboBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QProgressBar, QPushButton, QMainWindow, QLabel, QLineEdit, QStackedLayout, QTabWidget, QVBoxLayout, QWidget
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import  QComboBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QProgressBar, QPushButton, QMainWindow, QLabel, QLineEdit, QSlider, QStackedLayout, QTabWidget, QVBoxLayout, QWidget
+from PyQt5.QtGui import QPixmap, QImage
+import numpy as np
 
 class MainWindow(QMainWindow):
     def __init__(self, scanner):
@@ -328,12 +329,45 @@ class ViewModelDialog(QDialog):
         super().__init__()
         self.setWindowTitle("View Model")
             
-        layout = QVBoxLayout()
+        self.layout = QVBoxLayout()
 
-        self.model_name_label = QLabel(model._model_name)
-        self.model_description_label = QLabel(model._description)
+        image_array = model._T1map[:,:,:]
+        image_array = (image_array - np.min(image_array)) / (np.max(image_array) - np.min(image_array))  # Normalize to [0, 1] range
+        image_array = (image_array * 255).astype(np.uint8)  # Scale to 8bit range       
 
-        layout.addWidget(self.model_name_label)
-        layout.addWidget(self.model_description_label)
+        # The np.ascontiguousarray function is used to create a new NumPy array that is guaranteed to have a contiguous memory layout. In other words, it ensures that the array elements are stored in adjacent memory locations without any gaps or strides.
+        # QImage expects the image data to be stored in a contiguous block of memory.
+        image_array = np.ascontiguousarray(np.array(image_array))   
 
-        self.setLayout(layout)
+         # Create QImage
+        height, width = image_array.shape
+        qimage = QImage(image_array.data, width, height, width, QImage.Format_Grayscale8)           
+
+        #Create a QLabel, set the image as its pixmap, and add it to the layout.
+        #setPixmap needs to be provided with a QPixmap object 
+        label = QLabel()
+        # QPixmap.fromImage method in PyQt is a static method provided by the QPixmap class. It creates a QPixmap object from a QImage object.
+        label.setPixmap(QPixmap.fromImage(qimage))
+        self.layout.addWidget(label)
+
+        self.createButtons()
+        self.createSlider() 
+
+        self.setLayout(self.layout)
+
+    def createButtons(self):
+        buttonsLayout = QHBoxLayout()
+        T1Button = QPushButton("T1")
+        T2Button = QPushButton("T2")
+        PDButton = QPushButton("PD")
+        buttonsLayout.addWidget(T1Button)
+        buttonsLayout.addWidget(T2Button)
+        buttonsLayout.addWidget(PDButton)
+        self.layout.addLayout(buttonsLayout)
+
+    def createSlider(self):
+        slider = QSlider(Qt.Horizontal)
+        self.layout.addWidget(slider)
+    
+
+
