@@ -1,7 +1,7 @@
 # this module provides the exit() function which we need to cleanly terminate the app
 import sys 
 from PyQt5.QtWidgets import (
-    QApplication
+    QApplication, QStyleFactory
 )
 
 from view import MainWindow
@@ -23,13 +23,15 @@ def main():
     eduMRIsimWindow = MainWindow(scanner)
     
     # Set the QSS stylesheet
-    with open("stylesheet_eduMRIsim.qss", "r") as f:
+    with open("style_sheet_streamlit.css", "r") as f:
         style_sheet = f.read()
-    eduMRIsimWindow.setStyleSheet(style_sheet)
+    eduMRIsimApp.setStyleSheet(style_sheet)
     
     eduMRIsimWindow.show()
 
     controller = Controller(eduMRIsimWindow, scanner)
+
+    eduMRIsimApp.setStyle('Fusion')
     
     # runs application's event loop with .exec() 
     sys.exit(eduMRIsimApp.exec())

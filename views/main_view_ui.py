@@ -3,20 +3,23 @@ from PyQt5.QtWidgets import  QComboBox, QDialog, QFormLayout, QFrame, QHBoxLayou
 from PyQt5.QtGui import QPixmap, QImage
 import numpy as np
 
-class MainWindow(QMainWindow):
-    def __init__(self, scanner):
+class Ui_MainWindow:
+    def __init__(self, scanner, MainWindow):
         super().__init__()
 
-        self.setWindowTitle("eduMRIsim_V0_UI")
+        #self.setWindowTitle("eduMRIsim_V0_UI")
 
-        self.centralWidget = QWidget(self)
-        self.setCentralWidget(self.centralWidget)
+        self.centralWidget = QWidget(MainWindow)
+        #self.setCentralWidget(self.centralWidget)
 
         self.layout = QHBoxLayout()
         self.centralWidget.setLayout(self.layout)
 
         self.scanner = scanner
         self._createMainWindow()
+
+        MainWindow.setCentralWidget(self.centralWidget)
+        MainWindow.setWindowTitle("eduMRIsim_V0_UI")
 
         self._scanningModeButton = self._modeSwitchButtonsLayout.scanningModeButton
         self._viewingModeButton = self._modeSwitchButtonsLayout.viewingModeButton
