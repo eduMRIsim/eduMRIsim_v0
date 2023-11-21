@@ -1,40 +1,20 @@
-# this module provides the exit() function which we need to cleanly terminate the app
-import sys 
-from PyQt5.QtWidgets import (
-    QApplication, QStyleFactory
-)
-
-from view import MainWindow
-from controller import Controller
+import sys
+from PyQt5.QtWidgets import QApplication
 from scanner import Scanner
+from controllers.main_ctrl import MainController
+from views.main_view import MainView
 
 SCANNER_NAME = "test"
 SCANNER_FIELD_STRENGTH = 3
 
-# having a main() function like this is best practice in Python. This function provides the apps entry point.         
-def main():
-    
-    # creates QApplication object
-    eduMRIsimApp = QApplication([])
+class App(QApplication):
+    def __init__(self, sys_argv):
+        super(App, self).__init__(sys_argv)
+        self.scanner = Scanner(SCANNER_NAME, SCANNER_FIELD_STRENGTH)
+        self.main_controller = MainController(self.scanner)
+        self.main_view = MainView(self.scanner, self.main_controller)
+        self.main_view.show()
 
-    scanner = Scanner(SCANNER_NAME,SCANNER_FIELD_STRENGTH)
-
-    # creates instance of app's window and shows GUI
-    eduMRIsimWindow = MainWindow(scanner)
-    
-    # Set the QSS stylesheet
-    with open("style_sheet_streamlit.css", "r") as f:
-        style_sheet = f.read()
-    eduMRIsimApp.setStyleSheet(style_sheet)
-    
-    eduMRIsimWindow.show()
-
-    controller = Controller(eduMRIsimWindow, scanner)
-
-    eduMRIsimApp.setStyle('Fusion')
-    
-    # runs application's event loop with .exec() 
-    sys.exit(eduMRIsimApp.exec())
-    
-if __name__ == "__main__": 
-    main()
+if __name__ == '__main__':
+    app = App(sys.argv)
+    sys.exit(app.exec_())
