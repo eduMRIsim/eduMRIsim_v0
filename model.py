@@ -6,5 +6,10 @@ class Model:
         self._T2map = T2map
         self._PDmap = PDmap 
 
-    def get_model_name(self):
+    @property
+    def model_name(self):
         return self._model_name
+    
+    @model_name.setter
+    def model_name(self, name):
+        self._model_name = name 

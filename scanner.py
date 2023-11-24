@@ -7,14 +7,26 @@ class Scanner:
     def scan(self):
         pass 
 
-    def set_examination(self, examination):
-        self._examination = examination
-
-    def get_examination(self):
+    @property 
+    def examination(self):
         return self._examination
 
-    def get_name(self):
-        return self._scanner_name 
+    @examination.setter
+    def examination(self, new_examination):
+        self._examination = new_examination
 
-    def get_field_strength(self):
+    @property
+    def scanner_name(self):
+        return self._scanner_name 
+    
+    @scanner_name.setter
+    def scanner_name(self, new_scanner_name):
+        self._scanner_name = new_scanner_name
+
+    @property
+    def field_strength(self):
         return self._field_strength 
+    
+    @field_strength.setter
+    def field_strength(self, new_field_strength):
+        self._field_strength = new_field_strength 

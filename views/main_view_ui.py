@@ -1,5 +1,7 @@
 from PyQt5.QtCore import Qt, QStringListModel
-from PyQt5.QtWidgets import  QComboBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QListView, QProgressBar, QPushButton, QMainWindow, QLabel, QLineEdit, QSlider, QStackedLayout, QTabWidget, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import   (QComboBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton,
+                             QSlider, QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
 from PyQt5.QtGui import QPixmap, QImage
 import numpy as np
 
@@ -53,7 +55,11 @@ class Ui_MainWindow:
 
     @property
     def addScanItemButton(self):
-        return self._examCardInfoFrame.addScanItemButton
+        return self._scanlistInfoFrame.addScanItemButton
+    
+    @property
+    def scanlistListWidget(self):
+        return self._scanlistInfoFrame.scanlistListWidget
 
     @property
     def scanProgressBar(self):
@@ -80,10 +86,6 @@ class Ui_MainWindow:
         return self._editingStackedLayout 
     
     @property
-    def examCardListModel(self):
-        return self._examCardTab.examCardListModel
-    
-    @property
     def examCardListView(self):
         return self._examCardTab.examCardListView
      
@@ -107,8 +109,8 @@ class Ui_MainWindow:
         self._examinationInfoStackedLayout.setCurrentIndex(0)
         leftLayout.addLayout(self._examinationInfoStackedLayout, stretch=1)
 
-        self._examCardInfoFrame = ExamCardInfoFrame()
-        leftLayout.addWidget(self._examCardInfoFrame, stretch=2)
+        self._scanlistInfoFrame = ScanlistInfoFrame()
+        leftLayout.addWidget(self._scanlistInfoFrame, stretch=2)
 
         self._scanProgressInfoFrame = ScanProgressInfoFrame(self.scanner)
         leftLayout.addWidget(self._scanProgressInfoFrame, stretch=1)
@@ -227,22 +229,28 @@ class ExaminationInfoFrame(QFrame):
     def viewModelButton(self):
         return self._viewModelButton
 
-class ExamCardInfoFrame(QFrame):
+class ScanlistInfoFrame(QFrame):
     def __init__(self):
         super().__init__()
         self.setStyleSheet("QFrame { border: 2px solid black; }") 
-        self.label = QLabel(self)
-        self.label.setText("Exam Cards")
-        self.label.setStyleSheet("QLabel { color: black; }")
+        #self.label.setStyleSheet("QLabel { color: black; }")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._addScanItemButton = QPushButton("Add Scan Item")
         self._addScanItemButton.setVisible(False)
-        self.layout.addWidget(self._addScanItemButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._scanlistListWidget = QListWidget()
+        self._scanlistListWidget.setVisible(False)
+        self._scanlistListWidget.setStyleSheet("border: none;")
+        self.layout.addWidget(self._scanlistListWidget)
+        self.layout.addWidget(self._addScanItemButton)
 
     @property
     def addScanItemButton(self):
         return self._addScanItemButton
+
+    @property
+    def scanlistListWidget(self):
+        return self._scanlistListWidget
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):
@@ -304,9 +312,9 @@ class ScanProgressInfoFrame(QFrame):
     def _createScanInfo(self,scanner):
         scanInfoForm = QFormLayout()
 
-        scannerName = QLabel(scanner.get_name())
+        scannerName = QLabel(scanner.scanner_name)
         scannerName.setStyleSheet("border: none;")
-        scannerFieldStrength = QLabel(str(scanner.get_field_strength()))
+        scannerFieldStrength = QLabel(str(scanner.field_strength))
         scannerFieldStrength.setStyleSheet("border: none;")
 
         # Ensure there's no border around labels "Scanner" and "Field strength (T)"
@@ -341,13 +349,9 @@ class ExamCardTab(QWidget):
         super().__init__()
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self._examCardListModel = QStringListModel()
         self._examCardListView = QListView()
+        self._examCardListView.setEditTriggers(QListView.NoEditTriggers)
         self.layout.addWidget(self._examCardListView)
-
-    @property
-    def examCardListModel(self):
-        return self._examCardListModel
     
     @property
     def examCardListView(self):
