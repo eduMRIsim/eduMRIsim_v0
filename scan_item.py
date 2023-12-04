@@ -1,9 +1,9 @@
-from scan_parameters import ScanParameters
-
 class ScanItem: 
     def __init__(self, name, scan_parameters):
         self._name = name
-        self._scan_parameters = ScanParameters(scan_parameters)
+        self._scan_parameters = {}
+        for key, value in scan_parameters.items():
+            self._scan_parameters[key] = value 
 
     @property
     def name(self):

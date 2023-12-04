@@ -13,17 +13,22 @@ class MainController(QObject):
     show_examCardTabWidget = pyqtSignal()
     populate_examCardListView = pyqtSignal(dict)
     update_scanlistListWidget = pyqtSignal(list)
+    populate_parameterFormLayout = pyqtSignal(dict)
 
     def __init__(self, scanner):
         super().__init__()
 
         self._scanner = scanner
+        self._loader = Loader()
+
+    @property
+    def scanner(self):
+        return self._scanner
 
     @pyqtSlot()
     def handle_newExaminationButton_clicked(self):
-        loader = Loader()
         jsonFilePath = 'models/models.json'
-        self.model_data = loader.load(jsonFilePath)
+        self.model_data = self._loader.load(jsonFilePath)
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox.emit(model_names)
         self.open_newExaminationDialog.emit() 
@@ -38,21 +43,22 @@ class MainController(QObject):
         t1map = np.load(t1map_file_path)
         t2map = np.load(t2map_file_path)
         pdmap = np.load(pdmap_file_path)
-        self.examination = Examination(exam_name)
-        self.model = Model(model_name, description, t1map, t2map, pdmap)
-        self.examination.model = self.model
-        self._scanner.examination = self.examination
+        model = Model(model_name, description, t1map, t2map, pdmap)
+        self.scanner.start_examination(exam_name, model)
         self.close_newExaminationDialog.emit()
         self.start_new_examination.emit(exam_name, model_name)
         
     @pyqtSlot()
     def handle_addScanItemButton_clicked(self):
-        loader = Loader()
         jsonFilePath = 'exam_cards/exam_cards.json'
-        self.exam_card_data = loader.load(jsonFilePath)
+        self.exam_card_data = self._loader.load(jsonFilePath)
         self.show_examCardTabWidget.emit()
         self.populate_examCardListView.emit(self.exam_card_data)
 
-    def handle_add_to_scanlist(self, key, scan_item):
-        self.examination.scanlist.add_scan_item(key, scan_item)
-        self.update_scanlistListWidget.emit(self.examination.scanlist.scanlist)
+    def handle_add_to_scanlist(self, name, scan_parameters):
+        self.scanner.examination.add_scan_item(name, scan_parameters)
+        self.update_scanlistListWidget.emit(self.scanner.scanlist)
+
+    def handle_scanlistListWidget_dclicked(self, index):
+        self.scanner.current_scan_item = self.scanner.scanlist[index]
+        self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters)

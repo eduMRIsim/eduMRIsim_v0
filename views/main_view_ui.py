@@ -86,6 +86,10 @@ class Ui_MainWindow:
         return self._editingStackedLayout 
     
     @property
+    def parameterFormLayout(self):
+        return self._scanParametersTabWidget.parameterFormLayout
+    
+    @property
     def examCardListView(self):
         return self._examCardTab.examCardListView
      
@@ -311,8 +315,7 @@ class ScanProgressInfoFrame(QFrame):
 
     def _createScanInfo(self,scanner):
         scanInfoForm = QFormLayout()
-
-        scannerName = QLabel(scanner.scanner_name)
+        scannerName = QLabel(scanner.name)
         scannerName.setStyleSheet("border: none;")
         scannerFieldStrength = QLabel(str(scanner.field_strength))
         scannerFieldStrength.setStyleSheet("border: none;")
@@ -360,20 +363,50 @@ class ExamCardTab(QWidget):
 class ScanParametersTabWidget(QTabWidget):
     def __init__(self):
         super().__init__()
-        self.addTab(GeometryTab(), "Geometry")
-        self.addTab(ContrastTab(), "Contrast")
+        self.parameterTab = ParameterTab()
+        self.addTab(self.parameterTab, "Scan Parameters")
+        
+    @property
+    def parameterFormLayout(self):
+        return self.parameterTab.parameterFormLayout
 
-class GeometryTab(QWidget):
+
+class ParameterTab(QWidget):
     def __init__(self):
         super().__init__()
-        label = QLabel(self)
-        label.setText("Geometry parameters")
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self._parameterFormLayout = ParameterFormLayout()
+        self.layout.addLayout(self.parameterFormLayout)
 
-class ContrastTab(QWidget):
+    @property
+    def parameterFormLayout(self):
+        return self._parameterFormLayout    
+    
+
+
+class ParameterFormLayout(QFormLayout):
     def __init__(self):
         super().__init__()
-        label = QLabel(self)
-        label.setText("Contrast parameters")
+        self.TELineEdit = QLineEdit()
+        self.TELineEdit.setFixedWidth(100)
+        self.TRLineEdit = QLineEdit()
+        self.TRLineEdit.setFixedWidth(100)
+        self.TILineEdit = QLineEdit()
+        self.TILineEdit.setFixedWidth(100)
+        self.sliceLineEdit = QLineEdit()
+        self.sliceLineEdit.setFixedWidth(100)
+
+        self.addRow("TE:", self.TELineEdit)
+        self.addRow("TR:", self.TRLineEdit)
+        self.addRow("TI:", self.TILineEdit)
+        self.addRow("slice:", self.sliceLineEdit)
+
+    def setData(self, data):
+        self.TELineEdit.setText(str(data["TE"]))
+        self.TRLineEdit.setText(str(data["TR"]))
+        self.TILineEdit.setText(str(data["TI"]))
+        self.sliceLineEdit.setText(str(data["slice"]))
 
 class ScannedImageFrame(QFrame):
     def __init__(self):

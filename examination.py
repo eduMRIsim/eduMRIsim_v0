@@ -1,22 +1,26 @@
-from scanlist import Scanlist
+from scan_item import ScanItem
 
 class Examination:
-    def __init__(self, exam_name):
-        self._exam_name = exam_name 
-        self._model = None
-        self._scanlist = Scanlist() 
+    def __init__(self, name, model):
+        self._name = name 
+        self._model = model 
+        self._scanlist = []
+
+    def add_scan_item(self, name, scan_parameters):
+        new_scan_item = ScanItem(name, scan_parameters)
+        self._scanlist.append(new_scan_item)
 
     @property
     def scanlist(self):
         return self._scanlist 
 
     @property
-    def exam_name(self):
-        return self._exam_name
+    def name(self):
+        return self._name
     
-    @exam_name.setter
-    def exam_name(self, name):
-        self._exam_name = name
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
 
     @property
     def model(self):
