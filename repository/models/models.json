@@ -2,8 +2,8 @@
     "mriSimBrainModel": {
         "name": "mriSim brain model",
         "description": "Data from mriSim `Generated.mat` with MRSTAT data from clinical study. Data includes T1, T2 and PD maps of the brain.",
-        "T1mapFilePath": "models/model1/T1map.npy",
-        "T2mapFilePath": "models/model1/T2map.npy",
-        "PDmapFilePath": "models/model1/PDmap.npy"
+        "T1mapFilePath": "repository/models/model1/T1map.npy",
+        "T2mapFilePath": "repository/models/model1/T2map.npy",
+        "PDmapFilePath": "repository/models/model1/PDmap.npy"
     }
 }

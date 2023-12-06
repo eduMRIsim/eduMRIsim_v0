@@ -22,6 +22,7 @@ class MainView(QMainWindow):
         self._ui.addScanItemButton.clicked.connect(self._main_ctrl.handle_addScanItemButton_clicked)
         self._ui.examCardListView.doubleClicked.connect(self.on_examCardListView_dclicked)
         self._ui.scanlistListWidget.itemDoubleClicked.connect(self.on_scanlistListWidget_dclicked)
+        self._ui.viewModelButton.clicked.connect(self._main_ctrl.handle_viewModelButton_clicked)
 
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self._main_ctrl.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))
@@ -34,6 +35,7 @@ class MainView(QMainWindow):
         self._main_ctrl.populate_examCardListView.connect(self.on_populate_examCardListView)
         self._main_ctrl.update_scanlistListWidget.connect(self.on_update_scanlistListWidget) 
         self._main_ctrl.populate_parameterFormLayout.connect(self.on_populate_parameterFormLayout)
+        self._main_ctrl.open_viewModelDialog.connect(self.on_open_viewModelDialog)
 
     @pyqtSlot(list)
     def on_populate_modelComboBox(self, list):
@@ -72,3 +74,7 @@ class MainView(QMainWindow):
     @pyqtSlot(dict)
     def on_populate_parameterFormLayout(self, data):
         self._ui.parameterFormLayout.setData(data)
+
+    def on_open_viewModelDialog(self, model):
+        view_model_dialog = ViewModelDialog(model)
+        view_model_dialog.exec()    
