@@ -14,6 +14,7 @@ class MainController(QObject):
     populate_examCardListView = pyqtSignal(dict)
     update_scanlistListWidget = pyqtSignal(list)
     populate_parameterFormLayout = pyqtSignal(dict)
+    open_viewModelDialog = pyqtSignal(Model) 
 
     def __init__(self, scanner):
         super().__init__()
@@ -27,7 +28,7 @@ class MainController(QObject):
 
     @pyqtSlot()
     def handle_newExaminationButton_clicked(self):
-        jsonFilePath = 'models/models.json'
+        jsonFilePath = 'repository/models/models.json'
         self.model_data = self._loader.load(jsonFilePath)
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox.emit(model_names)
@@ -50,7 +51,7 @@ class MainController(QObject):
         
     @pyqtSlot()
     def handle_addScanItemButton_clicked(self):
-        jsonFilePath = 'exam_cards/exam_cards.json'
+        jsonFilePath = 'repository/exam_cards/exam_cards.json'
         self.exam_card_data = self._loader.load(jsonFilePath)
         self.show_examCardTabWidget.emit()
         self.populate_examCardListView.emit(self.exam_card_data)
@@ -62,3 +63,6 @@ class MainController(QObject):
     def handle_scanlistListWidget_dclicked(self, index):
         self.scanner.current_scan_item = self.scanner.scanlist[index]
         self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters)
+
+    def handle_viewModelButton_clicked(self):
+        self.open_viewModelDialog.emit(self.scanner.model)
