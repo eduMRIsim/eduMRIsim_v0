@@ -1,9 +1,7 @@
-from PyQt5.QtCore import Qt, QStringListModel
-from PyQt5.QtWidgets import   (QComboBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton,
-                             QSlider, QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
-from PyQt5.QtGui import QPixmap, QImage
-import numpy as np
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import   (QFormLayout, QFrame, QGridLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QProgressBar, QPushButton,
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
 
 class Ui_MainWindow:
     def __init__(self, scanner, MainWindow):
@@ -87,8 +85,16 @@ class Ui_MainWindow:
     
     @property
     def parameterFormLayout(self):
-        return self._scanParametersTabWidget.parameterFormLayout
+        return self._scanParametersWidget.parameterFormLayout
     
+    @property 
+    def scanParametersSaveChangesButton(self):
+        return self._scanParametersWidget.scanParametersSaveChangesButton
+    
+    @property 
+    def scanParametersCancelChangesButton(self):
+        return self._scanParametersWidget.scanParametersCancelChangesButton
+
     @property
     def examCardListView(self):
         return self._examCardTab.examCardListView
@@ -131,9 +137,9 @@ class Ui_MainWindow:
         bottomLayout = QHBoxLayout()
 
         self._examCardTab = ExamCardTab()
-        self._scanParametersTabWidget = ScanParametersTabWidget()
+        self._scanParametersWidget = ScanParametersWidget()
         self._examCardTabWidget = ExamCardTabWidget(self._examCardTab)
-        self._editingStackedLayout = EditingStackedLayout(self._scanParametersTabWidget, self._examCardTabWidget)
+        self._editingStackedLayout = EditingStackedLayout(self._scanParametersWidget, self._examCardTabWidget)
         self._editingStackedLayout.setCurrentIndex(0)
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
         scanned_image_frame = ScannedImageFrame()
@@ -337,11 +343,45 @@ class ScanPlanningFrame(QFrame):
         self.setStyleSheet("background-color: black; border: 1px solid black;")
 
 class EditingStackedLayout(QStackedLayout):
-    def __init__(self, scanParametersTabWidget, examCardTabWidget):
+    def __init__(self, scanParametersWidget, examCardTabWidget):
         super().__init__()
-        self.addWidget(scanParametersTabWidget)
+        self.addWidget(scanParametersWidget)
         self.addWidget(examCardTabWidget)
         
+class ScanParametersWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self._createScanParametersTabWidget()
+        self._createButtons()
+
+
+    @property
+    def parameterFormLayout(self):
+        return self.scanParametersTabWidget.parameterFormLayout
+    
+    @property 
+    def scanParametersSaveChangesButton(self):
+        return self._scanParametersSaveChangesButton
+    
+    @property 
+    def scanParametersCancelChangesButton(self):
+        return self._scanParametersCancelChangesButton
+
+    def _createScanParametersTabWidget(self):
+        self.scanParametersTabWidget = ScanParametersTabWidget() 
+        self.layout.addWidget(self.scanParametersTabWidget)
+
+    def _createButtons(self):
+        buttonsLayout = QHBoxLayout()
+        self._scanParametersSaveChangesButton = QPushButton("Save Changes")
+        self._scanParametersCancelChangesButton = QPushButton("Cancel")
+        buttonsLayout.addWidget(self._scanParametersSaveChangesButton)
+        buttonsLayout.addWidget(self._scanParametersCancelChangesButton)
+        self.layout.addLayout(buttonsLayout)        
+    
+
 class ExamCardTabWidget(QTabWidget):
     def __init__(self, examCardTab):
         super().__init__()
@@ -376,6 +416,7 @@ class ParameterTab(QWidget):
         super().__init__()
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
+        self.layout.setAlignment(Qt.AlignTop)
         self._parameterFormLayout = ParameterFormLayout()
         self.layout.addLayout(self.parameterFormLayout)
 
@@ -385,28 +426,67 @@ class ParameterTab(QWidget):
     
 
 
-class ParameterFormLayout(QFormLayout):
+class ParameterFormLayout(QGridLayout):
     def __init__(self):
         super().__init__()
-        self.TELineEdit = QLineEdit()
-        self.TELineEdit.setFixedWidth(100)
-        self.TRLineEdit = QLineEdit()
-        self.TRLineEdit.setFixedWidth(100)
-        self.TILineEdit = QLineEdit()
-        self.TILineEdit.setFixedWidth(100)
-        self.sliceLineEdit = QLineEdit()
-        self.sliceLineEdit.setFixedWidth(100)
 
-        self.addRow("TE:", self.TELineEdit)
-        self.addRow("TR:", self.TRLineEdit)
-        self.addRow("TI:", self.TILineEdit)
-        self.addRow("slice:", self.sliceLineEdit)
+        self.TELineEdit = QLineEdit()
+        self.TRLineEdit = QLineEdit()
+        self.TILineEdit = QLineEdit()
+        self.sliceLineEdit = QLineEdit()
+
+        self.TEMessageLabel = QLabel()
+        self.TEMessageLabel.setStyleSheet("color: red")
+        self.TRMessageLabel = QLabel()
+        self.TRMessageLabel.setStyleSheet("color: red")
+        self.TIMessageLabel = QLabel()
+        self.TIMessageLabel.setStyleSheet("color: red")
+        self.sliceMessageLabel = QLabel()
+        self.sliceMessageLabel.setStyleSheet("color: red")
+
+        self.setHorizontalSpacing(0)
+
+        self.addWidget(QLabel("TE:"), 0, 0, Qt.AlignLeft)
+        self.addWidget(self.TELineEdit, 0, 1, Qt.AlignLeft)
+        self.addWidget(self.TEMessageLabel, 0, 2, Qt.AlignLeft)
+
+        self.addWidget(QLabel("TR:"), 1, 0, Qt.AlignLeft)
+        self.addWidget(self.TRLineEdit, 1, 1, Qt.AlignLeft)
+        self.addWidget(self.TRMessageLabel, 1, 2, Qt.AlignLeft)
+
+        self.addWidget(QLabel("TI:"), 2, 0, Qt.AlignLeft)
+        self.addWidget(self.TILineEdit, 2, 1, Qt.AlignLeft)
+        self.addWidget(self.TIMessageLabel, 2, 2, Qt.AlignLeft)
+
+        self.addWidget(QLabel("slice:"), 3, 0, Qt.AlignLeft)
+        self.addWidget(self.sliceLineEdit, 3, 1, Qt.AlignLeft)
+        self.addWidget(self.sliceMessageLabel, 3, 2, Qt.AlignLeft)
+
+        self.setColumnStretch(0, 1)
+        self.setColumnStretch(1, 2)
+        self.setColumnStretch(2, 2)
 
     def setData(self, data):
-        self.TELineEdit.setText(str(data["TE"]))
-        self.TRLineEdit.setText(str(data["TR"]))
-        self.TILineEdit.setText(str(data["TI"]))
-        self.sliceLineEdit.setText(str(data["slice"]))
+        self.TELineEdit.setText(str(data.get("TE", "")))
+        self.TRLineEdit.setText(str(data.get("TR", "")))
+        self.TILineEdit.setText(str(data.get("TI", "")))
+        self.sliceLineEdit.setText(str(data.get("slice", "")))
+
+    def getData(self):
+        data = {}
+
+        data["TE"] = self.TELineEdit.text()
+        data["TR"] = self.TRLineEdit.text()
+        data["TI"] = self.TILineEdit.text()
+        data["slice"] = self.sliceLineEdit.text()
+
+        return data
+
+    def setMessages(self, messages):
+        self.TEMessageLabel.setText(messages.get("TE", ""))
+        self.TRMessageLabel.setText(messages.get("TR", ""))
+        self.TIMessageLabel.setText(messages.get("TI", ""))
+        self.sliceMessageLabel.setText(messages.get("slice", ""))
 
 class ScannedImageFrame(QFrame):
     def __init__(self):

@@ -13,7 +13,7 @@ class MainController(QObject):
     show_examCardTabWidget = pyqtSignal()
     populate_examCardListView = pyqtSignal(dict)
     update_scanlistListWidget = pyqtSignal(list)
-    populate_parameterFormLayout = pyqtSignal(dict)
+    populate_parameterFormLayout = pyqtSignal(dict, dict)
     open_viewModelDialog = pyqtSignal(Model) 
 
     def __init__(self, scanner):
@@ -62,7 +62,17 @@ class MainController(QObject):
 
     def handle_scanlistListWidget_dclicked(self, index):
         self.scanner.current_scan_item = self.scanner.scanlist[index]
-        self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters)
+        self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters, {})
+
+    def handle_scanParametersCancelChangesButton_clicked(self):
+        self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters, {})
 
     def handle_viewModelButton_clicked(self):
         self.open_viewModelDialog.emit(self.scanner.model)
+
+    def handle_scanParametersSaveChangesButton_clicked(self, scan_parameters):
+        [valid, messages] = self.scanner.current_scan_item.validate_scan_parameters(scan_parameters)
+        if valid == True:
+            self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters, messages)
+        else:
+            self.populate_parameterFormLayout.emit(scan_parameters, messages)
