@@ -13,3 +13,15 @@ class Model:
     @model_name.setter
     def model_name(self, name):
         self._model_name = name 
+
+    @property
+    def T1map(self):
+        return self._T1map
+    
+    @property
+    def T2map(self):
+        return self._T2map
+    
+    @property
+    def PDmap(self):
+        return self._PDmap 

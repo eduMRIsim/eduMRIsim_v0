@@ -1,7 +1,9 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import   (QFormLayout, QFrame, QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QProgressBar, QPushButton,
+from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor
+import numpy as np
 
 class Ui_MainWindow:
     def __init__(self, scanner, MainWindow):
@@ -98,6 +100,10 @@ class Ui_MainWindow:
     @property
     def examCardListView(self):
         return self._examCardTab.examCardListView
+    
+    @property
+    def scannedImageFrame(self):
+        return self._scannedImageFrame 
      
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
@@ -142,8 +148,8 @@ class Ui_MainWindow:
         self._editingStackedLayout = EditingStackedLayout(self._scanParametersWidget, self._examCardTabWidget)
         self._editingStackedLayout.setCurrentIndex(0)
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
-        scanned_image_frame = ScannedImageFrame()
-        bottomLayout.addWidget(scanned_image_frame, stretch=1)
+        self._scannedImageFrame = ImageLabel()
+        bottomLayout.addWidget(self._scannedImageFrame, stretch=1)
 
         rightLayout.addLayout(bottomLayout,stretch=1)
 
@@ -430,11 +436,16 @@ class ParameterFormLayout(QGridLayout):
     def __init__(self):
         super().__init__()
 
+        self.scanTechniqueComboBox = QComboBox()
+        self.scanTechniqueComboBox.addItems(["GE", "SE"])
         self.TELineEdit = QLineEdit()
         self.TRLineEdit = QLineEdit()
         self.TILineEdit = QLineEdit()
         self.sliceLineEdit = QLineEdit()
 
+
+        self.scanTechniqueMessageLabel = QLabel()
+        self.scanTechniqueMessageLabel.setStyleSheet("color: red")    
         self.TEMessageLabel = QLabel()
         self.TEMessageLabel.setStyleSheet("color: red")
         self.TRMessageLabel = QLabel()
@@ -446,27 +457,34 @@ class ParameterFormLayout(QGridLayout):
 
         self.setHorizontalSpacing(0)
 
-        self.addWidget(QLabel("TE:"), 0, 0, Qt.AlignLeft)
-        self.addWidget(self.TELineEdit, 0, 1, Qt.AlignLeft)
-        self.addWidget(self.TEMessageLabel, 0, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("Scan Technique:"), 0, 0, Qt.AlignLeft)
+        self.addWidget(self.scanTechniqueComboBox, 0, 1, Qt.AlignLeft)
+        self.addWidget(self.scanTechniqueComboBox, 0, 2, Qt.AlignLeft)
 
-        self.addWidget(QLabel("TR:"), 1, 0, Qt.AlignLeft)
-        self.addWidget(self.TRLineEdit, 1, 1, Qt.AlignLeft)
-        self.addWidget(self.TRMessageLabel, 1, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("TE:"), 1, 0, Qt.AlignLeft)
+        self.addWidget(self.TELineEdit, 1, 1, Qt.AlignLeft)
+        self.addWidget(self.TEMessageLabel, 1, 2, Qt.AlignLeft)
 
-        self.addWidget(QLabel("TI:"), 2, 0, Qt.AlignLeft)
-        self.addWidget(self.TILineEdit, 2, 1, Qt.AlignLeft)
-        self.addWidget(self.TIMessageLabel, 2, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("TR:"), 2, 0, Qt.AlignLeft)
+        self.addWidget(self.TRLineEdit, 2, 1, Qt.AlignLeft)
+        self.addWidget(self.TRMessageLabel, 2, 2, Qt.AlignLeft)
 
-        self.addWidget(QLabel("slice:"), 3, 0, Qt.AlignLeft)
-        self.addWidget(self.sliceLineEdit, 3, 1, Qt.AlignLeft)
-        self.addWidget(self.sliceMessageLabel, 3, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("TI:"), 3, 0, Qt.AlignLeft)
+        self.addWidget(self.TILineEdit, 3, 1, Qt.AlignLeft)
+        self.addWidget(self.TIMessageLabel, 3, 2, Qt.AlignLeft)
+
+        self.addWidget(QLabel("slice:"), 4, 0, Qt.AlignLeft)
+        self.addWidget(self.sliceLineEdit, 4, 1, Qt.AlignLeft)
+        self.addWidget(self.sliceMessageLabel, 4, 2, Qt.AlignLeft)
 
         self.setColumnStretch(0, 1)
         self.setColumnStretch(1, 2)
         self.setColumnStretch(2, 2)
 
     def setData(self, data):
+        index = self.scanTechniqueComboBox.findText(str(data.get("scan_technique", "")))
+        if index != -1:
+            self.scanTechniqueComboBox.setCurrentIndex(index)
         self.TELineEdit.setText(str(data.get("TE", "")))
         self.TRLineEdit.setText(str(data.get("TR", "")))
         self.TILineEdit.setText(str(data.get("TI", "")))
@@ -475,6 +493,7 @@ class ParameterFormLayout(QGridLayout):
     def getData(self):
         data = {}
 
+        data["scan_technique"] = self.scanTechniqueComboBox.currentText()
         data["TE"] = self.TELineEdit.text()
         data["TR"] = self.TRLineEdit.text()
         data["TI"] = self.TILineEdit.text()
@@ -492,3 +511,64 @@ class ScannedImageFrame(QFrame):
     def __init__(self):
         super().__init__()
         self.setStyleSheet("background-color: black; border: 1px solid black;")
+
+""" class ImageLabel(QLabel):
+    def __init__(self):
+        super().__init__()
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+    def displayArray(self, array):
+        array_norm = (array - np.min(array)) / (np.max(array) - np.min(array))  # Normalize to [0, 1] range
+        array_8bit = (array_norm * 255).astype(np.uint8)  # Scale to 8bit range       
+
+        # The np.ascontiguousarray function is used to create a new NumPy array that is guaranteed to have a contiguous memory layout. In other words, it ensures that the array elements are stored in adjacent memory locations without any gaps or strides.
+        # QImage expects the image data to be stored in a contiguous block of memory.
+        image = np.ascontiguousarray(np.array(array_8bit))   
+
+         # Create QImage
+        height, width = image.shape
+        qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)           
+    
+        self.setPixmap(QPixmap.fromImage(qimage))
+        self.setScaledContents(True)
+        self.setAlignment(Qt.AlignCenter)
+        self.setAspectRatioMode(Qt.KeepAspectRatio) """
+
+class ImageLabel(QGraphicsView):
+    def __init__(self):
+        super().__init__()
+
+        self.scene = QGraphicsScene(self)
+        self.pixmap_item = QGraphicsPixmapItem()
+        self.scene.addItem(self.pixmap_item)
+
+        self.setScene(self.scene)
+        self.setRenderHint(QPainter.Antialiasing, True)
+
+        # Set the background color to black
+        self.setBackgroundBrush(QColor(0, 0, 0))  # RGB values for black
+
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    def resizeEvent(self, event: QResizeEvent):
+        super().resizeEvent(event)
+        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+    def displayArray(self, array):
+        array_norm = (array - np.min(array)) / (np.max(array) - np.min(array))
+        array_8bit = (array_norm * 255).astype(np.uint8)
+
+        image = np.ascontiguousarray(np.array(array_8bit))
+        height, width = image.shape
+        qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+
+        pixmap = QPixmap.fromImage(qimage)
+        self.pixmap_item.setPixmap(pixmap)
+
+        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+        # Adjust the scene rectangle and center the image
+        self.scene.setSceneRect(0, 0, width, height)
+        self.centerOn(width / 2, height / 2)

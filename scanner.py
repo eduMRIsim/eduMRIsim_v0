@@ -10,7 +10,7 @@ class Scanner:
         self._current_scan_item = None 
     
     def scan(self):
-        pass     
+        return self.current_scan_item.run(self.model)     
 
     def start_examination(self, exam_name, model):
         self.examination = Examination(exam_name, model)

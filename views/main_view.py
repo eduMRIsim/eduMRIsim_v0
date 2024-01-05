@@ -25,6 +25,7 @@ class MainView(QMainWindow):
         self._ui.viewModelButton.clicked.connect(self._main_ctrl.handle_viewModelButton_clicked)
         self._ui.scanParametersCancelChangesButton.clicked.connect(self._main_ctrl.handle_scanParametersCancelChangesButton_clicked)
         self._ui.scanParametersSaveChangesButton.clicked.connect(self.on_scanParametersSaveChangesButton_clicked)
+        self._ui.startScanButton.clicked.connect(self.on_startScanButton_clicked)
 
 
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
@@ -86,3 +87,7 @@ class MainView(QMainWindow):
     def on_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self._ui.parameterFormLayout.getData()
         self._main_ctrl.handle_scanParametersSaveChangesButton_clicked(scan_parameters)
+
+    def on_startScanButton_clicked(self):
+        array = self._scanner.scan()
+        self._ui.scannedImageFrame.displayArray(array)
