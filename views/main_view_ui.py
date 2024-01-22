@@ -441,7 +441,7 @@ class ParameterFormLayout(QGridLayout):
         self.TELineEdit = QLineEdit()
         self.TRLineEdit = QLineEdit()
         self.TILineEdit = QLineEdit()
-        self.sliceLineEdit = QLineEdit()
+        #self.sliceLineEdit = QLineEdit()
 
 
         self.scanTechniqueMessageLabel = QLabel()
@@ -452,8 +452,8 @@ class ParameterFormLayout(QGridLayout):
         self.TRMessageLabel.setStyleSheet("color: red")
         self.TIMessageLabel = QLabel()
         self.TIMessageLabel.setStyleSheet("color: red")
-        self.sliceMessageLabel = QLabel()
-        self.sliceMessageLabel.setStyleSheet("color: red")
+        #self.sliceMessageLabel = QLabel()
+        #self.sliceMessageLabel.setStyleSheet("color: red")
 
         self.setHorizontalSpacing(0)
 
@@ -473,9 +473,9 @@ class ParameterFormLayout(QGridLayout):
         self.addWidget(self.TILineEdit, 3, 1, Qt.AlignLeft)
         self.addWidget(self.TIMessageLabel, 3, 2, Qt.AlignLeft)
 
-        self.addWidget(QLabel("slice:"), 4, 0, Qt.AlignLeft)
-        self.addWidget(self.sliceLineEdit, 4, 1, Qt.AlignLeft)
-        self.addWidget(self.sliceMessageLabel, 4, 2, Qt.AlignLeft)
+        #self.addWidget(QLabel("slice:"), 4, 0, Qt.AlignLeft)
+        #self.addWidget(self.sliceLineEdit, 4, 1, Qt.AlignLeft)
+        #self.addWidget(self.sliceMessageLabel, 4, 2, Qt.AlignLeft)
 
         self.setColumnStretch(0, 1)
         self.setColumnStretch(1, 2)
@@ -488,7 +488,7 @@ class ParameterFormLayout(QGridLayout):
         self.TELineEdit.setText(str(data.get("TE", "")))
         self.TRLineEdit.setText(str(data.get("TR", "")))
         self.TILineEdit.setText(str(data.get("TI", "")))
-        self.sliceLineEdit.setText(str(data.get("slice", "")))
+        #self.sliceLineEdit.setText(str(data.get("slice", "")))
 
     def getData(self):
         data = {}
@@ -497,7 +497,7 @@ class ParameterFormLayout(QGridLayout):
         data["TE"] = self.TELineEdit.text()
         data["TR"] = self.TRLineEdit.text()
         data["TI"] = self.TILineEdit.text()
-        data["slice"] = self.sliceLineEdit.text()
+        #data["slice"] = self.sliceLineEdit.text()
 
         return data
 
@@ -505,7 +505,7 @@ class ParameterFormLayout(QGridLayout):
         self.TEMessageLabel.setText(messages.get("TE", ""))
         self.TRMessageLabel.setText(messages.get("TR", ""))
         self.TIMessageLabel.setText(messages.get("TI", ""))
-        self.sliceMessageLabel.setText(messages.get("slice", ""))
+        #self.sliceMessageLabel.setText(messages.get("slice", ""))
 
 class ScannedImageFrame(QFrame):
     def __init__(self):
@@ -534,15 +534,22 @@ class ScannedImageFrame(QFrame):
         self.setAlignment(Qt.AlignCenter)
         self.setAspectRatioMode(Qt.KeepAspectRatio) """
 
+#QGraphicsView is a Qt class designed to display the contents of a QGraphicsScene. It provides a 2D view of the scene and allows users to interact with the items within the scene. 
 class ImageLabel(QGraphicsView):
     def __init__(self):
         super().__init__()
 
+        # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually. 
         self.scene = QGraphicsScene(self)
+
+        # Creates a pixmap graphics item that will be added to the scene
         self.pixmap_item = QGraphicsPixmapItem()
         self.scene.addItem(self.pixmap_item)
 
+        # Sets the created scene as the scene for the graphics view
         self.setScene(self.scene)
+
+        # Sets the render hint to enable antialiasing, which makes the image look smoother. Aliasings occur when a high-resolution image is displayed or rendered at a lower resolution, leading to the loss of information and the appearance of stair-stepped edges. Antialiasing techniques smooth out these jagged edges by introducing intermediate colors or shades along the edges of objects.
         self.setRenderHint(QPainter.Antialiasing, True)
 
         # Set the background color to black
@@ -552,23 +559,54 @@ class ImageLabel(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
+        # Initialize array attribute to None
+        self.array = None
+        self.current_slice = None
+
+
+    # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
-    def displayArray(self, array):
-        array_norm = (array - np.min(array)) / (np.max(array) - np.min(array))
-        array_8bit = (array_norm * 255).astype(np.uint8)
+    # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
+    def wheelEvent(self, event):
+        # Check if the event occurred over the image
+        if self.pixmap_item.isUnderMouse():
+            delta = event.angleDelta().y() / 120
+            current_slice = getattr(self, 'current_slice', 0)
+            new_slice = max(0, min(current_slice + delta, self.array.shape[2] - 1))
+            self.current_slice = int(new_slice)
+            self.displayArray()
+        else:
+            # Allow the base class to handle the event in other cases
+            super().wheelEvent(event)
 
-        image = np.ascontiguousarray(np.array(array_8bit))
-        height, width = image.shape
-        qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+    def setArray(self, array):
+        # Set the array and display the middle slice by default
+        self.array = array
+        self.current_slice = array.shape[2] // 2
+        self.displayArray()    
 
-        pixmap = QPixmap.fromImage(qimage)
-        self.pixmap_item.setPixmap(pixmap)
+    def displayArray(self):
+        if self.array is not None:
+            displayed_slice = getattr(self, 'current_slice', 0)
 
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+            array_norm = (self.array[:,:,displayed_slice] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
+            array_8bit = (array_norm * 255).astype(np.uint8)
 
-        # Adjust the scene rectangle and center the image
-        self.scene.setSceneRect(0, 0, width, height)
-        self.centerOn(width / 2, height / 2)
+            image = np.ascontiguousarray(np.array(array_8bit))
+            height, width = image.shape
+            qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+
+            pixmap = QPixmap.fromImage(qimage)
+            self.pixmap_item.setPixmap(pixmap)
+
+            self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+            # Adjust the scene rectangle and center the image
+            self.scene.setSceneRect(0, 0, width, height)
+            self.centerOn(width / 2, height / 2)
+        
+        else:
+            pass 

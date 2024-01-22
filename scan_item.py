@@ -35,10 +35,10 @@ class ScanItem:
             valid = False
             messages["TI"] = "TI must be a real number."
         
-        try: scan_parameters["slice"] = int(scan_parameters["slice"])
-        except: 
-            valid = False
-            messages["slice"] = "Slice must be an integer."
+        #try: scan_parameters["slice"] = int(scan_parameters["slice"])
+        #except: 
+            #valid = False
+            #messages["slice"] = "Slice must be an integer."
         
         if valid == True:
             for key, value in scan_parameters.items():

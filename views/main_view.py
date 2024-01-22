@@ -90,4 +90,5 @@ class MainView(QMainWindow):
 
     def on_startScanButton_clicked(self):
         array = self._scanner.scan()
-        self._ui.scannedImageFrame.displayArray(array)
+        self._ui.scannedImageFrame.setArray(array)
+        self._ui.scannedImageFrame.displayArray()
