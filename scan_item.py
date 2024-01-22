@@ -1,15 +1,9 @@
-from image_synthesiser import ImageSynthesiser
-from signal_calculator import SESignalCalculator, GESignalCalculator
-
 class ScanItem: 
     def __init__(self, name, scan_parameters):
         self._name = name
         self._scan_parameters = {}
         for key, value in scan_parameters.items():
             self._scan_parameters[key] = value 
-
-        self._image_synthesiser = ImageSynthesiser()
-
     @property
     def name(self):
         return self._name
@@ -52,10 +46,4 @@ class ScanItem:
 
         return valid, messages 
 
-    def run(self, model):
-        if self.scan_parameters["scan_technique"] == "SE": 
-            self._image_synthesiser.set_signal_calculator(SESignalCalculator())
-        elif self.scan_parameters["scan_technique"] == "GE": 
-            self._image_synthesiser.set_signal_calculator(GESignalCalculator())
-        return self._image_synthesiser.synthesise_image(self.scan_parameters, model)
         

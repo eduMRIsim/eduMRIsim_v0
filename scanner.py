@@ -1,25 +1,29 @@
 from examination import Examination
+from MRI_data_synthesiser import MRIDataSynthesiser
 
 class Scanner:
     def __init__(self, name, field_strength):
         self._name = name
         self._field_strength = field_strength 
+        self._MRI_data_synthesiser = MRIDataSynthesiser()
         self._examination = None 
-        self._model = None 
-        self._scanlist = None 
-        self._current_scan_item = None 
     
     def scan(self):
-        return self.current_scan_item.run(self.model)     
+        return self.MRI_data_synthesiser.synthesise_MRI_data(self.current_scan_item.scan_parameters, self.model)     
 
     def start_examination(self, exam_name, model):
         self.examination = Examination(exam_name, model)
-        self.model = model 
-        self.scanlist = self.examination.scanlist 
 
-    @property 
+    @property
+    def MRI_data_synthesiser(self):
+        return self._MRI_data_synthesiser
+
+    @property
     def examination(self):
-        return self._examination
+        try :
+            return self._examination
+        except AttributeError:
+            return None
 
     @examination.setter
     def examination(self, new_examination):
@@ -43,24 +47,29 @@ class Scanner:
 
     @property 
     def model(self):
-        return self._model
-    
-    @model.setter
-    def model(self, new_model):
-        self._model = new_model
+        try:
+            return self.examination.model
+        except AttributeError:
+            return None
 
     @property
     def scanlist(self):
-        return self._scanlist
-    
-    @scanlist.setter
-    def scanlist(self, new_scanlist):
-        self._scanlist = new_scanlist
+        try:
+            return self.examination.scanlist
+        except AttributeError:  
+            return None 
+        
+    @property
+    def scan_items(self):
+        try:
+            return self.examination.scanlist.scan_items
+        except AttributeError:
+            return None
 
     @property
     def current_scan_item(self):
-        return self._current_scan_item
-    
-    @current_scan_item.setter
-    def current_scan_item(self, new_current_scan_item):
-        self._current_scan_item = new_current_scan_item 
+        try:
+            return self.examination.scanlist.current_scan_item
+        except AttributeError:
+            return None
+        

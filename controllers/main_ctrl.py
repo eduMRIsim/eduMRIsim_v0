@@ -57,11 +57,11 @@ class MainController(QObject):
         self.populate_examCardListView.emit(self.exam_card_data)
 
     def handle_add_to_scanlist(self, name, scan_parameters):
-        self.scanner.examination.add_scan_item(name, scan_parameters)
-        self.update_scanlistListWidget.emit(self.scanner.scanlist)
+        self.scanner.scanlist.add_scan_item(name, scan_parameters)
+        self.update_scanlistListWidget.emit(self.scanner.scan_items)
 
     def handle_scanlistListWidget_dclicked(self, index):
-        self.scanner.current_scan_item = self.scanner.scanlist[index]
+        self.scanner.scanlist.current_scan_item_index = index
         self.populate_parameterFormLayout.emit(self.scanner.current_scan_item.scan_parameters, {})
 
     def handle_scanParametersCancelChangesButton_clicked(self):
