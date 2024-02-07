@@ -22,6 +22,7 @@ class MainView(QMainWindow):
         self._ui.examCardListView.doubleClicked.connect(self.on_examCardListView_dclicked)
         self._ui.scanlistListWidget.itemDoubleClicked.connect(self.on_scanlistListWidget_dclicked)
         self._ui.viewModelButton.clicked.connect(self._main_ctrl.handle_viewModelButton_clicked)
+        self._ui.stopExaminationButton.clicked.connect(lambda: self._ui.state.enter_idle_state(self._ui))
         self._ui.scanParametersCancelChangesButton.clicked.connect(self._main_ctrl.handle_scanParametersCancelChangesButton_clicked)
         self._ui.scanParametersSaveChangesButton.clicked.connect(self.on_scanParametersSaveChangesButton_clicked)
         self._ui.startScanButton.clicked.connect(self.on_startScanButton_clicked)
@@ -48,11 +49,10 @@ class MainView(QMainWindow):
     @pyqtSlot(str, str)
     def on_start_new_examination(self, exam_name, model_name):
         self._new_examination_dialog_ui.accept()
+        self._ui.state.enter_exam_state(self._ui)
         self._ui.examinationNameLabel.setText(exam_name)
         self._ui.modelNameLabel.setText(model_name)
-        self._ui.examinationInfoStackedLayout.setCurrentIndex(1)
-        self._ui.addScanItemButton.setVisible(True)
-        self._ui.scanlistListWidget.setVisible(True)
+
 
     @pyqtSlot(dict)
     def on_populate_examCardListView(self, exam_card_data):
@@ -67,7 +67,11 @@ class MainView(QMainWindow):
     @pyqtSlot(list)
     def on_update_scanlistListWidget(self, list):
         self._ui.scanlistListWidget.clear()
-        self._ui.scanlistListWidget.addItems([item.name for item in list])
+        #self._ui.scanlistListWidget.addItems([item.name for item in list])
+
+        #test icon code
+        
+
 
     def on_scanlistListWidget_dclicked(self, item):
         self._ui.editingStackedLayout.setCurrentIndex(0)    

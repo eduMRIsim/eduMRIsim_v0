@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, Q
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor
 import numpy as np
+from views.UI_MainWindowState import IdleState
 
 class Ui_MainWindow:
     def __init__(self, scanner, MainWindow):
@@ -19,6 +20,9 @@ class Ui_MainWindow:
 
         MainWindow.setCentralWidget(self.centralWidget)
         MainWindow.setWindowTitle("eduMRIsim_V0_UI")
+
+        self.state = IdleState()
+        self.state.enter_state(self)
     
     @property
     def scanningModeButton(self):
@@ -52,6 +56,10 @@ class Ui_MainWindow:
     @property
     def viewModelButton(self):
         return self._examinationInfoFrame.viewModelButton
+    
+    @property
+    def stopExaminationButton(self):
+        return self._examinationInfoFrame.stopExaminationButton
 
     @property
     def addScanItemButton(self):
@@ -122,7 +130,6 @@ class Ui_MainWindow:
         self._preExaminationInfoFrame = PreExaminationInfoFrame()
         self._examinationInfoFrame = ExaminationInfoFrame()
         self._examinationInfoStackedLayout = ExaminationInfoStackedLayout(self._preExaminationInfoFrame, self._examinationInfoFrame)
-        self._examinationInfoStackedLayout.setCurrentIndex(0)
         leftLayout.addLayout(self._examinationInfoStackedLayout, stretch=1)
 
         self._scanlistInfoFrame = ScanlistInfoFrame()
@@ -215,7 +222,7 @@ class ExaminationInfoFrame(QFrame):
         self.setObjectName("examinationFrame")
         self.setStyleSheet("QFrame#examinationFrame { border: 2px solid black; }")
         self._createExaminationInfo()
-        self._createViewModelButton()
+        self._createButtonLayout()
 
     def _createExaminationInfo(self):
         examInfoForm = QFormLayout()
@@ -228,10 +235,15 @@ class ExaminationInfoFrame(QFrame):
 
         self.layout.addLayout(examInfoForm)        
     
-    def _createViewModelButton(self):
+    def _createButtonLayout(self):
+        buttonLayout = QHBoxLayout()
         self._viewModelButton = QPushButton("View Model")
         self._viewModelButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        self.layout.addWidget(self._viewModelButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        buttonLayout.addWidget(self._viewModelButton)
+        self._stopExaminationButton = QPushButton("Stop Examination")
+        self._stopExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        buttonLayout.addWidget(self._stopExaminationButton)
+        self.layout.addLayout(buttonLayout)
 
     @property
     def examinationNameLabel(self):
@@ -244,6 +256,10 @@ class ExaminationInfoFrame(QFrame):
     @property
     def viewModelButton(self):
         return self._viewModelButton
+    
+    @property
+    def stopExaminationButton(self):
+        return self._stopExaminationButton
 
 class ScanlistInfoFrame(QFrame):
     def __init__(self):
@@ -253,9 +269,9 @@ class ScanlistInfoFrame(QFrame):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._addScanItemButton = QPushButton("Add Scan Item")
-        self._addScanItemButton.setVisible(False)
+        #self._addScanItemButton.setVisible(False)
         self._scanlistListWidget = QListWidget()
-        self._scanlistListWidget.setVisible(False)
+        #self._scanlistListWidget.setVisible(False)
         self._scanlistListWidget.setStyleSheet("border: none;")
         self.layout.addWidget(self._scanlistListWidget)
         self.layout.addWidget(self._addScanItemButton)
@@ -361,7 +377,6 @@ class ScanParametersWidget(QWidget):
         self.setLayout(self.layout)
         self._createScanParametersTabWidget()
         self._createButtons()
-        self.isEnabled = False
 
 
     @property
@@ -483,7 +498,6 @@ class ParameterFormLayout(QGridLayout):
         self.setColumnStretch(2, 2)
 
         self.isReadOnly = None
-        #self.setReadOnly(True)
 
     def setReadOnly(self, isReadOnly):
         if self.isReadOnly == isReadOnly:
