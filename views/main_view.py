@@ -5,7 +5,6 @@ from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.view_model_dialog_ui import ViewModelDialog
 from views.qmodels import DictionaryModel
-from scanner import Scanner
 
 class MainView(QMainWindow):
     def __init__(self, scanner, main_ctrl):

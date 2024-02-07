@@ -361,6 +361,7 @@ class ScanParametersWidget(QWidget):
         self.setLayout(self.layout)
         self._createScanParametersTabWidget()
         self._createButtons()
+        self.isEnabled = False
 
 
     @property
@@ -481,6 +482,24 @@ class ParameterFormLayout(QGridLayout):
         self.setColumnStretch(1, 2)
         self.setColumnStretch(2, 2)
 
+        self.isReadOnly = None
+        #self.setReadOnly(True)
+
+    def setReadOnly(self, isReadOnly):
+        if self.isReadOnly == isReadOnly:
+            return
+        else:
+            for row in range(self.rowCount()):
+                for col in range(self.columnCount()):
+                    item = self.itemAtPosition(row, col)
+                    if item and item.widget():
+                        # Check if the widget is a QLineEdit or QComboBox and set its read-only state
+                        if isinstance(item.widget(), (QLineEdit)):
+                            item.widget().setReadOnly(isReadOnly)
+                        elif isinstance(item.widget(), (QComboBox)):
+                            item.widget().setEnabled(not isReadOnly)
+            self.isReadOnly = isReadOnly
+
     def setData(self, data):
         index = self.scanTechniqueComboBox.findText(str(data.get("scan_technique", "")))
         if index != -1:
@@ -573,6 +592,7 @@ class ImageLabel(QGraphicsView):
     def wheelEvent(self, event):
         # Check if the event occurred over the image
         if self.pixmap_item.isUnderMouse():
+            # angleDelta().y() provides the angle through which the vertical mouse wheel was rotated since the last event in eigths of a degree. The value is positive when the wheel is rotated away from the user and negative when the wheel is rotated towards the user. 120 units * 1/8 = 15 degrees for most mouses. 
             delta = event.angleDelta().y() / 120
             current_slice = getattr(self, 'current_slice', 0)
             new_slice = max(0, min(current_slice + delta, self.array.shape[2] - 1))
@@ -582,31 +602,36 @@ class ImageLabel(QGraphicsView):
             # Allow the base class to handle the event in other cases
             super().wheelEvent(event)
 
+    #ImageLabel holds a copy of the array of MRI data to be displayed. 
     def setArray(self, array):
-        # Set the array and display the middle slice by default
+        # Set the array and make current_slice the middle slice by default
         self.array = array
-        self.current_slice = array.shape[2] // 2
-        self.displayArray()    
+        self.current_slice = array.shape[2] // 2    
 
     def displayArray(self):
         if self.array is not None:
             displayed_slice = getattr(self, 'current_slice', 0)
 
+            # Normalize the slice values for display
             array_norm = (self.array[:,:,displayed_slice] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
             array_8bit = (array_norm * 255).astype(np.uint8)
 
+            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
             qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
 
+            # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)
             self.pixmap_item.setPixmap(pixmap)
 
             self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
-            # Adjust the scene rectangle and center the image
+            # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
             self.scene.setSceneRect(0, 0, width, height)
+            # The centerOn method is used to center the view on a particular point within the scene.
             self.centerOn(width / 2, height / 2)
         
         else:
+            # If the array is None, take appropriate action (currently, do nothing)
             pass 
