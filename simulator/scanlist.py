@@ -1,4 +1,4 @@
-from scan_item import ScanItem
+from simulator.scan_item import ScanItem
 
 class Scanlist:
     def __init__(self):

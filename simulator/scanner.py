@@ -1,5 +1,5 @@
-from examination import Examination
-from MRI_data_synthesiser import MRIDataSynthesiser
+from simulator.examination import Examination
+from simulator.MRI_data_synthesiser import MRIDataSynthesiser
 
 class Scanner:
     def __init__(self, name, field_strength):

@@ -1,16 +1,34 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QProgressBar, QPushButton, QSizePolicy,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor
 import numpy as np
 from views.UI_MainWindowState import IdleState
+from contextlib import contextmanager
 
-class Ui_MainWindow:
-    def __init__(self, scanner, MainWindow):
+@contextmanager
+def block_signals(widgets):
+    """
+    Context manager to temporarily block signal emissions for a group of widgets.
+    :param widgets: List of widgets for which signal emissions should be blocked.
+    """
+    try:
+        # Temporarily block signal emissions for each widget
+        for widget in widgets:
+            widget.blockSignals(True)
+        # Yield control back to the caller
+        yield
+    finally:
+        # Re-enable signal emissions for each widget, even if an exception occurred
+        for widget in widgets:
+            widget.blockSignals(False)
+
+class Ui_MainWindow(QMainWindow):
+    def __init__(self, scanner):
         super().__init__()
 
-        self.centralWidget = QWidget(MainWindow)
+        self.centralWidget = QWidget(self)
 
         self.layout = QHBoxLayout()
         self.centralWidget.setLayout(self.layout)
@@ -18,8 +36,8 @@ class Ui_MainWindow:
         self.scanner = scanner
         self._createMainWindow()
 
-        MainWindow.setCentralWidget(self.centralWidget)
-        MainWindow.setWindowTitle("eduMRIsim_V0_UI")
+        self.setCentralWidget(self.centralWidget)
+        self.setWindowTitle("eduMRIsim_V0_UI")
 
         self.state = IdleState()
         self.state.enter_state(self)
@@ -90,6 +108,14 @@ class Ui_MainWindow:
         return self._scanProgressInfoFrame.scannerFieldStrengthLabel  
     
     @property
+    def testInfoLabel(self):
+        return self._scanProgressInfoFrame.testInfoLabel
+    
+    @property
+    def testInfoLabel2(self):
+        return self._scanProgressInfoFrame.testInfoLabel2
+    
+    @property
     def editingStackedLayout(self):
         return self._editingStackedLayout 
     
@@ -104,6 +130,10 @@ class Ui_MainWindow:
     @property 
     def scanParametersCancelChangesButton(self):
         return self._scanParametersWidget.scanParametersCancelChangesButton
+    
+    @property
+    def scanParametersResetButton(self):
+        return self._scanParametersWidget.scanParametersResetButton
 
     @property
     def examCardListView(self):
@@ -314,6 +344,14 @@ class ScanProgressInfoFrame(QFrame):
     @property
     def scannerFieldStrengthLabel(self):
         return self._scannerFieldStrengthLabel
+    
+    @property
+    def testInfoLabel(self):
+        return self._testInfoLabel
+
+    @property
+    def testInfoLabel2(self):
+        return self._testInfoLabel2
 
     def _createProgressBar(self):
         scanProgressBarLayout = QHBoxLayout()   
@@ -348,14 +386,27 @@ class ScanProgressInfoFrame(QFrame):
         scannerFieldStrength = QLabel(str(scanner.field_strength))
         scannerFieldStrength.setStyleSheet("border: none;")
 
+
+
         # Ensure there's no border around labels "Scanner" and "Field strength (T)"
         self._scannerNameLabel = QLabel("Scanner name:")
         self._scannerNameLabel.setStyleSheet("border: none;")
         self._scannerFieldStrengthLabel = QLabel("Field strength (T):")
         self._scannerFieldStrengthLabel.setStyleSheet("border: none;")
+        #Label for printing info for testing
+        self._testInfo = QLabel("Test info:")
+        self._testInfo.setStyleSheet("border: none;")
+        self._testInfoLabel = QLabel()
+        self._testInfoLabel.setStyleSheet("border: none;")
+        self._testInfo2 = QLabel("Test info2:")
+        self._testInfo2.setStyleSheet("border: none;")
+        self._testInfoLabel2 = QLabel()
+        self._testInfoLabel2.setStyleSheet("border: none;")
 
         scanInfoForm.addRow(self._scannerNameLabel, scannerName)
         scanInfoForm.addRow(self._scannerFieldStrengthLabel, scannerFieldStrength)
+        scanInfoForm.addRow(self._testInfo, self._testInfoLabel)
+        scanInfoForm.addRow(self._testInfo2, self._testInfoLabel2)
 
         self.layout.addLayout(scanInfoForm)
 
@@ -390,6 +441,10 @@ class ScanParametersWidget(QWidget):
     @property 
     def scanParametersCancelChangesButton(self):
         return self._scanParametersCancelChangesButton
+    
+    @property
+    def scanParametersResetButton(self):
+        return self._scanParametersResetButton
 
     def _createScanParametersTabWidget(self):
         self.scanParametersTabWidget = ScanParametersTabWidget() 
@@ -399,8 +454,10 @@ class ScanParametersWidget(QWidget):
         buttonsLayout = QHBoxLayout()
         self._scanParametersSaveChangesButton = QPushButton("Save Changes")
         self._scanParametersCancelChangesButton = QPushButton("Cancel")
+        self._scanParametersResetButton = QPushButton("Reset")
         buttonsLayout.addWidget(self._scanParametersSaveChangesButton)
         buttonsLayout.addWidget(self._scanParametersCancelChangesButton)
+        buttonsLayout.addWidget(self._scanParametersResetButton)
         self.layout.addLayout(buttonsLayout)        
     
 
@@ -449,6 +506,8 @@ class ParameterTab(QWidget):
 
 
 class ParameterFormLayout(QGridLayout):
+    formActivatedSignal = pyqtSignal()
+
     def __init__(self):
         super().__init__()
 
@@ -499,6 +558,12 @@ class ParameterFormLayout(QGridLayout):
 
         self.isReadOnly = None
 
+        # Connect signals to the custom signal
+        self.TELineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
+        self.TRLineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
+        self.TILineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
+        self.scanTechniqueComboBox.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
+
     def setReadOnly(self, isReadOnly):
         if self.isReadOnly == isReadOnly:
             return
@@ -514,14 +579,23 @@ class ParameterFormLayout(QGridLayout):
                             item.widget().setEnabled(not isReadOnly)
             self.isReadOnly = isReadOnly
 
-    def setData(self, data):
-        index = self.scanTechniqueComboBox.findText(str(data.get("scan_technique", "")))
-        if index != -1:
-            self.scanTechniqueComboBox.setCurrentIndex(index)
-        self.TELineEdit.setText(str(data.get("TE", "")))
-        self.TRLineEdit.setText(str(data.get("TR", "")))
-        self.TILineEdit.setText(str(data.get("TI", "")))
-        #self.sliceLineEdit.setText(str(data.get("slice", "")))
+    def setData(self, data, messages):
+        widgets = [self.TELineEdit, self.TRLineEdit, self.TILineEdit, self.scanTechniqueComboBox]
+
+        # Use the block_signals context manager to temporarily block signal emissions
+        with block_signals(widgets):
+            # Set the data for the widgets without emitting formActivatedSignal
+            index = self.scanTechniqueComboBox.findText(str(data.get("scan_technique", "")))
+            if index != -1:
+                self.scanTechniqueComboBox.setCurrentIndex(index)
+            self.TELineEdit.setText(str(data.get("TE", "")))
+            self.TRLineEdit.setText(str(data.get("TR", "")))
+            self.TILineEdit.setText(str(data.get("TI", "")))
+            #self.sliceLineEdit.setText(str(data.get("slice", "")))
+
+            self.setMessages(messages)
+
+        
 
     def getData(self):
         data = {}

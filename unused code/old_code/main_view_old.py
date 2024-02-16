@@ -5,6 +5,8 @@ from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.view_model_dialog_ui import ViewModelDialog
 from views.qmodels import DictionaryModel
+from PyQt5.QtWidgets import QListWidgetItem
+from PyQt5.QtGui import QIcon
 
 class MainView(QMainWindow):
     def __init__(self, scanner, main_ctrl):
@@ -70,7 +72,10 @@ class MainView(QMainWindow):
         #self._ui.scanlistListWidget.addItems([item.name for item in list])
 
         #test icon code
-        
+        for item in list:
+            list_item = QListWidgetItem(item.name)
+            list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))  # Replace "path_to_icon.png" with the actual path to your icon image
+            self._ui.scanlistListWidget.addItem(list_item)        
 
 
     def on_scanlistListWidget_dclicked(self, item):

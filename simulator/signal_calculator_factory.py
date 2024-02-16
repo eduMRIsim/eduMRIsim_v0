@@ -1,4 +1,4 @@
-from signal_calculator import SESignalCalculator, GESignalCalculator
+from simulator.signal_calculator import SESignalCalculator, GESignalCalculator
 
 class SignalCalculatorFactory:
     def __init__(self):

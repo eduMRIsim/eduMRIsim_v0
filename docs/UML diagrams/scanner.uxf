@@ -1,0 +1,61 @@
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><help_text>lt=&gt;.
+</help_text><element><id>UMLClass</id><coordinates><x>550</x><y>130</y><w>350</w><h>260</h></coordinates><panel_attributes>Scanner
+--
+name
+field_strength
+examination : Examination
+MRI_data_synthesiser : MRIDataSynthesiser
+--
+scan(model: Model, scan_parameters: dict) : numpy.ndarray
+start_examination(exam_name : str, model : Model) : void
+get_model() : Model
+get_scanlist() : Scanlist
+get_scan_items() : list[ScanItems]
+get_current_scan_item() : ScanItem </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>140</y><w>470</w><h>100</h></coordinates><panel_attributes>MRIDataSynthesiser
+--
+signal_calculator_factory : SignalCalculatorFactory()
+--
+synthesise_MRI_data(model : Model, scan_parameters: dict) : numpy.ndarry </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>330</y><w>390</w><h>140</h></coordinates><panel_attributes>SignalCalculatorFactory
+--
+cache : dict
+calculator_registry : dict
+-- 
+create_signal_calculator(scan_parameters: dict) : SignalCalculator</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>460</x><y>200</y><w>110</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>90;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>190</x><y>230</y><w>70</w><h>120</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>50;10;10;100</additional_attributes></element><element><id>UMLClass</id><coordinates><x>280</x><y>570</y><w>210</w><h>70</h></coordinates><panel_attributes>&lt;&lt;interface&gt;&gt;
+SignalCalculator
+--
+calculate_signal() </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>680</y><w>390</w><h>80</h></coordinates><panel_attributes>SESignalCalculator
+--
+
+--
+calculate_signal(scan_parameters : dict, model : Model) : np.array</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>420</x><y>680</y><w>390</w><h>80</h></coordinates><panel_attributes>GESignalCalculator
+--
+
+--
+calculate_signal(scan_parameters : dict, model : Model) : np.array</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>260</x><y>630</y><w>160</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>140;10;10;50</additional_attributes></element><element><id>Relation</id><coordinates><x>430</x><y>630</y><w>150</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>10;10;130;50</additional_attributes></element><element><id>Relation</id><coordinates><x>330</x><y>460</y><w>110</w><h>130</h></coordinates><panel_attributes>lt=&lt;.
+&lt;&lt;creates&gt;&gt;</panel_attributes><additional_attributes>60;110;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>410</x><y>230</y><w>80</w><h>360</h></coordinates><panel_attributes>lt=&lt;.
+&lt;&lt;uses&gt;&gt;</panel_attributes><additional_attributes>40;340;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1020</x><y>400</y><w>170</w><h>90</h></coordinates><panel_attributes>Examination
+--
+name
+model : Model
+scanlist : Scanlist </panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>980</x><y>530</y><w>240</w><h>140</h></coordinates><panel_attributes>Model
+--
+name
+description
+T1_map : np.array
+T2_map : np.array
+PD_map : np.array
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>890</x><y>280</y><w>150</w><h>190</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;130;170</additional_attributes></element><element><id>Relation</id><coordinates><x>1110</x><y>480</y><w>30</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50</additional_attributes></element><element><id>UMLClass</id><coordinates><x>960</x><y>230</y><w>290</w><h>110</h></coordinates><panel_attributes>Scanlist
+--
+scan_items : list[ScanItem]
+current_scan_item_index : int 
+--
+add_scan_item(name, scan_parameters : dict) 
+get_current_scan_item() : ScanItem
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1120</x><y>330</y><w>30</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;70;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>920</x><y>30</y><w>450</w><h>100</h></coordinates><panel_attributes>ScanItem
+--
+name
+scan_parameters : dict
+--
+validate_scan_parameters(scan_parameters : dict) : Boolean, messages : dict </panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1090</x><y>120</y><w>70</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m2=0..*
+</panel_attributes><additional_attributes>10;110;40;10</additional_attributes></element></diagram>

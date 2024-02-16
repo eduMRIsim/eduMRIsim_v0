@@ -1,4 +1,4 @@
-from scanlist import Scanlist
+from simulator.scanlist import Scanlist
 
 class Examination:
     def __init__(self, name, model):

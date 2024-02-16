@@ -1,4 +1,4 @@
-from signal_calculator_factory import SignalCalculatorFactory
+from simulator.signal_calculator_factory import SignalCalculatorFactory
 
 class MRIDataSynthesiser:
     def __init__(self):
