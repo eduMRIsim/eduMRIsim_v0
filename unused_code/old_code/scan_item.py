@@ -6,6 +6,35 @@ class ScanItemStatusEnum(Enum):
     INVALID = auto()
     COMPLETE = auto()
 
+# class ScanItemDataTuple:
+#     def __init__(self, name, scan_parameters):
+#         self.scan_item = ScanItem(name, scan_parameters)
+#         self._acquired_data = None
+
+#     @property
+#     def status(self):
+#         return self.scan_item.status
+    
+#     @status.setter
+#     def status(self, status):
+#         self.scan_item.status = status
+
+#     @property
+#     def scan_parameters(self):
+#         return self.scan_item.scan_parameters
+
+#     @property
+#     def acquired_data(self):
+#         return self.acquired_data
+    
+#     @acquired_data.setter
+#     def acquired_data(self, acquired_data):
+#         self._acquired_data = acquired_data
+
+#     @property
+#     def name(self):
+#         return self.scan_item.name
+
 class ScanItem: 
     def __init__(self, name, scan_parameters):
         self._name = name

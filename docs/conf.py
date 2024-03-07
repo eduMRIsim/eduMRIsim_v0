@@ -8,9 +8,15 @@
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
-import pathlib
+#import pathlib
 import sys
-sys.path.insert(0, pathlib.Path(__file__).parents[1].resolve().as_posix())
+import os
+#sys.path.insert(0, pathlib.Path(__file__).parents[1].resolve().as_posix())
+sys.path.insert(0, os.path.abspath('..'))
+scripts = r'C:\Users\20230077\Documents Local\eduMRIsim_v0' 
+if scripts not in sys.path:
+    sys.path.append(scripts)
+
 
 project = 'eduMRIsim'
 copyright = '2024, Stephanie Gonzalez Riedel'
@@ -24,6 +30,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.viewcode',
     ]
 
 templates_path = ['_templates']

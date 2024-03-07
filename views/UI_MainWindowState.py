@@ -17,7 +17,7 @@ class UI_MainWindowState():
     def enter_being_modified_state(self, context) -> None:
         pass
 
-    def enter_invalid_state(self, context) -> None:
+    def enter_invalid_parameters_state(self, context) -> None:
         pass
 
     def enter_scan_complete_state(self, context) -> None:
@@ -62,8 +62,8 @@ class ReadyToScanState(ExamState):
         context.state = BeingModifiedState()
         context.state.enter_state(context)
 
-    def enter_invalid_state(self, context) -> None:
-        context.state = InvalidState()
+    def enter_invalid_parameters_state(self, context) -> None:
+        context.state = InvalidParametersState()
         context.state.enter_state(context)
 
     def enter_scan_complete_state(self, context) -> None:
@@ -89,12 +89,12 @@ class BeingModifiedState(ExamState):
         context.state = ReadyToScanState()
         context.state.enter_state(context)
 
-    def enter_invalid_state(self, context) -> None:
-        context.state = InvalidState()
+    def enter_invalid_parameters_state(self, context) -> None:
+        context.state = InvalidParametersState()
         context.state.enter_state(context)
 
-class InvalidState(ExamState):
-    name = "InvalidState"
+class InvalidParametersState(ExamState):
+    name = "InvalidParametersState"
     def enter_state(self, context) -> None:
         super().enter_state(context)
         context.parameterFormLayout.setReadOnly(False)

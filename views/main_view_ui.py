@@ -1,8 +1,8 @@
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent
 import numpy as np
 from views.UI_MainWindowState import IdleState
 from contextlib import contextmanager
@@ -143,6 +143,18 @@ class Ui_MainWindow(QMainWindow):
     def scannedImageFrame(self):
         return self._scannedImageFrame 
      
+    @property 
+    def scanPlanningWindow1(self):
+        return self.scanPlanningWindow.ImageLabelTuple[0]
+    
+    @property
+    def scanPlanningWindow2(self):  
+        return self.scanPlanningWindow.ImageLabelTuple[1]
+
+    @property
+    def scanPlanningWindow3(self):
+        return self.scanPlanningWindow.ImageLabelTuple[2]   
+
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch = 1)
@@ -174,8 +186,8 @@ class Ui_MainWindow(QMainWindow):
 
         rightLayout = QVBoxLayout() 
 
-        scan_planning_frame = ScanPlanningFrame()
-        rightLayout.addWidget(scan_planning_frame,stretch=1)
+        self.scanPlanningWindow = ScanPlanningWindow()
+        rightLayout.addWidget(self.scanPlanningWindow,stretch=1)
 
         bottomLayout = QHBoxLayout()
 
@@ -191,7 +203,6 @@ class Ui_MainWindow(QMainWindow):
         rightLayout.addLayout(bottomLayout,stretch=1)
 
         return rightLayout
-
     
 class ModeSwitchButtonsLayout(QHBoxLayout):
     def __init__(self):
@@ -300,9 +311,9 @@ class ScanlistInfoFrame(QFrame):
         self.setLayout(self.layout)
         self._addScanItemButton = QPushButton("Add Scan Item")
         #self._addScanItemButton.setVisible(False)
-        self._scanlistListWidget = QListWidget()
+        self._scanlistListWidget = ScanlistListWidget()
         #self._scanlistListWidget.setVisible(False)
-        self._scanlistListWidget.setStyleSheet("border: none;")
+        #self._scanlistListWidget.setStyleSheet("border: none;")
         self.layout.addWidget(self._scanlistListWidget)
         self.layout.addWidget(self._addScanItemButton)
 
@@ -313,6 +324,27 @@ class ScanlistInfoFrame(QFrame):
     @property
     def scanlistListWidget(self):
         return self._scanlistListWidget
+
+class ScanlistListWidget(QListWidget):
+    dropEventSignal = pyqtSignal(list)
+    def __init__(self):
+        super().__init__()
+        self.setStyleSheet("border: none;")
+        self.setDragDropMode(self.DragDrop)
+        self.setSelectionMode(self.ExtendedSelection)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, e: QDragEnterEvent) -> None:
+        e.accept()
+
+    def dragMoveEvent(self, e: QDragMoveEvent) -> None:
+        e.accept()
+
+    def dropEvent(self, e: QDropEvent):
+        widget = e.source()
+        selected_indexes = widget.selectedIndexes()
+        self.dropEventSignal.emit(selected_indexes)
+        e.accept()        
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):
@@ -410,10 +442,15 @@ class ScanProgressInfoFrame(QFrame):
 
         self.layout.addLayout(scanInfoForm)
 
-class ScanPlanningFrame(QFrame):
+class ScanPlanningWindow(QFrame):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("background-color: black; border: 1px solid black;")
+        layout = QHBoxLayout()
+        layout.setSpacing(0)
+        self.setLayout(layout)
+        self.ImageLabelTuple = tuple(ImageLabel() for i in range(3))
+        for label in self.ImageLabelTuple:
+            layout.addWidget(label, stretch=1)
 
 class EditingStackedLayout(QStackedLayout):
     def __init__(self, scanParametersWidget, examCardTabWidget):
@@ -460,7 +497,6 @@ class ScanParametersWidget(QWidget):
         buttonsLayout.addWidget(self._scanParametersResetButton)
         self.layout.addLayout(buttonsLayout)        
     
-
 class ExamCardTabWidget(QTabWidget):
     def __init__(self, examCardTab):
         super().__init__()
@@ -472,7 +508,9 @@ class ExamCardTab(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._examCardListView = QListView()
-        self._examCardListView.setEditTriggers(QListView.NoEditTriggers)
+        self._examCardListView.setDragDropMode(QListView.DragOnly)
+        self._examCardListView.setSelectionMode(QListView.ExtendedSelection)
+        self._examCardListView.setEditTriggers(QListView.NoEditTriggers) #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
         self.layout.addWidget(self._examCardListView)
     
     @property
@@ -489,7 +527,6 @@ class ScanParametersTabWidget(QTabWidget):
     def parameterFormLayout(self):
         return self.parameterTab.parameterFormLayout
 
-
 class ParameterTab(QWidget):
     def __init__(self):
         super().__init__()
@@ -503,8 +540,6 @@ class ParameterTab(QWidget):
     def parameterFormLayout(self):
         return self._parameterFormLayout    
     
-
-
 class ParameterFormLayout(QGridLayout):
     formActivatedSignal = pyqtSignal()
 
@@ -595,8 +630,6 @@ class ParameterFormLayout(QGridLayout):
 
             self.setMessages(messages)
 
-        
-
     def getData(self):
         data = {}
 
@@ -613,33 +646,6 @@ class ParameterFormLayout(QGridLayout):
         self.TRMessageLabel.setText(messages.get("TR", ""))
         self.TIMessageLabel.setText(messages.get("TI", ""))
         #self.sliceMessageLabel.setText(messages.get("slice", ""))
-
-class ScannedImageFrame(QFrame):
-    def __init__(self):
-        super().__init__()
-        self.setStyleSheet("background-color: black; border: 1px solid black;")
-
-""" class ImageLabel(QLabel):
-    def __init__(self):
-        super().__init__()
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-    def displayArray(self, array):
-        array_norm = (array - np.min(array)) / (np.max(array) - np.min(array))  # Normalize to [0, 1] range
-        array_8bit = (array_norm * 255).astype(np.uint8)  # Scale to 8bit range       
-
-        # The np.ascontiguousarray function is used to create a new NumPy array that is guaranteed to have a contiguous memory layout. In other words, it ensures that the array elements are stored in adjacent memory locations without any gaps or strides.
-        # QImage expects the image data to be stored in a contiguous block of memory.
-        image = np.ascontiguousarray(np.array(array_8bit))   
-
-         # Create QImage
-        height, width = image.shape
-        qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)           
-    
-        self.setPixmap(QPixmap.fromImage(qimage))
-        self.setScaledContents(True)
-        self.setAlignment(Qt.AlignCenter)
-        self.setAspectRatioMode(Qt.KeepAspectRatio) """
 
 #QGraphicsView is a Qt class designed to display the contents of a QGraphicsScene. It provides a 2D view of the scene and allows users to interact with the items within the scene. 
 class ImageLabel(QGraphicsView):
@@ -670,7 +676,6 @@ class ImageLabel(QGraphicsView):
         self.array = None
         self.current_slice = None
 
-
     # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
@@ -678,6 +683,12 @@ class ImageLabel(QGraphicsView):
 
     # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
     def wheelEvent(self, event):
+
+        # Check if the array is None
+        if self.array is None:
+            # Do nothing and return
+            return
+
         # Check if the event occurred over the image
         if self.pixmap_item.isUnderMouse():
             # angleDelta().y() provides the angle through which the vertical mouse wheel was rotated since the last event in eigths of a degree. The value is positive when the wheel is rotated away from the user and negative when the wheel is rotated towards the user. 120 units * 1/8 = 15 degrees for most mouses. 
@@ -694,9 +705,13 @@ class ImageLabel(QGraphicsView):
     def setArray(self, array):
         # Set the array and make current_slice the middle slice by default
         self.array = array
-        self.current_slice = array.shape[2] // 2    
-
+        if array is not None:
+            self.current_slice = array.shape[2] // 2    
+        else:
+            self.current_slice = 0
+            
     def displayArray(self):
+        width, height = 0, 0
         if self.array is not None:
             displayed_slice = getattr(self, 'current_slice', 0)
 
@@ -713,13 +728,40 @@ class ImageLabel(QGraphicsView):
             pixmap = QPixmap.fromImage(qimage)
             self.pixmap_item.setPixmap(pixmap)
 
-            self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-
-            # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-            self.scene.setSceneRect(0, 0, width, height)
-            # The centerOn method is used to center the view on a particular point within the scene.
-            self.centerOn(width / 2, height / 2)
-        
         else:
-            # If the array is None, take appropriate action (currently, do nothing)
-            pass 
+            # Set a black image when self.array is None
+            black_image = QImage(1, 1, QImage.Format_Grayscale8)
+            black_image.fill(Qt.black)
+            pixmap = QPixmap.fromImage(black_image)
+            self.pixmap_item.setPixmap(pixmap)           
+
+        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
+        self.scene.setSceneRect(0, 0, width, height)
+        # The centerOn method is used to center the view on a particular point within the scene.
+        self.centerOn(width / 2, height / 2)
+        
+# class DropImageLabel(QGraphicsPixmapItem, QObject):
+#     dropEventSignal = pyqtSignal(list)
+#     def __init__(self):
+#         QGraphicsPixmapItem.__init__(self)
+#         QObject.__init__(self)
+#         self.setAcceptDrops(True)
+
+#     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+#         source_widget = event.source()
+#         # Should only accept drops if source widget is ScanlistListWidget and only one item is selected
+#         if isinstance(source_widget, ScanlistListWidget) and len(source_widget.selectedIndexes()) == 1:
+#             event.accept()
+#         else:
+#             event.ignore()
+
+#     def dragMoveEvent(self, event: QDragMoveEvent) -> None:
+#         event.accept()
+
+#     def dropEvent(self, event: QDropEvent) -> None:
+#         source_widget = event.source()
+#         selected_index = source_widget.selectedIndexes()[0]
+#         self.dropEventSignal.emit(selected_index)
+#         event.accept()

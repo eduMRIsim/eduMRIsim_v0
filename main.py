@@ -8,6 +8,7 @@ SCANNER_NAME = "test"
 SCANNER_FIELD_STRENGTH = 3
 
 class App(QApplication):
+    '''Main application class.'''
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
         self.scanner = Scanner(SCANNER_NAME, SCANNER_FIELD_STRENGTH)
@@ -15,6 +16,9 @@ class App(QApplication):
         self.main_view.show()
         self.main_controller = MainController(self.scanner, self.main_view)
 
-if __name__ == '__main__':
+def main():
     app = App(sys.argv)
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()

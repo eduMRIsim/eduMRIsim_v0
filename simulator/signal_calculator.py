@@ -11,11 +11,6 @@ class SESignalCalculator(SignalCalculator):
         TE = scan_parameters['TE']
         TR = scan_parameters['TR']
         TI = scan_parameters['TI']
-        #slice_idx = scan_parameters['slice'] - 1
-        
-        # PD = model.PDmap[:, :, slice_idx]
-        # T1 = model.T1map[:, :, slice_idx]
-        # T2 = model.T2map[:, :, slice_idx]
 
         PD = model.PDmap[:, :]
         T1 = model.T1map[:, :]

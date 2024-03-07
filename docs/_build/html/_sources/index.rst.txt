@@ -32,4 +32,4 @@ Contents
 .. toctree::
 
    dependencies
-   api
+   modules
