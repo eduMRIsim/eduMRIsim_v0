@@ -110,6 +110,7 @@ class MainController:
         view_model_dialog.exec()    
 
     def handle_parameterFormLayout_activated(self):
+        print("parameterFormLayout activated")
         self.scanner.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.BEING_MODIFIED
         self._ui.state.enter_being_modified_state(self._ui)
         self.update_scanlistListWidget(self.scanner.scanlist)
@@ -122,9 +123,14 @@ class MainController:
         
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self._ui.parameterFormLayout.getData()
+        print(scan_parameters)
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        print(self.scanner.scanlist.active_scan_item.status.name)
+        print(self.scanner.scanlist.active_scan_item.valid)
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
+        print(self.scanner.scanlist.active_scanlist_element.status.name)
         self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
+        print(self.scanner.scanlist.active_scanlist_element.status.name)
         self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_scanParametersResetButton_clicked(self):
@@ -143,14 +149,19 @@ class MainController:
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
         selected_model_data = self.model_data.get(model_name)
-        description = selected_model_data["description"]
-        t1map_file_path = selected_model_data["T1mapFilePath"]
-        t2map_file_path = selected_model_data["T2mapFilePath"]
-        pdmap_file_path = selected_model_data["PDmapFilePath"]
+        description = selected_model_data.get("description", None)
+        t1map_file_path = selected_model_data.get("T1mapFilePath", None)
+        t2map_file_path = selected_model_data.get("T2mapFilePath", None)
+        t2smap_file_path = selected_model_data.get("T2smapFilePath", None)
+        pdmap_file_path = selected_model_data.get("PDmapFilePath", None)
         t1map = np.load(t1map_file_path)
         t2map = np.load(t2map_file_path)
+        if t2smap_file_path is not None:
+            t2smap = np.load(t2smap_file_path)
+        else: 
+            t2smap = None
         pdmap = np.load(pdmap_file_path)
-        model = Model(model_name, description, t1map, t2map, pdmap)
+        model = Model(model_name, description, t1map, t2map, t2smap, pdmap)
         self.scanner.start_examination(exam_name, model)
         self._new_examination_dialog_ui.accept()
         self._ui.state.enter_exam_state(self._ui)

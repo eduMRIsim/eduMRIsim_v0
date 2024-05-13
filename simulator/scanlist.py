@@ -50,7 +50,9 @@ class ScanItem:
     
     @status.setter
     def status(self, status):
+        print("setting scanlist_element status to", status)
         self.scanlist_element.status = status
+        print("scanlist_element status is now", self.scanlist_element.status)
 
     @property
     def scan_parameters(self):
@@ -95,17 +97,22 @@ class ScanItem:
         try: scan_parameters["TE"] = float(scan_parameters["TE"])
         except: 
             self.valid = False
-            self.messages['TE'] = "TE must be a real number."
+            self.messages['TE'] = "TE must be a number."
         
         try: scan_parameters["TR"] = float(scan_parameters["TR"])
         except: 
             self.valid = False
-            self.messages['TR'] = "TR must be a real number."
+            self.messages['TR'] = "TR must be a number."
         
         try: scan_parameters["TI"] = float(scan_parameters["TI"])
         except: 
             self.valid = False
-            self.messages["TI"] = "TI must be a real number."
+            self.messages["TI"] = "TI must be a number."
+
+        try: scan_parameters["FA"] = float(scan_parameters["FA"])
+        except: 
+            self.valid = False
+            self.messages["FA"] = "FA must be a number."
 
         self.scan_parameters = scan_parameters
   

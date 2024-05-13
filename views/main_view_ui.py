@@ -551,6 +551,7 @@ class ParameterFormLayout(QGridLayout):
         self.TELineEdit = QLineEdit()
         self.TRLineEdit = QLineEdit()
         self.TILineEdit = QLineEdit()
+        self.FALineEdit = QLineEdit()
         #self.sliceLineEdit = QLineEdit()
 
 
@@ -562,6 +563,8 @@ class ParameterFormLayout(QGridLayout):
         self.TRMessageLabel.setStyleSheet("color: red")
         self.TIMessageLabel = QLabel()
         self.TIMessageLabel.setStyleSheet("color: red")
+        self.FAMessageLabel = QLabel()
+        self.FAMessageLabel.setStyleSheet("color: red")
         #self.sliceMessageLabel = QLabel()
         #self.sliceMessageLabel.setStyleSheet("color: red")
 
@@ -583,6 +586,10 @@ class ParameterFormLayout(QGridLayout):
         self.addWidget(self.TILineEdit, 3, 1, Qt.AlignLeft)
         self.addWidget(self.TIMessageLabel, 3, 2, Qt.AlignLeft)
 
+        self.addWidget(QLabel("FA:"), 4, 0, Qt.AlignLeft)
+        self.addWidget(self.FALineEdit, 4, 1, Qt.AlignLeft)
+        self.addWidget(self.FAMessageLabel, 4, 2, Qt.AlignLeft)
+
         #self.addWidget(QLabel("slice:"), 4, 0, Qt.AlignLeft)
         #self.addWidget(self.sliceLineEdit, 4, 1, Qt.AlignLeft)
         #self.addWidget(self.sliceMessageLabel, 4, 2, Qt.AlignLeft)
@@ -597,6 +604,7 @@ class ParameterFormLayout(QGridLayout):
         self.TELineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
         self.TRLineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
         self.TILineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
+        self.FALineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
         self.scanTechniqueComboBox.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
 
     def setReadOnly(self, isReadOnly):
@@ -615,7 +623,7 @@ class ParameterFormLayout(QGridLayout):
             self.isReadOnly = isReadOnly
 
     def setData(self, data, messages):
-        widgets = [self.TELineEdit, self.TRLineEdit, self.TILineEdit, self.scanTechniqueComboBox]
+        widgets = [self.TELineEdit, self.TRLineEdit, self.TILineEdit, self.FALineEdit, self.scanTechniqueComboBox]
 
         # Use the block_signals context manager to temporarily block signal emissions
         with block_signals(widgets):
@@ -626,6 +634,7 @@ class ParameterFormLayout(QGridLayout):
             self.TELineEdit.setText(str(data.get("TE", "")))
             self.TRLineEdit.setText(str(data.get("TR", "")))
             self.TILineEdit.setText(str(data.get("TI", "")))
+            self.FALineEdit.setText(str(data.get("FA", "")))
             #self.sliceLineEdit.setText(str(data.get("slice", "")))
 
             self.setMessages(messages)
@@ -637,6 +646,7 @@ class ParameterFormLayout(QGridLayout):
         data["TE"] = self.TELineEdit.text()
         data["TR"] = self.TRLineEdit.text()
         data["TI"] = self.TILineEdit.text()
+        data["FA"] = self.FALineEdit.text()
         #data["slice"] = self.sliceLineEdit.text()
 
         return data
@@ -645,6 +655,7 @@ class ParameterFormLayout(QGridLayout):
         self.TEMessageLabel.setText(messages.get("TE", ""))
         self.TRMessageLabel.setText(messages.get("TR", ""))
         self.TIMessageLabel.setText(messages.get("TI", ""))
+        self.FAMessageLabel.setText(messages.get("FA", ""))
         #self.sliceMessageLabel.setText(messages.get("slice", ""))
 
 #QGraphicsView is a Qt class designed to display the contents of a QGraphicsScene. It provides a 2D view of the scene and allows users to interact with the items within the scene. 
