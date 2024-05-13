@@ -448,7 +448,7 @@ class ScanPlanningWindow(QFrame):
         layout = QHBoxLayout()
         layout.setSpacing(0)
         self.setLayout(layout)
-        self.ImageLabelTuple = tuple(ImageLabel() for i in range(3))
+        self.ImageLabelTuple = tuple(DropImageLabel() for i in range(3))
         for label in self.ImageLabelTuple:
             layout.addWidget(label, stretch=1)
 
@@ -742,26 +742,26 @@ class ImageLabel(QGraphicsView):
         # The centerOn method is used to center the view on a particular point within the scene.
         self.centerOn(width / 2, height / 2)
         
-# class DropImageLabel(QGraphicsPixmapItem, QObject):
-#     dropEventSignal = pyqtSignal(list)
-#     def __init__(self):
-#         QGraphicsPixmapItem.__init__(self)
-#         QObject.__init__(self)
-#         self.setAcceptDrops(True)
+class DropImageLabel(ImageLabel):
+    dropEventSignal = pyqtSignal(int)
+    def __init__(self):
+        super().__init__()
+        self.setAcceptDrops(True)
 
-#     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-#         source_widget = event.source()
-#         # Should only accept drops if source widget is ScanlistListWidget and only one item is selected
-#         if isinstance(source_widget, ScanlistListWidget) and len(source_widget.selectedIndexes()) == 1:
-#             event.accept()
-#         else:
-#             event.ignore()
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        source_widget = event.source()
+        # Should only accept drops if source widget is ScanlistListWidget and only one item is selected
+        if isinstance(source_widget, ScanlistListWidget) and len(source_widget.selectedIndexes()) == 1:
+            event.accept()
+        else:
+            event.ignore()
 
-#     def dragMoveEvent(self, event: QDragMoveEvent) -> None:
-#         event.accept()
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:
+        event.accept()
 
-#     def dropEvent(self, event: QDropEvent) -> None:
-#         source_widget = event.source()
-#         selected_index = source_widget.selectedIndexes()[0]
-#         self.dropEventSignal.emit(selected_index)
-#         event.accept()
+    def dropEvent(self, event: QDropEvent) -> None:
+        source_widget = event.source()
+        selected_index = source_widget.selectedIndexes()[0].row()
+        print(selected_index)
+        self.dropEventSignal.emit(selected_index)
+        event.accept()

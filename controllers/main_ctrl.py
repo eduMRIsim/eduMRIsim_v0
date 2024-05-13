@@ -30,9 +30,9 @@ class MainController:
         self._ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
         self._ui.scanParametersResetButton.clicked.connect(self.handle_scanParametersResetButton_clicked)
         self._ui.startScanButton.clicked.connect(self.handle_startScanButton_clicked)  
-        # self._ui.scanPlanningWindow1.pixmap_item.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
-        # self._ui.scanPlanningWindow2.pixmap_item.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
-        # self._ui.scanPlanningWindow3.pixmap_item.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
+        self._ui.scanPlanningWindow1.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
+        self._ui.scanPlanningWindow2.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
+        self._ui.scanPlanningWindow3.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
 
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
@@ -158,11 +158,6 @@ class MainController:
         self._ui.modelNameLabel.setText(model_name)        
 
     def handle_scanlist_element_status_change(self, status):
-        array = self.scanner.scanlist.active_scanlist_element.acquired_data
-        self._ui.scannedImageFrame.setArray(array)
-        self._ui.scannedImageFrame.displayArray()        
-        self._ui.scanPlanningWindow1.setArray(array)
-        self._ui.scanPlanningWindow1.displayArray()
         if status == ScanlistElementStatusEnum.READY_TO_SCAN:
             self._ui.state.enter_ready_to_scan_state(self._ui)
         elif status == ScanlistElementStatusEnum.BEING_MODIFIED:
@@ -172,20 +167,29 @@ class MainController:
         elif status == ScanlistElementStatusEnum.COMPLETE:
             self._ui.state.enter_scan_complete_state(self._ui)
 
-    # def handle_scanPlanningWindow1_dropped(self, selected_index):
-    #     scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-    #     array = scanlist_element.acquired_data
-    #     self._ui.scanPlanningWindow1.setArray(array)
-    #     self._ui.scanPlanningWindow1.displayArray()
+    def handle_scanPlanningWindow1_dropped(self, selected_index):
+        scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
+        array = scanlist_element.acquired_data
+        if array is not None:
+            self._ui.scanPlanningWindow1.setArray(array)
+            self._ui.scanPlanningWindow1.displayArray()
+        else:
+            pass
 
-    # def handle_scanPlanningWindow2_dropped(self, selected_index):
-    #     scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-    #     array = scanlist_element.acquired_data
-    #     self._ui.scanPlanningWindow2.setArray(array)
-    #     self._ui.scanPlanningWindow2.displayArray()
+    def handle_scanPlanningWindow2_dropped(self, selected_index):
+        scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
+        array = scanlist_element.acquired_data
+        if array is not None:
+            self._ui.scanPlanningWindow2.setArray(array)
+            self._ui.scanPlanningWindow2.displayArray()
+        else:
+            pass
 
-    # def handle_scanPlanningWindow3_dropped(self, selected_index):
-    #     scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-    #     array = scanlist_element.acquired_data
-    #     self._ui.scanPlanningWindow3.setArray(array)
-    #     self._ui.scanPlanningWindow3.displayArray()
+    def handle_scanPlanningWindow3_dropped(self, selected_index):
+        scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
+        array = scanlist_element.acquired_data
+        if array is not None:
+            self._ui.scanPlanningWindow3.setArray(array)
+            self._ui.scanPlanningWindow3.displayArray()
+        else:
+            pass

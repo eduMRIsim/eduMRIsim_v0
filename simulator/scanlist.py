@@ -37,7 +37,9 @@ class ScanItem:
     def __init__(self, name, scan_parameters, scanlist_element):
         self.name = name
         self._scan_parameters = scan_parameters
-        self._scan_parameters_original = scan_parameters
+        self._scan_parameters_original = {}
+        for key, value in scan_parameters.items():
+            self._scan_parameters_original[key] = value
         self.scanlist_element = scanlist_element
         self.messages = {}
         self.valid = True
@@ -57,8 +59,11 @@ class ScanItem:
     @scan_parameters.setter
     def scan_parameters(self, scan_parameters):
         for key, value in scan_parameters.items():
-            try: self._scan_parameters[key] = float(value)   
-            except: self._scan_parameters[key] = value
+            try: 
+                self._scan_parameters[key] = float(value) 
+            except: 
+                self._scan_parameters[key] = value
+
     @property
     def scan_parameters_original(self):
         return self._scan_parameters_original
@@ -76,6 +81,8 @@ class ScanItem:
             self.status = ScanlistElementStatusEnum.INVALID
 
     def reset_parameters(self):
+        for key, value in self.scan_parameters_original.items():
+            print(key, value)        
         self.scan_parameters = self.scan_parameters_original
         self.valid = True
         self.messages = {}
@@ -101,7 +108,8 @@ class ScanItem:
             self.messages["TI"] = "TI must be a real number."
 
         self.scan_parameters = scan_parameters
-        
+  
+
         if self.valid == True:
             self.status = ScanlistElementStatusEnum.READY_TO_SCAN
             

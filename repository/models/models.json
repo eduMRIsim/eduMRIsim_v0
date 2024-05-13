@@ -5,5 +5,14 @@
         "T1mapFilePath": "repository/models/model1/T1map.npy",
         "T2mapFilePath": "repository/models/model1/T2map.npy",
         "PDmapFilePath": "repository/models/model1/PDmap.npy"
+    },
+
+    "MRiLabBrainHighRes": {
+        "name": "MRiLab high resolution brain model",
+        "description": "High resolution brain model from MRiLab. Data includes T1, T2, T2* and PD maps of the brain.",
+        "T1mapFilePath": "repository/models/model2/T1map.npy",
+        "T2mapFilePath": "repository/models/model2/T2map.npy",
+        "T2smapFilePath": "repository/models/model2/T2smap.npy",
+        "PDmapFilePath": "repository/models/model2/PDmap.npy"
     }
 }

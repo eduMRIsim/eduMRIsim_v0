@@ -1,5 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QFont
 from simulator.scanner import Scanner
 from controllers.main_ctrl import MainController
 from views.main_view_ui import Ui_MainWindow
@@ -18,6 +19,8 @@ class App(QApplication):
 
 def main():
     app = App(sys.argv)
+    default_font =  QFont("Segoe UI", 10)
+    app.setFont(default_font)
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
