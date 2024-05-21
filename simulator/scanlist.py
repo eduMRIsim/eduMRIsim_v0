@@ -17,6 +17,17 @@ class Scanlist:
     def active_scan_item(self):
         return self.scanlist_elements[self.active_idx].scan_item
 
+    def get_progress(self):
+        # divide the number of completed scans by the total number of scans
+        completed = 0
+        for scanlist_element in self.scanlist_elements:
+            if scanlist_element.status == ScanlistElementStatusEnum.COMPLETE:
+                completed += 1
+        if len(self.scanlist_elements) == 0:
+            return 0
+        else:        
+            return completed / len(self.scanlist_elements)
+
 class ScanlistElementStatusEnum(Enum):
     READY_TO_SCAN = auto()
     BEING_MODIFIED = auto()
@@ -50,9 +61,7 @@ class ScanItem:
     
     @status.setter
     def status(self, status):
-        print("setting scanlist_element status to", status)
         self.scanlist_element.status = status
-        print("scanlist_element status is now", self.scanlist_element.status)
 
     @property
     def scan_parameters(self):
@@ -82,13 +91,11 @@ class ScanItem:
         else:
             self.status = ScanlistElementStatusEnum.INVALID
 
-    def reset_parameters(self):
-        for key, value in self.scan_parameters_original.items():
-            print(key, value)        
+    def reset_parameters(self):      
         self.scan_parameters = self.scan_parameters_original
         self.valid = True
         self.messages = {}
-        self.status = ScanlistElementStatusEnum.READY_TO_SCAN
+        self.status = ScanlistElementStatusEnum.READY_TO_SCAN    
 
     def validate_scan_parameters(self, scan_parameters):
         self.valid = True

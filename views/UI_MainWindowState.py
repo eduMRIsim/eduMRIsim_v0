@@ -1,9 +1,6 @@
 class UI_MainWindowState():
     def enter_state(self, context) -> None:
-        try:
-            context.testInfoLabel2.setText(self.name)
-        except:
-            pass
+        pass
 
     def enter_exam_state(self, context) -> None:
         pass
@@ -28,7 +25,7 @@ class ExamState(UI_MainWindowState):
     def enter_state(self, context) -> None:
         super().enter_state(context)
         context.scanningModeButton.setEnabled(True)
-        context.viewingModeButton.setEnabled(True)
+        context.viewingModeButton.setEnabled(False)
         context.examinationInfoStackedLayout.setCurrentIndex(1)
         context.scanlistListWidget.setVisible(True)
         context.scanlistListWidget.setEnabled(True)
@@ -124,6 +121,7 @@ class IdleState(UI_MainWindowState):
         context.scanParametersCancelChangesButton.setEnabled(False) 
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
+        context.scanProgressBar.setValue(0)
 
     def enter_exam_state(self, context) -> None:
         context.state = ExamState()

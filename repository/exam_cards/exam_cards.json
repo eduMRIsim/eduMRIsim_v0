@@ -1,5 +1,5 @@
 {
-    "T1W_SE": {
+    "T1-weighted spin echo": {
         "description": "T1-weighted spin echo sequence",
         "scan_technique": "SE",
         "TE": 0.014,
@@ -8,7 +8,7 @@
         "FA": 90,
         "slice": 15
     },
-    "T2W_SE": {
+    "T2-weighted spin echo": {
         "description": "T2-weighted spin echo sequence",
         "scan_technique": "SE",
         "TE": 0.08,
@@ -17,7 +17,7 @@
         "FA": 90,
         "slice": 15        
     },
-    "PDW_SE": {
+    "PD-weighted spin echo": {
         "description": "Proton density-weighted spin echo sequence",
         "scan_technique": "SE",
         "TE": 0.02,
@@ -26,7 +26,7 @@
         "FA": 90,
         "slice": 15
     },
-    "FLAIR": {
+    "Fluid-attenuated inversion recovery": {
         "description": "Fluid-attenuated inversion recovery sequence",
         "scan_technique": "SE",
         "TE": 0.12,

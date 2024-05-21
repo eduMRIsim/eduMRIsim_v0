@@ -1,11 +1,12 @@
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget)
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent
 import numpy as np
 from views.UI_MainWindowState import IdleState
 from contextlib import contextmanager
+from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 @contextmanager
 def block_signals(widgets):
@@ -29,6 +30,7 @@ class Ui_MainWindow(QMainWindow):
         super().__init__()
 
         self.centralWidget = QWidget(self)
+
 
         self.layout = QHBoxLayout()
         self.centralWidget.setLayout(self.layout)
@@ -65,19 +67,19 @@ class Ui_MainWindow(QMainWindow):
     
     @property
     def examinationNameLabel(self):
-        return self._examinationInfoFrame.examinationNameLabel
+        return self._examinationInfoFrame.section1_text
     
     @property
     def modelNameLabel(self):
-        return self._examinationInfoFrame.modelNameLabel
+        return self._examinationInfoFrame.section2_text
 
     @property
     def viewModelButton(self):
-        return self._examinationInfoFrame.viewModelButton
+        return self._examinationInfoFrame.section2_view_button
     
     @property
     def stopExaminationButton(self):
-        return self._examinationInfoFrame.stopExaminationButton
+        return self._examinationInfoFrame.section1_stop_button
 
     @property
     def addScanItemButton(self):
@@ -170,7 +172,7 @@ class Ui_MainWindow(QMainWindow):
         leftLayout.addLayout(self._modeSwitchButtonsLayout, stretch=1)
 
         self._preExaminationInfoFrame = PreExaminationInfoFrame()
-        self._examinationInfoFrame = ExaminationInfoFrame()
+        self._examinationInfoFrame = InfoFrame("Examination", "Model")
         self._examinationInfoStackedLayout = ExaminationInfoStackedLayout(self._preExaminationInfoFrame, self._examinationInfoFrame)
         leftLayout.addLayout(self._examinationInfoStackedLayout, stretch=1)
 
@@ -207,8 +209,8 @@ class Ui_MainWindow(QMainWindow):
 class ModeSwitchButtonsLayout(QHBoxLayout):
     def __init__(self):
         super().__init__()
-        self._scanningModeButton = QPushButton("Scanning Mode")
-        self._viewingModeButton = QPushButton("Viewing Mode")
+        self._scanningModeButton = TertiaryActionButton("Scanning Mode")
+        self._viewingModeButton = TertiaryActionButton("Viewing Mode")
         self.addWidget(self._scanningModeButton)
         self.addWidget(self._viewingModeButton)
     
@@ -231,21 +233,34 @@ class ExaminationInfoStackedLayout(QStackedLayout):
 class PreExaminationInfoFrame(QFrame):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("QFrame { border: 2px solid black; }")
-        self.layout = QHBoxLayout()
+        self.setStyleSheet("""
+            PreExaminationInfoFrame {
+                background-color: white; /* Background color */
+                border: 1px solid #BFBFBF; /* Border color and thickness */
+                border-radius: 5px; /* Radius for rounded corners */
+            }
+        """)
+        self.layout = QVBoxLayout()
+        self.welcomeLabel = QLabel("Welcome to eduMRIsim!", alignment=Qt.AlignmentFlag.AlignCenter)
+        self.welcomeLabel.setStyleSheet("QLabel { font-size: 24px; }")
         self.setLayout(self.layout)
+        self.layout.addWidget(self.welcomeLabel)
+        self.horizontalLayout = QHBoxLayout()
         self._createNewExaminationButton()
         self._createLoadExaminationButton()
+        self.layout.addLayout(self.horizontalLayout)
 
     def _createNewExaminationButton(self):
-        self._newExaminationButton = QPushButton("New Examination")
-        self._newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        self.layout.addWidget(self._newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._newExaminationButton = PrimaryActionButton("New Examination")
+        #self._newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        self._newExaminationButton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.horizontalLayout.addWidget(self._newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def _createLoadExaminationButton(self):
-        self._loadExaminationButton = QPushButton("Load Examination")
-        self._loadExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        self.layout.addWidget(self._loadExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._loadExaminationButton = PrimaryActionButton("Load Examination")
+        #self._loadExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+        self._loadExaminationButton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.horizontalLayout.addWidget(self._loadExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     @property
     def newExaminationButton(self):
@@ -255,61 +270,68 @@ class PreExaminationInfoFrame(QFrame):
     def loadExaminationButton(self):
         return self._loadExaminationButton
     
-class ExaminationInfoFrame(QFrame):
-    def __init__(self):
-        super().__init__()
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self.setObjectName("examinationFrame")
-        self.setStyleSheet("QFrame#examinationFrame { border: 2px solid black; }")
-        self._createExaminationInfo()
-        self._createButtonLayout()
 
-    def _createExaminationInfo(self):
-        examInfoForm = QFormLayout()
 
-        self._examinationNameLabel = QLabel()
-        self._modelNameLabel = QLabel()
+# class ExaminationInfoFrame(QFrame):
+#     def __init__(self):
+#         super().__init__()
+#         self.layout = QVBoxLayout()
+#         self.setLayout(self.layout)
+#         self.setObjectName("examinationFrame")
+#         self.setStyleSheet("QFrame#examinationFrame { border: 2px solid black; }")
+#         self._createExaminationInfo()
+#         self._createButtonLayout()
 
-        examInfoForm.addRow(QLabel("Exam name:"), self._examinationNameLabel)
-        examInfoForm.addRow(QLabel("Model name:"), self._modelNameLabel)
+#     def _createExaminationInfo(self):
+#         examInfoForm = QFormLayout()
 
-        self.layout.addLayout(examInfoForm)        
+#         self._examinationNameLabel = QLabel()
+#         self._modelNameLabel = QLabel()
+
+#         examInfoForm.addRow(QLabel("Exam name:"), self._examinationNameLabel)
+#         examInfoForm.addRow(QLabel("Model name:"), self._modelNameLabel)
+
+#         self.layout.addLayout(examInfoForm)        
     
-    def _createButtonLayout(self):
-        buttonLayout = QHBoxLayout()
-        self._viewModelButton = QPushButton("View Model")
-        self._viewModelButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        buttonLayout.addWidget(self._viewModelButton)
-        self._stopExaminationButton = QPushButton("Stop Examination")
-        self._stopExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-        buttonLayout.addWidget(self._stopExaminationButton)
-        self.layout.addLayout(buttonLayout)
+#     def _createButtonLayout(self):
+#         buttonLayout = QHBoxLayout()
+#         self._viewModelButton = QPushButton("View Model")
+#         self._viewModelButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+#         buttonLayout.addWidget(self._viewModelButton)
+#         self._stopExaminationButton = QPushButton("Stop Examination")
+#         self._stopExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
+#         buttonLayout.addWidget(self._stopExaminationButton)
+#         self.layout.addLayout(buttonLayout)
 
-    @property
-    def examinationNameLabel(self):
-        return self._examinationNameLabel
+#     @property
+#     def examinationNameLabel(self):
+#         return self._examinationNameLabel
 
-    @property
-    def modelNameLabel(self):
-        return self._modelNameLabel
+#     @property
+#     def modelNameLabel(self):
+#         return self._modelNameLabel
     
-    @property
-    def viewModelButton(self):
-        return self._viewModelButton
+#     @property
+#     def viewModelButton(self):
+#         return self._viewModelButton
     
-    @property
-    def stopExaminationButton(self):
-        return self._stopExaminationButton
+#     @property
+#     def stopExaminationButton(self):
+#         return self._stopExaminationButton
 
 class ScanlistInfoFrame(QFrame):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("QFrame { border: 2px solid black; }") 
+        self.setStyleSheet("""
+            ScanlistInfoFrame {
+                border: 1px solid #BFBFBF; /* Border color and thickness */
+                border-radius: 5px; /* Radius for rounded corners */
+            }
+        """)
         #self.label.setStyleSheet("QLabel { color: black; }")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self._addScanItemButton = QPushButton("Add Scan Item")
+        self._addScanItemButton = PrimaryActionButton("Add Scan Item")
         #self._addScanItemButton.setVisible(False)
         self._scanlistListWidget = ScanlistListWidget()
         #self._scanlistListWidget.setVisible(False)
@@ -331,8 +353,17 @@ class ScanlistListWidget(QListWidget):
         super().__init__()
         self.setStyleSheet("border: none;")
         self.setDragDropMode(self.DragDrop)
-        self.setSelectionMode(self.ExtendedSelection)
+        self.setSelectionMode(self.SingleSelection)
         self.setAcceptDrops(True)
+  
+
+
+    def mouseDoubleClickEvent(self, event):
+        item = self.itemAt(event.pos())
+        if item is not None:
+            self.setCurrentItem(item)
+            self.itemDoubleClicked.emit(item)  # Manually emit the itemDoubleClicked signal
+
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
         e.accept()
@@ -341,21 +372,34 @@ class ScanlistListWidget(QListWidget):
         e.accept()
 
     def dropEvent(self, e: QDropEvent):
+        # Get the widget that received the drop event
         widget = e.source()
-        selected_indexes = widget.selectedIndexes()
-        self.dropEventSignal.emit(selected_indexes)
-        e.accept()        
+        # do not accept drops from itself
+        if widget == self:
+            e.ignore()
+        else:    
+            selected_indexes = widget.selectedIndexes()
+            self.dropEventSignal.emit(selected_indexes)
+            e.accept()        
+
+
+
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):
         super().__init__()
-        self.setStyleSheet("QFrame { border: 2px solid black; }")
+        self.setStyleSheet("""
+            ScanProgressInfoFrame {
+                border: 1px solid #BFBFBF; /* Border color and thickness */
+                border-radius: 5px; /* Radius for rounded corners */
+            }
+        """)
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.scanner = scanner
         self._createProgressBar()
         self._createScanButtons()
-        self._createScanInfo(scanner)
+        #self._createScanInfo(scanner)
 
     @property
     def scanProgressBar(self):
@@ -388,13 +432,26 @@ class ScanProgressInfoFrame(QFrame):
     def _createProgressBar(self):
         scanProgressBarLayout = QHBoxLayout()   
 
-        scanProgressBarLabel = QLabel("Scan Progress:")
-        scanProgressBarLabel.setStyleSheet("QLabel { border: none; }")  # Remove border
-        scanProgressBarLayout.addWidget(scanProgressBarLabel)
+        #scanProgressBarLabel = QLabel("0%")
+        #scanProgressBarLabel.setStyleSheet("QLabel { border: none; }")  # Remove border
+        #scanProgressBarLayout.addWidget(scanProgressBarLabel)
 
         self._scanProgressBar = QProgressBar()
-        self._scanProgressBar.setValue(50)
+
+        self._scanProgressBar.setValue(0)
+        # Set a custom stylesheet for the progress bar to customize its appearance
+        self._scanProgressBar.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid grey;
+                background-color: #f0f0f0;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #6bcc7a; /* Set the color of the progress bar chunk */
+            }
+        """)        
         scanProgressBarLayout.addWidget(self._scanProgressBar)
+        
 
         self.layout.addLayout(scanProgressBarLayout)
         
@@ -489,18 +546,19 @@ class ScanParametersWidget(QWidget):
 
     def _createButtons(self):
         buttonsLayout = QHBoxLayout()
-        self._scanParametersSaveChangesButton = QPushButton("Save Changes")
-        self._scanParametersCancelChangesButton = QPushButton("Cancel")
-        self._scanParametersResetButton = QPushButton("Reset")
-        buttonsLayout.addWidget(self._scanParametersSaveChangesButton)
-        buttonsLayout.addWidget(self._scanParametersCancelChangesButton)
-        buttonsLayout.addWidget(self._scanParametersResetButton)
+        self._scanParametersSaveChangesButton = PrimaryActionButton("Save")
+        self._scanParametersCancelChangesButton = SecondaryActionButton("Cancel")
+        self._scanParametersResetButton = DestructiveActionButton("Reset")
+        buttonsLayout.addWidget(self._scanParametersSaveChangesButton, 1)
+        buttonsLayout.addWidget(self._scanParametersCancelChangesButton, 1)
+        buttonsLayout.addSpacerItem(QSpacerItem(self._scanParametersSaveChangesButton.sizeHint().width(), self._scanParametersSaveChangesButton.sizeHint().height(), QSizePolicy.Expanding, QSizePolicy.Minimum))
+        buttonsLayout.addWidget(self._scanParametersResetButton, 1)
         self.layout.addLayout(buttonsLayout)        
     
 class ExamCardTabWidget(QTabWidget):
     def __init__(self, examCardTab):
         super().__init__()
-        self.addTab(examCardTab, "Exam cards")
+        self.addTab(examCardTab, "Scan items")
 
 class ExamCardTab(QWidget):
     def __init__(self):
@@ -521,7 +579,7 @@ class ScanParametersTabWidget(QTabWidget):
     def __init__(self):
         super().__init__()
         self.parameterTab = ParameterTab()
-        self.addTab(self.parameterTab, "Scan Parameters")
+        self.addTab(self.parameterTab, "Contrast")
         
     @property
     def parameterFormLayout(self):
@@ -530,11 +588,17 @@ class ScanParametersTabWidget(QTabWidget):
 class ParameterTab(QWidget):
     def __init__(self):
         super().__init__()
+        self.horizontalLayout = QHBoxLayout()
         self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self.layout.setAlignment(Qt.AlignTop)
         self._parameterFormLayout = ParameterFormLayout()
+        self.layout.addItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.layout.addLayout(self.parameterFormLayout)
+        self.layout.addItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        #self.horizontalLayout.addItem(QSpacerItem(10, 0,  QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.horizontalLayout.addLayout(self.layout)
+        self.horizontalLayout.addItem(QSpacerItem(0, 0,  QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.setLayout(self.horizontalLayout)
+        self.setStyleSheet("QLineEdit { border: 1px solid  #BFBFBF; }")
 
     @property
     def parameterFormLayout(self):
@@ -545,13 +609,29 @@ class ParameterFormLayout(QGridLayout):
 
     def __init__(self):
         super().__init__()
+        
 
         self.scanTechniqueComboBox = QComboBox()
-        self.scanTechniqueComboBox.addItems(["GE", "SE"])
+        self.scanTechniqueComboBox.addItems(["gradient echo", "spin echo"])
+        self.scanTechniqueComboBox.setFixedHeight(30)
+        self.scanTechniqueComboBox.setFixedWidth(300)
+        #self.scanTechniqueComboBox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.TELineEdit = QLineEdit()
+        self.TELineEdit.setFixedHeight(30)
+        self.TELineEdit.setFixedWidth(300)
+        #self.TELineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.TRLineEdit = QLineEdit()
+        self.TRLineEdit.setFixedHeight(30)
+        self.TRLineEdit.setFixedWidth(300)
+        #self.TRLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.TILineEdit = QLineEdit()
+        self.TILineEdit.setFixedHeight(30)
+        self.TILineEdit.setFixedWidth(300)
+        #self.TILineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.FALineEdit = QLineEdit()
+        self.FALineEdit.setFixedHeight(30)
+        self.FALineEdit.setFixedWidth(300)
+        #self.FALineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         #self.sliceLineEdit = QLineEdit()
 
 
@@ -568,35 +648,39 @@ class ParameterFormLayout(QGridLayout):
         #self.sliceMessageLabel = QLabel()
         #self.sliceMessageLabel.setStyleSheet("color: red")
 
-        self.setHorizontalSpacing(0)
+        self.setHorizontalSpacing(10)
 
-        self.addWidget(QLabel("Scan Technique:"), 0, 0, Qt.AlignLeft)
-        self.addWidget(self.scanTechniqueComboBox, 0, 1, Qt.AlignLeft)
-        self.addWidget(self.scanTechniqueComboBox, 0, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("Scan technique"), 0, 0, Qt.AlignLeft)
+        self.addWidget(self.scanTechniqueComboBox, 1, 0, Qt.AlignLeft)
+        self.addWidget(self.scanTechniqueMessageLabel, 2, 0, Qt.AlignLeft)
 
-        self.addWidget(QLabel("TE:"), 1, 0, Qt.AlignLeft)
-        self.addWidget(self.TELineEdit, 1, 1, Qt.AlignLeft)
-        self.addWidget(self.TEMessageLabel, 1, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("Echo time (TE)"), 3, 0, Qt.AlignLeft)
+        self.addWidget(self.TELineEdit, 4, 0, Qt.AlignLeft)
+        self.addWidget(HeaderLabel("seconds"), 4, 1)
+        self.addWidget(self.TEMessageLabel, 5, 0, Qt.AlignLeft)
 
-        self.addWidget(QLabel("TR:"), 2, 0, Qt.AlignLeft)
-        self.addWidget(self.TRLineEdit, 2, 1, Qt.AlignLeft)
-        self.addWidget(self.TRMessageLabel, 2, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("Repetition time (TR)"), 6, 0, Qt.AlignLeft)
+        self.addWidget(self.TRLineEdit, 7, 0, Qt.AlignLeft)
+        self.addWidget(HeaderLabel("seconds"), 7, 1)
+        self.addWidget(self.TRMessageLabel, 8, 0, Qt.AlignLeft)
 
-        self.addWidget(QLabel("TI:"), 3, 0, Qt.AlignLeft)
-        self.addWidget(self.TILineEdit, 3, 1, Qt.AlignLeft)
-        self.addWidget(self.TIMessageLabel, 3, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("Inversion time (TI)"), 9, 0, Qt.AlignLeft)
+        self.addWidget(self.TILineEdit, 10, 0, Qt.AlignLeft)
+        self.addWidget(HeaderLabel("seconds"), 10, 1)
+        self.addWidget(self.TIMessageLabel, 11, 0, Qt.AlignLeft)
 
-        self.addWidget(QLabel("FA:"), 4, 0, Qt.AlignLeft)
-        self.addWidget(self.FALineEdit, 4, 1, Qt.AlignLeft)
-        self.addWidget(self.FAMessageLabel, 4, 2, Qt.AlignLeft)
+        self.addWidget(QLabel("Flip angle (FA)"), 12, 0, Qt.AlignLeft)
+        self.addWidget(self.FALineEdit, 13, 0, Qt.AlignLeft)
+        self.addWidget(HeaderLabel("degrees"), 13, 1)
+        self.addWidget(self.FAMessageLabel, 14, 0, Qt.AlignLeft)
 
         #self.addWidget(QLabel("slice:"), 4, 0, Qt.AlignLeft)
         #self.addWidget(self.sliceLineEdit, 4, 1, Qt.AlignLeft)
         #self.addWidget(self.sliceMessageLabel, 4, 2, Qt.AlignLeft)
 
-        self.setColumnStretch(0, 1)
-        self.setColumnStretch(1, 2)
-        self.setColumnStretch(2, 2)
+        self.setColumnStretch(0, 10)
+        self.setColumnStretch(1, 1)
+        #self.setColumnStretch(2, 2)
 
         self.isReadOnly = None
 
@@ -628,7 +712,10 @@ class ParameterFormLayout(QGridLayout):
         # Use the block_signals context manager to temporarily block signal emissions
         with block_signals(widgets):
             # Set the data for the widgets without emitting formActivatedSignal
-            index = self.scanTechniqueComboBox.findText(str(data.get("scan_technique", "")))
+            if data["scan_technique"] == "SE":
+                index = self.scanTechniqueComboBox.findText("spin echo")
+            if data["scan_technique"] == "GE":
+                index = self.scanTechniqueComboBox.findText("gradient echo")
             if index != -1:
                 self.scanTechniqueComboBox.setCurrentIndex(index)
             self.TELineEdit.setText(str(data.get("TE", "")))
@@ -641,8 +728,10 @@ class ParameterFormLayout(QGridLayout):
 
     def getData(self):
         data = {}
-
-        data["scan_technique"] = self.scanTechniqueComboBox.currentText()
+        if self.scanTechniqueComboBox.currentText() == "spin echo":
+            data["scan_technique"] = "SE"
+        if self.scanTechniqueComboBox.currentText() == "gradient echo":
+            data["scan_technique"] = "GE"
         data["TE"] = self.TELineEdit.text()
         data["TR"] = self.TRLineEdit.text()
         data["TI"] = self.TILineEdit.text()
@@ -657,6 +746,16 @@ class ParameterFormLayout(QGridLayout):
         self.TIMessageLabel.setText(messages.get("TI", ""))
         self.FAMessageLabel.setText(messages.get("FA", ""))
         #self.sliceMessageLabel.setText(messages.get("slice", ""))
+
+    def clearForm(self):
+        widgets = [self.TELineEdit, self.TRLineEdit, self.TILineEdit, self.FALineEdit, self.scanTechniqueComboBox]
+        with block_signals(widgets):
+            self.TELineEdit.clear()
+            self.TRLineEdit.clear()
+            self.TILineEdit.clear()
+            self.FALineEdit.clear()
+            self.scanTechniqueComboBox.setCurrentIndex(0)
+            self.setMessages({})
 
 #QGraphicsView is a Qt class designed to display the contents of a QGraphicsScene. It provides a 2D view of the scene and allows users to interact with the items within the scene. 
 class ImageLabel(QGraphicsView):

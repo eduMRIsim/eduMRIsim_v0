@@ -22,9 +22,9 @@ class MainController:
         self._ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self._ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
         self._ui.scanlistListWidget.dropEventSignal.connect(self.handle_add_to_scanlist)
-        self._ui.scanlistListWidget.itemDoubleClicked.connect(self.handle_scanlistListWidget_dclicked)
+        self._ui.scanlistListWidget.itemClicked.connect(self.handle_scanlistListWidget_dclicked)
         self._ui.viewModelButton.clicked.connect(self.handle_viewModelButton_clicked)
-        self._ui.stopExaminationButton.clicked.connect(lambda: self._ui.state.enter_idle_state(self._ui))
+        self._ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
         self._ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
         self._ui.scanParametersCancelChangesButton.clicked.connect(self.handle_scanParametersCancelChangesButton_clicked)
         self._ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
@@ -37,12 +37,28 @@ class MainController:
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
 
+
+
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
         self.model_data = Loader.load(jsonFilePath)
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
         self._new_examination_dialog_ui.exec()    
+
+    def handle_stopExaminationButton_clicked(self):
+        self.scanner.stop_examination()
+        self._ui.parameterFormLayout.clearForm()
+        self._ui.scanlistListWidget.clear()
+        self._ui.scannedImageFrame.setArray(None)
+        self._ui.scanPlanningWindow1.setArray(None)
+        self._ui.scanPlanningWindow2.setArray(None)
+        self._ui.scanPlanningWindow3.setArray(None)
+        self._ui.scannedImageFrame.displayArray()
+        self._ui.scanPlanningWindow1.displayArray()
+        self._ui.scanPlanningWindow2.displayArray()
+        self._ui.scanPlanningWindow3.displayArray()
+        self._ui.state.enter_idle_state(self._ui)
 
     def populate_modelComboBox(self, list):
         self._new_examination_dialog_ui.modelComboBox.clear()
@@ -53,6 +69,7 @@ class MainController:
         self.exam_card_data = Loader.load(jsonFilePath)
         self._ui.editingStackedLayout.setCurrentIndex(1)
         self.populate_examCardListView(self.exam_card_data)       
+        self.update_scanlistListWidget(self.scanner.scanlist)
 
     def populate_examCardListView(self, exam_card_data):
         self.exam_card_qmodel = DictionaryModel(exam_card_data)
@@ -89,18 +106,31 @@ class MainController:
             elif item.status == ScanlistElementStatusEnum.COMPLETE:
                 list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))
             self._ui.scanlistListWidget.addItem(list_item)  
-        try:
-            self._ui.testInfoLabel.setText(scanlist.active_scan_item.status.name)
-        except:
-            self._ui.testInfoLabel.setText("No current scan item")
+        active_idx = self.scanner.scanlist.active_idx
+        print("active_idx: ", active_idx)
+        if active_idx is not None:
+            current_list_item = self._ui.scanlistListWidget.item(active_idx)
+            print("current_list_item: ", current_list_item)
+            self._ui.scanlistListWidget.setCurrentItem(current_list_item)
+        progress = scanlist.get_progress()
+        self._ui.scanProgressBar.setValue(int(progress * 100))    
+
+        # try:
+        #     self._ui.testInfoLabel.setText(scanlist.active_scan_item.status.name)
+        # except:
+        #     self._ui.testInfoLabel.setText("No current scan item")
 
     def handle_scanlistListWidget_dclicked(self, item):
         self._ui.editingStackedLayout.setCurrentIndex(0)    
         index = self._ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
+        self._ui.scannedImageFrame.setArray(self.scanner.scanlist.active_scanlist_element.acquired_data)
+        self._ui.scannedImageFrame.displayArray()
+        current_list_item = self._ui.scanlistListWidget.item(index)
+        self._ui.scanlistListWidget.setCurrentItem(current_list_item)
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
         self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
-        self._ui.testInfoLabel.setText(self.scanner.active_scan_item.status.name)
+        #self._ui.testInfoLabel.setText(self.scanner.active_scan_item.status.name)
 
     def populate_parameterFormLayout(self, scan_item):
         self._ui.parameterFormLayout.setData(scan_item.scan_parameters, scan_item.messages)
@@ -110,7 +140,6 @@ class MainController:
         view_model_dialog.exec()    
 
     def handle_parameterFormLayout_activated(self):
-        print("parameterFormLayout activated")
         self.scanner.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.BEING_MODIFIED
         self._ui.state.enter_being_modified_state(self._ui)
         self.update_scanlistListWidget(self.scanner.scanlist)
@@ -123,14 +152,10 @@ class MainController:
         
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self._ui.parameterFormLayout.getData()
-        print(scan_parameters)
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
-        print(self.scanner.scanlist.active_scan_item.status.name)
-        print(self.scanner.scanlist.active_scan_item.valid)
+        print(self.scanner.scanlist.active_scan_item.messages)
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
-        print(self.scanner.scanlist.active_scanlist_element.status.name)
         self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
-        print(self.scanner.scanlist.active_scanlist_element.status.name)
         self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_scanParametersResetButton_clicked(self):
@@ -181,26 +206,22 @@ class MainController:
     def handle_scanPlanningWindow1_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         array = scanlist_element.acquired_data
-        if array is not None:
-            self._ui.scanPlanningWindow1.setArray(array)
-            self._ui.scanPlanningWindow1.displayArray()
-        else:
-            pass
+        self._ui.scanPlanningWindow1.setArray(array)
+        self._ui.scanPlanningWindow1.displayArray()
+        self.update_scanlistListWidget(self.scanner.scanlist)
+
 
     def handle_scanPlanningWindow2_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         array = scanlist_element.acquired_data
-        if array is not None:
-            self._ui.scanPlanningWindow2.setArray(array)
-            self._ui.scanPlanningWindow2.displayArray()
-        else:
-            pass
+        self._ui.scanPlanningWindow2.setArray(array)
+        self._ui.scanPlanningWindow2.displayArray()
+        self.update_scanlistListWidget(self.scanner.scanlist)
+
 
     def handle_scanPlanningWindow3_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         array = scanlist_element.acquired_data
-        if array is not None:
-            self._ui.scanPlanningWindow3.setArray(array)
-            self._ui.scanPlanningWindow3.displayArray()
-        else:
-            pass
+        self._ui.scanPlanningWindow3.setArray(array)
+        self._ui.scanPlanningWindow3.displayArray()
+        self.update_scanlistListWidget(self.scanner.scanlist)

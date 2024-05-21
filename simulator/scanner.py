@@ -40,6 +40,9 @@ class Scanner:
         """
         self.examination = Examination(exam_name, model)
 
+    def stop_examination(self):
+        self.examination = None
+
     @property
     def MRI_data_synthesiser(self):
         return self._MRI_data_synthesiser

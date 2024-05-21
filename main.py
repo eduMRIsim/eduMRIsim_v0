@@ -19,8 +19,11 @@ class App(QApplication):
 
 def main():
     app = App(sys.argv)
-    default_font =  QFont("Segoe UI", 10)
+    default_font =  QFont("Segoe UI", 11)
+    # change weight of font
+    default_font.setWeight(55)
     app.setFont(default_font)
+    
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
