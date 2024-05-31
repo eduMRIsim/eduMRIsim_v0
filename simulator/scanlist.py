@@ -47,7 +47,9 @@ class ScanlistElement:
 class ScanItem: 
     def __init__(self, name, scan_parameters, scanlist_element):
         self.name = name
-        self._scan_parameters = scan_parameters
+        self._scan_parameters = {}
+        for key, value in scan_parameters.items():
+            self._scan_parameters[key] = value
         self._scan_parameters_original = {}
         for key, value in scan_parameters.items():
             self._scan_parameters_original[key] = value
