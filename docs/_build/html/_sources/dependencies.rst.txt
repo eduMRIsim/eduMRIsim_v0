@@ -1,9 +1,0 @@
-Dependencies
-============
-
-Install the following dependencies using pip:
-
-.. note::
-    numpy==1.25.0
-    PyQt5==5.15.10
-    scipy==1.11.4
