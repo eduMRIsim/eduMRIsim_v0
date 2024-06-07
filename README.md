@@ -63,7 +63,8 @@ If you don't have Git installed, you can download the repository as a ZIP file:
 
 Once you have cloned or downloaded the repository, navigate to the directory where the repository is located using the `cd` (change directory) command in your command prompt/terminal.
     ```
-    cd path/to/repository ```
+    cd path/to/repository 
+    ```
 
 ## Step 3: Create and activate a virtual environment (optional but recommended):
 It's recommended to use a virtual environment to isolate your project's dependencies from other projects. This step is optional but highly recommended to avoid conflicts between different projects' dependencies.
