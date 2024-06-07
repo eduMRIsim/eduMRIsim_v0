@@ -61,9 +61,9 @@ If you don't have Git installed, you can download the repository as a ZIP file:
 
 ## Step 2: Navigate to the repository directory
 
-Once you have cloned or downloaded the repository, navigate to the directory where the repository is located using the `cd` (change directory) command in your command prompt/terminal.
+Once you have cloned or downloaded the repository, navigate into the eduMRIsim_v0 folder using the `cd` (change directory) command in your command prompt/terminal.
     ```
-    cd path/to/repository 
+    cd eduMRIsim_v0
     ```
 
 ## Step 3: Create and activate a virtual environment (optional but recommended):
