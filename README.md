@@ -7,8 +7,10 @@ eduMRIsim is an educational MRI simulator software application. It is currently 
 Follow these instructions to run main.py locally. 
 
 ## Prerequisites
-### Python 3.11 or higher installed
- Make sure you have Python installed on your system. You can download and install Python from the [official Python website](https://www.python.org/downloads/). 
+### Python 3.11 or higher installed*
+*Earlier versions of Python may also be sufficient but this has not yet been tested. 
+
+Make sure you have Python installed on your system. You can download and install Python from the [official Python website](https://www.python.org/downloads/). 
 
 To check if Python is installed on your system, you can use the command line or terminal. Here's how you can do it on different operating systems:
 
