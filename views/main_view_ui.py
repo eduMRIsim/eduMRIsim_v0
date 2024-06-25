@@ -458,11 +458,11 @@ class ScanProgressInfoFrame(QFrame):
     def _createScanButtons(self):
         scanButtonsLayout = QHBoxLayout()
         
-        self._startScanButton = QPushButton("Start Scan")
+        self._startScanButton = SecondaryActionButton("Start Scan")
         #self._startScanButton.setStyleSheet("QPushButton { background-color: green; color: #ffffff; }")
         scanButtonsLayout.addWidget(self._startScanButton)
         
-        self._stopScanButton = QPushButton("Stop Scan")
+        self._stopScanButton = DestructiveActionButton("Stop Scan")
         #self._stopScanButton.setStyleSheet("QPushButton { background-color: red; color: #ffffff; }") 
         scanButtonsLayout.addWidget(self._stopScanButton)
 
