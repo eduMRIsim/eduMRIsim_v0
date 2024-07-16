@@ -37,8 +37,6 @@ class MainController:
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
 
-
-
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
         self.model_data = Loader.load(jsonFilePath)
