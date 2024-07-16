@@ -111,3 +111,17 @@ This command executes the `main.py` script which opens the application.
 
 ## Python isn't added to your system's PATH environment variable 
 This is required for you to be able to run Python commands from any directory on your system. Look [here](https://realpython.com/add-python-to-path/) for further instructions.
+
+# Getting started: how to run an examination
+
+## Click on "New Examination"
+Once application has started running, press the "New Examination" button to set-up an examination. 
+![Screenshot 2024-07-16 151217](https://github.com/user-attachments/assets/5d521c7f-9b3c-434a-8264-a55affc751c3)
+
+## Set-up examination
+Set-up examination by selecting a model and entering an examination name. Then press "OK". 
+![Screenshot 2024-07-16 151257](https://github.com/user-attachments/assets/272d9178-9425-48fe-858d-793e9d1de1a8)
+
+## Click on "Add 
+![Screenshot 2024-07-16 151318](https://github.com/user-attachments/assets/79d2fafb-642c-4217-b509-ead9e1d1f42f)
+
