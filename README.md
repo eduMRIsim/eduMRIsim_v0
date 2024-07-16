@@ -122,6 +122,30 @@ Once application has started running, press the "New Examination" button to set-
 Set-up examination by selecting a model and entering an examination name. Then press "OK". 
 ![Screenshot 2024-07-16 151257](https://github.com/user-attachments/assets/272d9178-9425-48fe-858d-793e9d1de1a8)
 
-## Click on "Add 
+## Click on "Add Scan Item"
+Press "Add Scan Item" button to be shown the repository of scan items with predefined scan parameters. These are scan items that can be added to the examination's scanlist. 
 ![Screenshot 2024-07-16 151318](https://github.com/user-attachments/assets/79d2fafb-642c-4217-b509-ead9e1d1f42f)
 
+## Add scan items to scanlist
+Scan items can be added to the scanlist by dragging and dropping from the repository to the scanlist (white box above "Add Scan Item" button). 
+![Screenshot 2024-07-16 151338](https://github.com/user-attachments/assets/504f2121-93df-4637-93b6-6c829b352a8a)
+
+![Screenshot 2024-07-16 151355](https://github.com/user-attachments/assets/f7f4e296-9e99-4150-95ac-a75ae4d69c88)
+
+## Edit scan parameters
+Double-click any scan item in the scanlist to view and, if desired, edit scan parameters. Press "Save" after making any desired edits to the scan parameters. Press "Reset" to restore parameters to the scan item's original values. Press "Cancel" to discard edits. 
+![Screenshot 2024-07-16 151403](https://github.com/user-attachments/assets/c423c550-0cfb-457c-8e4f-7e5ecd72f15b)
+
+## Scan
+Select any item from the scanlist you wish to scan (by double-clicking). If the item is in the "ready-to-scan" state indicated by the black checkmark icon, you can press "Scan". 
+![Screenshot 2024-07-16 151416](https://github.com/user-attachments/assets/c191741d-aaea-4d55-9809-8a2dcf1e04c5)
+
+The result of the simulated scan will appear in the lower right corner. Use your mouse scroll button to scroll through the slices. Hold down the mouse scroll button to adjust window width and level settings. 
+![Screenshot 2024-07-16 151428](https://github.com/user-attachments/assets/bda92d18-fe51-4760-af47-50ae0b02931e)
+
+## View images
+Drag and drop any scan item in the "scan-complete" state (indicated by the circled checmark icon) to any of the three windows in the scan planning area to view. Here the result of different simulations can be viewed side-by-side. 
+![Screenshot 2024-07-16 154105](https://github.com/user-attachments/assets/28c392a5-a08e-4aa3-873f-bf47b6e59d71)
+
+## End examination
+To stop the examination and start a new one, click the "Stop" button. 
