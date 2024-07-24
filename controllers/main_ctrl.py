@@ -105,10 +105,8 @@ class MainController:
                 list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))
             self._ui.scanlistListWidget.addItem(list_item)  
         active_idx = self.scanner.scanlist.active_idx
-        print("active_idx: ", active_idx)
         if active_idx is not None:
             current_list_item = self._ui.scanlistListWidget.item(active_idx)
-            print("current_list_item: ", current_list_item)
             self._ui.scanlistListWidget.setCurrentItem(current_list_item)
         progress = scanlist.get_progress()
         self._ui.scanProgressBar.setValue(int(progress * 100))    
@@ -151,7 +149,6 @@ class MainController:
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self._ui.parameterFormLayout.getData()
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
-        print(self.scanner.scanlist.active_scan_item.messages)
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
         self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
         self.update_scanlistListWidget(self.scanner.scanlist)
