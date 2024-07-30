@@ -966,17 +966,18 @@ class ImageLabel(QGraphicsView):
         if self.pixmap_item.isUnderMouse():
             print("event occurred over the image")
             # angleDelta().y() provides the angle through which the vertical mouse wheel was rotated since the last event in eigths of a degree. The value is positive when the wheel is rotated away from the user and negative when the wheel is rotated towards the user. 120 units * 1/8 = 15 degrees for most mouses. 
-            delta = event.angleDelta().y() / 120
-            print("delta (angle through which the vertical mouse wheel was rotated since the last event in eigths of a degree):", delta)
+            delta = event.angleDelta().y() 
             current_slice = getattr(self, 'current_slice', 0)
-            print("current_slice: ", current_slice)
-            print("current_slice + delta: ", current_slice + delta) 
-            print("self.array.shape[2] - 1: ", self.array.shape[2] - 1)
-            print("min(current_slice + delta, self.array.shape[2] - 1): ", min(current_slice + delta, self.array.shape[2] - 1))
-            print("new_slice = max(0, min(current_slice + delta, self.array.shape[2] - 1)): ", max(0, min(current_slice + delta, self.array.shape[2] - 1)))
-            new_slice = max(0, min(current_slice + delta, self.array.shape[2] - 1))
+            print("delta: ", delta)
+            print("current slice: ", current_slice)
+            if delta > 0:
+                new_slice = max(0, min(current_slice + 1, self.array.shape[2] - 1))
+            elif delta < 0:
+                new_slice = max(0, min(current_slice - 1, self.array.shape[2] - 1))
+            elif delta == 0:
+                new_slice = current_slice
+            print("new slice: ", new_slice)
             self.current_slice = int(new_slice)
-            print("new slice displayed: ", self.current_slice)
             self.displayArray()
         else:
             print("event did not occur over the image, allow the parent class to handle the event")
