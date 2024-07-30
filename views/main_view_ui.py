@@ -41,9 +41,21 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralWidget)
         self.setWindowTitle("eduMRIsim_V0_UI")
 
-        self.state = IdleState()
-        self.state.enter_state(self)
+        self._state = IdleState()
+        self.update_UI()
     
+    def update_UI(self):
+        self.state.update_UI(self)
+
+    @property
+    def state(self):
+        return self._state
+    
+    @state.setter
+    def state(self, state):
+        self._state = state
+        self.update_UI()
+
     @property
     def scanningModeButton(self):
         return self._modeSwitchButtonsLayout.scanningModeButton

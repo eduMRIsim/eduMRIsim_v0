@@ -8,6 +8,7 @@ from views.view_model_dialog_ui import ViewModelDialog
 import numpy as np
 from simulator.model import Model 
 from simulator.scanlist import ScanlistElementStatusEnum
+import views.UI_MainWindowState as UI_state 
 
 
 class MainController:
@@ -56,7 +57,8 @@ class MainController:
         self._ui.scanPlanningWindow1.displayArray()
         self._ui.scanPlanningWindow2.displayArray()
         self._ui.scanPlanningWindow3.displayArray()
-        self._ui.state.enter_idle_state(self._ui)
+        self._ui.state = UI_state.IdleState()
+        self._ui.update_UI()
 
     def populate_modelComboBox(self, list):
         self._new_examination_dialog_ui.modelComboBox.clear()
@@ -137,7 +139,8 @@ class MainController:
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.BEING_MODIFIED
-        self._ui.state.enter_being_modified_state(self._ui)
+        self._ui.state = UI_state.BeingModifiedState()
+        self._ui.update_UI()
         self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_scanParametersCancelChangesButton_clicked(self):
@@ -164,7 +167,8 @@ class MainController:
         self._ui.scannedImageFrame.setArray(array)
         self._ui.scannedImageFrame.displayArray()
         self.scanner.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.COMPLETE
-        self._ui.state.enter_scan_complete_state(self._ui)
+        self._ui.state = UI_state.ScanCompleteState()
+        self._ui.update_UI()
         self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
@@ -184,19 +188,24 @@ class MainController:
         model = Model(model_name, description, t1map, t2map, t2smap, pdmap)
         self.scanner.start_examination(exam_name, model)
         self._new_examination_dialog_ui.accept()
-        self._ui.state.enter_exam_state(self._ui)
+        self._ui.state = UI_state.ExamState()
+        self._ui.update_UI()
         self._ui.examinationNameLabel.setText(exam_name)
         self._ui.modelNameLabel.setText(model_name)        
 
     def handle_scanlist_element_status_change(self, status):
         if status == ScanlistElementStatusEnum.READY_TO_SCAN:
-            self._ui.state.enter_ready_to_scan_state(self._ui)
+            self._ui.state = UI_state.ReadyToScanState()
+            self._ui.update_UI()
         elif status == ScanlistElementStatusEnum.BEING_MODIFIED:
-            self._ui.state.enter_being_modified_state(self._ui)
+            self._ui.state = UI_state.BeingModifiedState()
+            self._ui.update_UI()
         elif status == ScanlistElementStatusEnum.INVALID:
-            self._ui.state.enter_invalid_parameters_state(self._ui)
+            self._ui.state = UI_state.InvalidParametersState()
+            self._ui.update_UI()
         elif status == ScanlistElementStatusEnum.COMPLETE:
-            self._ui.state.enter_scan_complete_state(self._ui)
+            self._ui.state = UI_state.ScanCompleteState()
+            self._ui.update_UI()
 
     def handle_scanPlanningWindow1_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
