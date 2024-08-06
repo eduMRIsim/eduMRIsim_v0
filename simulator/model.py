@@ -1,11 +1,11 @@
 class Model:
-    def __init__(self, name, description, T1map, T2map, T2smap, PDmap):
+    def __init__(self, name, description, T1map_ms, T2map_ms, T2smap_ms, PDmap_ms):
         self._name = name
         self._description = description
-        self._T1map = T1map
-        self._T2map = T2map
-        self._T2smap = T2smap
-        self._PDmap = PDmap 
+        self._T1map_ms = T1map_ms
+        self._T2map_ms = T2map_ms
+        self._T2smap_ms = T2smap_ms
+        self._PDmap_ms = PDmap_ms 
 
     @property
     def name(self):
@@ -16,17 +16,17 @@ class Model:
         self._name = name 
 
     @property
-    def T1map(self):
-        return self._T1map
+    def T1map_ms(self):
+        return self._T1map_ms
     
     @property
-    def T2map(self):
-        return self._T2map
+    def T2map_ms(self):
+        return self._T2map_ms
     
     @property
-    def T2smap(self):
-        return self._T2smap
+    def T2smap_ms(self):
+        return self._T2smap_ms
     
     @property
-    def PDmap(self):
-        return self._PDmap 
+    def PDmap_ms(self):
+        return self._PDmap_ms 

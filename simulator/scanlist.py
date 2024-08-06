@@ -104,24 +104,45 @@ class ScanItem:
         self.messages = {}
         
         try: scan_parameters["TE"] = float(scan_parameters["TE"])
+
         except: 
             self.valid = False
             self.messages['TE'] = "TE must be a number."
-        
+
+        if isinstance(scan_parameters["TE"], float):
+            if scan_parameters["TE"] < 0:
+                self.valid = False
+                self.messages['TE'] = "TE cannot be a negative number."
+
         try: scan_parameters["TR"] = float(scan_parameters["TR"])
         except: 
             self.valid = False
             self.messages['TR'] = "TR must be a number."
         
+        if isinstance(scan_parameters["TR"], float):
+            if scan_parameters["TR"] < 0:
+                self.valid = False
+                self.messages['TR'] = "TR cannot be a negative number."
+
         try: scan_parameters["TI"] = float(scan_parameters["TI"])
         except: 
             self.valid = False
             self.messages["TI"] = "TI must be a number."
 
+        if isinstance(scan_parameters["TI"], float):
+            if scan_parameters["TI"] < 0:
+                self.valid = False
+                self.messages['TI'] = "TI cannot be a negative number."
+
         try: scan_parameters["FA"] = float(scan_parameters["FA"])
         except: 
             self.valid = False
             self.messages["FA"] = "FA must be a number."
+
+        if isinstance(scan_parameters["FA"], float):
+            if scan_parameters["FA"] < 0:
+                self.valid = False
+                self.messages['FA'] = "FA cannot be a negative number."
 
         self.scan_parameters = scan_parameters
   

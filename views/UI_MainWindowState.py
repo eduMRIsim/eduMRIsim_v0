@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 class UI_MainWindowState(ABC):
     def update_UI(self, context) -> None:
-        pass
+        MRIfortheBrainState().update_UI(context) # all states will call this method first to implement the UI configuration for the MRI for the brain course
 
 class ExamState(UI_MainWindowState):
     name = "ExamState"
@@ -80,3 +80,10 @@ class IdleState(UI_MainWindowState):
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanProgressBar.setValue(0)
+
+class MRIfortheBrainState(UI_MainWindowState):
+    def update_UI(self, context) -> None:
+        context.loadExaminationButton.setVisible(False)
+        context.stopScanButton.setVisible(False)
+        context.scanningModeButton.setVisible(False)
+        context.viewingModeButton.setVisible(False)

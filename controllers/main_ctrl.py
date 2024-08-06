@@ -179,19 +179,26 @@ class MainController:
         t2smap_file_path = selected_model_data.get("T2smapFilePath", None)
         pdmap_file_path = selected_model_data.get("PDmapFilePath", None)
         t1map = np.load(t1map_file_path)
+        t1map_ms = t1map * 1000
         t2map = np.load(t2map_file_path)
+        t2map_ms = t2map * 1000
         if t2smap_file_path is not None:
             t2smap = np.load(t2smap_file_path)
+            t2smap_ms = t2smap * 1000
+            self._ui.parameterFormLayout.setScanTechniqueComboBox(["spin echo", "gradient echo"])
         else: 
-            t2smap = None
+            t2smap_ms = None
+            self._ui.parameterFormLayout.setScanTechniqueComboBox(["spin echo"])
+
         pdmap = np.load(pdmap_file_path)
-        model = Model(model_name, description, t1map, t2map, t2smap, pdmap)
+        model = Model(model_name, description, t1map_ms, t2map_ms, t2smap_ms, pdmap)
         self.scanner.start_examination(exam_name, model)
         self._new_examination_dialog_ui.accept()
         self._ui.state = UI_state.ExamState()
         self._ui.update_UI()
         self._ui.examinationNameLabel.setText(exam_name)
         self._ui.modelNameLabel.setText(model_name)        
+
 
     def handle_scanlist_element_status_change(self, status):
         if status == ScanlistElementStatusEnum.READY_TO_SCAN:

@@ -5,7 +5,7 @@ class NewExaminationDialog(QDialog):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("New examination")
+        self.setWindowTitle("New Examination")
         self.layout = QVBoxLayout()
 
         self._createModelComboBox()
@@ -21,6 +21,11 @@ class NewExaminationDialog(QDialog):
         self.layout.addLayout(horizontal_layout)
 
         self.setLayout(self.layout)
+
+        # remove help button hint from dialog
+        self.setWindowFlag(0x00040000) # Qt::WindowContextHelpButtonHint = 0x00040000 
+
+
 
     @property
     def newExaminationOkButton(self):
@@ -51,7 +56,7 @@ class NewExaminationDialog(QDialog):
         horizontal_layout = QHBoxLayout()
         self._uploadModelButton = QPushButton("Upload")
         horizontal_layout.addWidget(self._modelComboBox)
-        horizontal_layout.addWidget(self._uploadModelButton)
+        #horizontal_layout.addWidget(self._uploadModelButton)
         self.examInfoForm.addRow("Select model:", horizontal_layout)
         self._examNameLineEdit = QLineEdit()
         self.examInfoForm.addRow("Exam name:", self._examNameLineEdit)

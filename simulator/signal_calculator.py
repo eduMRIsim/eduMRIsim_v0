@@ -12,9 +12,9 @@ class SESignalCalculator(SignalCalculator):
         TR = scan_parameters['TR']
         TI = scan_parameters['TI']
 
-        PD = model.PDmap[:, :] 
-        T1 = model.T1map[:, :]
-        T2 = model.T2map[:, :]
+        PD = model.PDmap_ms[:, :] 
+        T1 = model.T1map_ms[:, :]
+        T2 = model.T2map_ms[:, :]
 
         with np.errstate(divide='ignore', invalid='ignore'): # supress warnings about division by zero and invalid values since these are handled in the code
             signal_array = np.abs(PD * np.exp(np.divide(-TE,T2)) * (1 - 2 * np.exp(np.divide(-TI, T1)) + np.exp(np.divide(-TR, T1))))   
@@ -29,9 +29,9 @@ class GESignalCalculator(SignalCalculator):
         TR = scan_parameters['TR']
         FA = np.deg2rad(scan_parameters['FA'])
 
-        PD = model.PDmap[:, :] 
-        T1 = model.T1map[:, :]
-        T2s = model.T2smap[:, :]
+        PD = model.PDmap_ms[:, :] 
+        T1 = model.T1map_ms[:, :]
+        T2s = model.T2smap_ms[:, :]
 
 
         with np.errstate(divide='ignore', invalid='ignore'): # supress warnings about division by zero and invalid values since these are handled in the code

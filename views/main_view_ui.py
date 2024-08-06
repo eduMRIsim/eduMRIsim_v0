@@ -181,7 +181,7 @@ class Ui_MainWindow(QMainWindow):
         leftLayout = QVBoxLayout()
 
         self._modeSwitchButtonsLayout = ModeSwitchButtonsLayout()
-        leftLayout.addLayout(self._modeSwitchButtonsLayout, stretch=1)
+        #leftLayout.addLayout(self._modeSwitchButtonsLayout, stretch=1)
 
         self._preExaminationInfoFrame = PreExaminationInfoFrame()
         self._examinationInfoFrame = InfoFrame("Examination", "Model")
@@ -282,55 +282,6 @@ class PreExaminationInfoFrame(QFrame):
     def loadExaminationButton(self):
         return self._loadExaminationButton
     
-
-
-# class ExaminationInfoFrame(QFrame):
-#     def __init__(self):
-#         super().__init__()
-#         self.layout = QVBoxLayout()
-#         self.setLayout(self.layout)
-#         self.setObjectName("examinationFrame")
-#         self.setStyleSheet("QFrame#examinationFrame { border: 2px solid black; }")
-#         self._createExaminationInfo()
-#         self._createButtonLayout()
-
-#     def _createExaminationInfo(self):
-#         examInfoForm = QFormLayout()
-
-#         self._examinationNameLabel = QLabel()
-#         self._modelNameLabel = QLabel()
-
-#         examInfoForm.addRow(QLabel("Exam name:"), self._examinationNameLabel)
-#         examInfoForm.addRow(QLabel("Model name:"), self._modelNameLabel)
-
-#         self.layout.addLayout(examInfoForm)        
-    
-#     def _createButtonLayout(self):
-#         buttonLayout = QHBoxLayout()
-#         self._viewModelButton = QPushButton("View Model")
-#         self._viewModelButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-#         buttonLayout.addWidget(self._viewModelButton)
-#         self._stopExaminationButton = QPushButton("Stop Examination")
-#         self._stopExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
-#         buttonLayout.addWidget(self._stopExaminationButton)
-#         self.layout.addLayout(buttonLayout)
-
-#     @property
-#     def examinationNameLabel(self):
-#         return self._examinationNameLabel
-
-#     @property
-#     def modelNameLabel(self):
-#         return self._modelNameLabel
-    
-#     @property
-#     def viewModelButton(self):
-#         return self._viewModelButton
-    
-#     @property
-#     def stopExaminationButton(self):
-#         return self._stopExaminationButton
-
 class ScanlistInfoFrame(QFrame):
     def __init__(self):
         super().__init__()
@@ -620,7 +571,7 @@ class ParameterFormLayout(QGridLayout):
         
 
         self.scanTechniqueComboBox = QComboBox()
-        self.scanTechniqueComboBox.addItems(["gradient echo", "spin echo"])
+        self.scanTechniqueComboBox.addItems([""]) # This line is needed because otherwise the QComboBox is not initialized properly. It is required in order to be able to set the combo box to read only. 
         self.scanTechniqueComboBox.setFixedHeight(30)
         self.scanTechniqueComboBox.setFixedWidth(300)
         #self.scanTechniqueComboBox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -664,17 +615,17 @@ class ParameterFormLayout(QGridLayout):
 
         self.addWidget(QLabel("Echo time (TE)"), 3, 0, Qt.AlignLeft)
         self.addWidget(self.TELineEdit, 4, 0, Qt.AlignLeft)
-        self.addWidget(HeaderLabel("seconds"), 4, 1)
+        self.addWidget(HeaderLabel("milliseconds"), 4, 1)
         self.addWidget(self.TEMessageLabel, 5, 0, Qt.AlignLeft)
 
         self.addWidget(QLabel("Repetition time (TR)"), 6, 0, Qt.AlignLeft)
         self.addWidget(self.TRLineEdit, 7, 0, Qt.AlignLeft)
-        self.addWidget(HeaderLabel("seconds"), 7, 1)
+        self.addWidget(HeaderLabel("milliseconds"), 7, 1)
         self.addWidget(self.TRMessageLabel, 8, 0, Qt.AlignLeft)
 
         self.addWidget(QLabel("Inversion time (TI)"), 9, 0, Qt.AlignLeft)
         self.addWidget(self.TILineEdit, 10, 0, Qt.AlignLeft)
-        self.addWidget(HeaderLabel("seconds"), 10, 1)
+        self.addWidget(HeaderLabel("milliseconds"), 10, 1)
         self.addWidget(self.TIMessageLabel, 11, 0, Qt.AlignLeft)
 
         self.addWidget(QLabel("Flip angle (FA)"), 12, 0, Qt.AlignLeft)
@@ -699,6 +650,11 @@ class ParameterFormLayout(QGridLayout):
         self.FALineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
         self.scanTechniqueComboBox.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
 
+    def setScanTechniqueComboBox(self, scan_techniques):
+        with block_signals([self.scanTechniqueComboBox]):
+            self.scanTechniqueComboBox.clear()
+            self.scanTechniqueComboBox.addItems(scan_techniques)
+
     def setReadOnly(self, isReadOnly):
         if self.isReadOnly == isReadOnly:
             return
@@ -710,7 +666,7 @@ class ParameterFormLayout(QGridLayout):
                         # Check if the widget is a QLineEdit or QComboBox and set its read-only state
                         if isinstance(item.widget(), (QLineEdit)):
                             item.widget().setReadOnly(isReadOnly)
-                        elif isinstance(item.widget(), (QComboBox)):
+                        if isinstance(item.widget(), (QComboBox)):
                             item.widget().setEnabled(not isReadOnly)
             self.isReadOnly = isReadOnly
 
@@ -1104,6 +1060,7 @@ class ImageLabel(QGraphicsView):
     def mouseMoveEvent(self, event):
         if self.displaying == False:
             return
+
         if self.dragging:
             dx = event.x() - self.start_pos.x()
             dy = self.start_pos.y() - event.y()
