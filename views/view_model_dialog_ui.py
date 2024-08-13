@@ -12,14 +12,14 @@ class ModelViewLabel(ImageLabel):
     def __init__(self):
         super().__init__()
 
-
-
     # override mouseMoveEvent
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self.pixmap_item.isUnderMouse():
             coordinate_in_pixmap = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
             # convert to model coordinates
             self.mouse_moved_signal.emit(int(abs(coordinate_in_pixmap.y())), int(abs(coordinate_in_pixmap.x())), self.current_slice)
+        else:
+            self.mouse_moved_signal.emit(-1, -1, -1) # signal that mouse is not over the pixmap
 
     def update_text_item(self):
         # set text
@@ -36,13 +36,15 @@ class ModelViewLabel(ImageLabel):
 
     def wheelEvent(self, event):
         super().wheelEvent(event)
-        # get current mouse position
-        mouse_position = event.pos()
-        # get the position of the mouse in the pixmap item
-        coordinate_in_pixmap = self.pixmap_item.mapFromScene(self.mapToScene(mouse_position))
-        # convert to model coordinates
-        self.mouse_moved_signal.emit(int(abs(coordinate_in_pixmap.y())), int(abs(coordinate_in_pixmap.x())), self.current_slice)
-
+        if self.pixmap_item.isUnderMouse():
+            # get current mouse position
+            mouse_position = event.pos()
+            # get the position of the mouse in the pixmap item
+            coordinate_in_pixmap = self.pixmap_item.mapFromScene(self.mapToScene(mouse_position))
+            # convert to model coordinates
+            self.mouse_moved_signal.emit(int(abs(coordinate_in_pixmap.y())), int(abs(coordinate_in_pixmap.x())), self.current_slice)
+        else:
+            self.mouse_moved_signal.emit(-1, -1, -1) # signal that mouse is not over the pixmap
 
 class ViewModelDialog(QDialog):
     def __init__(self, model):
@@ -87,20 +89,10 @@ class ViewModelDialog(QDialog):
         self.setMouseTracking(True)
 
     def handleMouseMoved(self, x, y, z):
-        self.tissue_property_value_display.setText(str(round(self.map[x,y,z],2)))
-
-    # def createButtons(self):
-    #     buttonsLayout = QHBoxLayout()
-    #     T1Button = QPushButton("T1")
-    #     T2Button = QPushButton("T2")
-    #     PDButton = QPushButton("PD")
-    #     T1Button.clicked.connect(self.T1ButtonPressed)
-    #     T2Button.clicked.connect(self.T2ButtonPressed)
-    #     PDButton.clicked.connect(self.PDButtonPressed)
-    #     buttonsLayout.addWidget(T1Button)
-    #     buttonsLayout.addWidget(T2Button)
-    #     buttonsLayout.addWidget(PDButton)
-    #     self.layout.addLayout(buttonsLayout)
+        if x == -1 and y == -1 and z == -1:
+            self.tissue_property_value_display.setText("")
+        else:
+            self.tissue_property_value_display.setText(str(round(self.map[x,y,z],2)))
 
     def createButtons(self):
         buttonsLayout = QHBoxLayout()
@@ -142,12 +134,10 @@ class ViewModelDialog(QDialog):
         self.information_label_layout.addWidget(self.unit_label, 1, 1) 
         self.layout.addLayout(self.information_label_layout)
 
-
     def handleSliderMoved(self,position):
         self.slice = self.sender().value()
         self.image_array = self.map[:,:,self.slice]
         self.setPixmap(self.image_array)
-
 
     def T1ButtonPressed(self):
         self.map = self.model._T1map_ms[:,:,:]

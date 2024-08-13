@@ -911,34 +911,22 @@ class ImageLabel(QGraphicsView):
 
     # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
     def wheelEvent(self, event):
-        print("wheel event")
         # Check if the array is None
         if self.array is None:
-            print("array is None, do nothing and return")
             # Do nothing and return
             return
 
-        # Check if the event occurred over the image
-        if self.pixmap_item.isUnderMouse():
-            print("event occurred over the image")
-            # angleDelta().y() provides the angle through which the vertical mouse wheel was rotated since the last event in eigths of a degree. The value is positive when the wheel is rotated away from the user and negative when the wheel is rotated towards the user. 120 units * 1/8 = 15 degrees for most mouses. 
-            delta = event.angleDelta().y() 
-            current_slice = getattr(self, 'current_slice', 0)
-            print("delta: ", delta)
-            print("current slice: ", current_slice)
-            if delta > 0:
-                new_slice = max(0, min(current_slice + 1, self.array.shape[2] - 1))
-            elif delta < 0:
-                new_slice = max(0, min(current_slice - 1, self.array.shape[2] - 1))
-            elif delta == 0:
-                new_slice = current_slice
-            print("new slice: ", new_slice)
-            self.current_slice = int(new_slice)
-            self.displayArray()
-        else:
-            print("event did not occur over the image, allow the parent class to handle the event")
-            # Allow the base class to handle the event in other cases
-            super().wheelEvent(event)
+        delta = event.angleDelta().y() 
+        current_slice = getattr(self, 'current_slice', 0)
+        if delta > 0:
+            new_slice = max(0, min(current_slice + 1, self.array.shape[2] - 1))
+        elif delta < 0:
+            new_slice = max(0, min(current_slice - 1, self.array.shape[2] - 1))
+        elif delta == 0:
+            new_slice = current_slice
+        self.current_slice = int(new_slice)
+        self.displayArray()
+
 
     #ImageLabel holds a copy of the array of MRI data to be displayed. 
     def setArray(self, array):
