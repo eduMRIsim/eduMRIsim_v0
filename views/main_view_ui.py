@@ -1,8 +1,8 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPoint
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QGraphicsTextItem)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont
+                             QLineEdit, QListView, QListWidget, QListWidgetItem, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QGraphicsTextItem, QMenu, QAction)
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QIcon
 import numpy as np
 from views.UI_MainWindowState import IdleState
 from contextlib import contextmanager
@@ -312,13 +312,34 @@ class ScanlistInfoFrame(QFrame):
 
 class ScanlistListWidget(QListWidget):
     dropEventSignal = pyqtSignal(list)
+    itemDeletedSignal = pyqtSignal(QListWidgetItem)
     def __init__(self):
         super().__init__()
         self.setStyleSheet("border: none;")
+        self.hover_color = "#e5f3ff"
+        self.setStyleSheet(f"""
+            QListWidget::item:hover {{
+                background-color: {self.hover_color}; /* Set the hover color */
+            }}
+        """)
         self.setDragDropMode(self.DragDrop)
         self.setSelectionMode(self.SingleSelection)
         self.setAcceptDrops(True)
-  
+        #self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu) # Enable the custom context menu
+        #self.customContextMenuRequested.connect(self.showContextMenu) # Connect the customContextMenuRequested signal to the showContextMenu method
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.RightButton:
+            item = self.itemAt(event.pos())
+            if item is not None:
+                print("item is not None")
+                brush = item.background()
+                color = brush.color()
+                print(color.name())
+                item.setBackground(QColor(self.hover_color))
+            self.showContextMenu(event.pos())
+        else:
+            super().mousePressEvent(event)    
 
 
     def mouseDoubleClickEvent(self, event):
@@ -326,7 +347,6 @@ class ScanlistListWidget(QListWidget):
         if item is not None:
             self.setCurrentItem(item)
             self.itemDoubleClicked.emit(item)  # Manually emit the itemDoubleClicked signal
-
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
         e.accept()
@@ -344,6 +364,54 @@ class ScanlistListWidget(QListWidget):
             selected_indexes = widget.selectedIndexes()
             self.dropEventSignal.emit(selected_indexes)
             e.accept()        
+
+    def showContextMenu(self, pos: QPoint):
+        item = self.itemAt(pos) 
+        if item is not None:
+            menu = QMenu()
+
+            # Create actions for the context menu
+            rename_action = QAction("Rename", self)
+            duplicate_action = QAction("Duplicate", self)
+            delete_action = QAction("Delete", self)
+
+            # Create icons
+            rename_icon = QIcon("resources/icons/edit-2-outline.png")
+            duplicate_icon = QIcon("resources/icons/copy-outline.png")
+            delete_icon = QIcon("resources/icons/trash-2-outline.png")
+
+            # Add icons
+            rename_action.setIcon(rename_icon)
+            duplicate_action.setIcon(duplicate_icon)
+            delete_action.setIcon(delete_icon)
+
+            # Add the actions to the context menu
+            menu.addAction(rename_action)
+            menu.addAction(duplicate_action)
+            menu.addAction(delete_action)
+
+           # Connect the actions to their respective slots
+            rename_action.triggered.connect(lambda: self.renameItem(item))
+            duplicate_action.triggered.connect(lambda: self.duplicateItem(item))
+            delete_action.triggered.connect(lambda: self.deleteItem(item))
+
+            # Show the context menu at the specified position
+            menu.exec_(self.viewport().mapToGlobal(pos))
+
+            item.setBackground(Qt.white)
+
+    def renameItem(self, item):
+        item.setFlags(item.flags() | Qt.ItemIsEditable)
+        self.editItem(item)
+
+    def duplicateItem(self, item):
+        print("Duplicate item")
+
+
+    def deleteItem(self, item):
+        print("Delete item")
+        self.itemDeletedSignal.emit(item)
+        self.takeItem(self.row(item))
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):

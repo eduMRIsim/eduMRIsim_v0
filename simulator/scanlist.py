@@ -28,6 +28,10 @@ class Scanlist:
         else:        
             return completed / len(self.scanlist_elements)
 
+    def rename_scanlist_element(self, index, name):
+        self.scanlist_elements[index].scan_item.name = name
+        
+
 class ScanlistElementStatusEnum(Enum):
     READY_TO_SCAN = auto()
     BEING_MODIFIED = auto()

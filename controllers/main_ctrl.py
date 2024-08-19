@@ -4,6 +4,7 @@ from simulator.load import Loader
 from views.qmodels import DictionaryModel
 from PyQt5.QtWidgets import QListWidgetItem
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
 from views.view_model_dialog_ui import ViewModelDialog
 import numpy as np
 from simulator.model import Model 
@@ -23,7 +24,10 @@ class MainController:
         self._ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self._ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
         self._ui.scanlistListWidget.dropEventSignal.connect(self.handle_add_to_scanlist)
-        self._ui.scanlistListWidget.itemClicked.connect(self.handle_scanlistListWidget_dclicked)
+        self._ui.scanlistListWidget.itemClicked.connect(self.handle_scanlistListWidget_clicked)
+        #self._ui.scanlistListWidget.itemDoubleClicked.connect(self.handle_scanlistListWidget_dclicked)
+        self._ui.scanlistListWidget.itemChanged.connect(self.handle_scanlistListWidget_itemChanged)
+        self._ui.scanlistListWidget.itemDeletedSignal.connect(self.handle_scanlistListWidget_itemDeleted)
         self._ui.viewModelButton.clicked.connect(self.handle_viewModelButton_clicked)
         self._ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
         self._ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
@@ -37,6 +41,13 @@ class MainController:
 
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
+
+    def handle_scanlistListWidget_itemChanged(self, item):
+        self.scanner.scanlist.rename_scanlist_element(self._ui.scanlistListWidget.row(item), item.text())
+
+    def handle_scanlistListWidget_itemDeleted(self, item):
+        print("item deleted")
+        print("what should happen to active index when deleting item?")
 
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
@@ -105,6 +116,7 @@ class MainController:
                 list_item.setIcon(QIcon("resources/icons/alert-circle-outline.png"))
             elif item.status == ScanlistElementStatusEnum.COMPLETE:
                 list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))
+            list_item.setFlags(list_item.flags() | Qt.ItemIsEditable)
             self._ui.scanlistListWidget.addItem(list_item)  
         active_idx = self.scanner.scanlist.active_idx
         if active_idx is not None:
@@ -118,7 +130,7 @@ class MainController:
         # except:
         #     self._ui.testInfoLabel.setText("No current scan item")
 
-    def handle_scanlistListWidget_dclicked(self, item):
+    def handle_scanlistListWidget_clicked(self, item):
         self._ui.editingStackedLayout.setCurrentIndex(0)    
         index = self._ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
@@ -129,6 +141,15 @@ class MainController:
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
         self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
         #self._ui.testInfoLabel.setText(self.scanner.active_scan_item.status.name)
+
+    def handle_scanlistListWidget_dclicked(self, item):
+        print("double clicked")
+        index = self._ui.scanlistListWidget.row(item)
+        if index == self.scanner.scanlist.active_idx:
+            print("double clicked on active item")
+            self._ui.scanlistListWidget.editItem(item)
+        else:
+            print("double clicked on inactive item")
 
     def populate_parameterFormLayout(self, scan_item):
         self._ui.parameterFormLayout.setData(scan_item.scan_parameters, scan_item.messages)
