@@ -4,6 +4,7 @@ from PyQt5.QtGui import QFont
 from simulator.scanner import Scanner
 from controllers.main_ctrl import MainController
 from views.main_view_ui import Ui_MainWindow
+from simulator.load import Loader
 
 SCANNER_NAME = "test"
 SCANNER_FIELD_STRENGTH = 3
@@ -16,6 +17,11 @@ class App(QApplication):
         self.main_view = Ui_MainWindow(self.scanner)
         self.main_view.show()
         self.main_controller = MainController(self.scanner, self.main_view)
+        parameters = Loader.load("scan_parameters/scan_parameters.json")
+        self.main_view.parameterFormLayout.createForm(parameters)
+        self.main_view.parameterFormLayout.clearForm()
+        self.main_view.parameterFormLayout.setReadOnly(True)
+
 
 def main():
     app = App(sys.argv)

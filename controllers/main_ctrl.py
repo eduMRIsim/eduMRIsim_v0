@@ -1,6 +1,6 @@
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
-from simulator.load import Loader
+from simulator.load import Loader, load_model_data
 from views.qmodels import DictionaryModel
 from PyQt5.QtWidgets import QListWidgetItem
 from PyQt5.QtGui import QIcon
@@ -49,11 +49,10 @@ class MainController:
         self.scanner.stop_examination()
         self._ui.parameterFormLayout.clearForm()
         self._ui.scanlistListWidget.clear()
-        self._ui.scannedImageFrame.setArray(None)
+        self._ui.scannedImageFrame.setAcquiredSeries(None)
         self._ui.scanPlanningWindow1.setArray(None)
         self._ui.scanPlanningWindow2.setArray(None)
         self._ui.scanPlanningWindow3.setArray(None)
-        self._ui.scannedImageFrame.displayArray()
         self._ui.scanPlanningWindow1.displayArray()
         self._ui.scanPlanningWindow2.displayArray()
         self._ui.scanPlanningWindow3.displayArray()
@@ -65,7 +64,7 @@ class MainController:
         self._new_examination_dialog_ui.modelComboBox.addItems(list)
 
     def handle_addScanItemButton_clicked(self):
-        jsonFilePath = 'repository/exam_cards/exam_cards.json'
+        jsonFilePath = 'repository/exam_cards/scan_items.json'
         self.exam_card_data = Loader.load(jsonFilePath)
         self._ui.editingStackedLayout.setCurrentIndex(1)
         self.populate_examCardListView(self.exam_card_data)       
@@ -122,8 +121,7 @@ class MainController:
         self._ui.editingStackedLayout.setCurrentIndex(0)    
         index = self._ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
-        self._ui.scannedImageFrame.setArray(self.scanner.scanlist.active_scanlist_element.acquired_data)
-        self._ui.scannedImageFrame.displayArray()
+        self._ui.scannedImageFrame.setAcquiredSeries(self.scanner.scanlist.active_scanlist_element.acquired_data)
         current_list_item = self._ui.scanlistListWidget.item(index)
         self._ui.scanlistListWidget.setCurrentItem(current_list_item)
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
@@ -131,7 +129,7 @@ class MainController:
         #self._ui.testInfoLabel.setText(self.scanner.active_scan_item.status.name)
 
     def populate_parameterFormLayout(self, scan_item):
-        self._ui.parameterFormLayout.setData(scan_item.scan_parameters, scan_item.messages)
+        self._ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
     def handle_viewModelButton_clicked(self):
         view_model_dialog = ViewModelDialog(self.scanner.model)
@@ -163,9 +161,8 @@ class MainController:
         self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_startScanButton_clicked(self):
-        array = self.scanner.scan()
-        self._ui.scannedImageFrame.setArray(array)
-        self._ui.scannedImageFrame.displayArray()
+        acquired_series = self.scanner.scan()
+        self._ui.scannedImageFrame.setAcquiredSeries(acquired_series)
         self.scanner.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.COMPLETE
         self._ui.state = UI_state.ScanCompleteState()
         self._ui.update_UI()
@@ -174,24 +171,9 @@ class MainController:
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
         selected_model_data = self.model_data.get(model_name)
         description = selected_model_data.get("description", None)
-        t1map_file_path = selected_model_data.get("T1mapFilePath", None)
-        t2map_file_path = selected_model_data.get("T2mapFilePath", None)
-        t2smap_file_path = selected_model_data.get("T2smapFilePath", None)
-        pdmap_file_path = selected_model_data.get("PDmapFilePath", None)
-        t1map = np.load(t1map_file_path)
-        t1map_ms = t1map * 1000
-        t2map = np.load(t2map_file_path)
-        t2map_ms = t2map * 1000
-        if t2smap_file_path is not None:
-            t2smap = np.load(t2smap_file_path)
-            t2smap_ms = t2smap * 1000
-            self._ui.parameterFormLayout.setScanTechniqueComboBox(["spin echo", "gradient echo"])
-        else: 
-            t2smap_ms = None
-            self._ui.parameterFormLayout.setScanTechniqueComboBox(["spin echo"])
-
-        pdmap = np.load(pdmap_file_path)
-        model = Model(model_name, description, t1map_ms, t2map_ms, t2smap_ms, pdmap)
+        file_path = selected_model_data.get("file_path", None)
+        model_data = load_model_data(file_path)
+        model = Model(model_name, model_data)
         self.scanner.start_examination(exam_name, model)
         self._new_examination_dialog_ui.accept()
         self._ui.state = UI_state.ExamState()
@@ -216,23 +198,22 @@ class MainController:
 
     def handle_scanPlanningWindow1_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-        array = scanlist_element.acquired_data
-        self._ui.scanPlanningWindow1.setArray(array)
-        self._ui.scanPlanningWindow1.displayArray()
+        acquired_series = scanlist_element.acquired_data
+        self._ui.scanPlanningWindow1.setAcquiredSeries(acquired_series)
+        scan_volume = scanlist_element.scan_item.scan_volume
+        self._ui.scanPlanningWindow1.setScanVolume(scan_volume)
         self.update_scanlistListWidget(self.scanner.scanlist)
 
 
     def handle_scanPlanningWindow2_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-        array = scanlist_element.acquired_data
-        self._ui.scanPlanningWindow2.setArray(array)
-        self._ui.scanPlanningWindow2.displayArray()
+        acquired_series = scanlist_element.acquired_data
+        self._ui.scanPlanningWindow2.setAcquiredSeries(acquired_series)
         self.update_scanlistListWidget(self.scanner.scanlist)
 
 
     def handle_scanPlanningWindow3_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-        array = scanlist_element.acquired_data
-        self._ui.scanPlanningWindow3.setArray(array)
-        self._ui.scanPlanningWindow3.displayArray()
+        acquired_series = scanlist_element.acquired_data
+        self._ui.scanPlanningWindow3.setAcquiredSeries(acquired_series)
         self.update_scanlistListWidget(self.scanner.scanlist)

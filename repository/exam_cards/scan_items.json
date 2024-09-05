@@ -1,0 +1,57 @@
+{
+    "T1WSE_Axial": {
+            "description": "T1-weighted spin echo axial survey scan",
+            "ScanPlane": "Axial",
+            "FOVPE_mm": "180",
+            "FOVFE_mm": "216",
+            "SliceThickness_mm": "1",
+            "NSlices": "3",
+            "SliceGap_mm": "30",
+            "OffCenterRL_mm": "0",
+            "OffCenterAP_mm": "0",
+            "OffCenterFH_mm": "0",
+            "RLAngle_deg": "0",
+            "APAngle_deg": "0",
+            "FHAngle_deg": "0",
+            "TE_ms": "14",
+            "TR_ms": "864",
+            "TI_ms": "0"
+    },
+    "T1WSE_Coronal": {
+            "description": "T1-weighted spin echo coronal survey scan",
+            "ScanPlane": "Coronal",
+            "FOVPE_mm": "180",
+            "FOVFE_mm": "216",
+            "SliceThickness_mm": "1",
+            "NSlices": "3",
+            "SliceGap_mm": "30",
+            "OffCenterRL_mm": "0",
+            "OffCenterAP_mm": "0",
+            "OffCenterFH_mm": "0",
+            "RLAngle_deg": "0",
+            "APAngle_deg": "0",
+            "FHAngle_deg": "0",
+            "TE_ms": "14",
+            "TR_ms": "864",
+            "TI_ms": "0"
+    },
+    "T1WSE_Sagittal": {
+            "description": "T1-weighted spin echo sagittal survey scan",
+            "ScanPlane": "Sagittal",
+            "FOVPE_mm": "180",
+            "FOVFE_mm": "216",
+            "SliceThickness_mm": "1",
+            "NSlices": "3",
+            "SliceGap_mm": "30",
+            "OffCenterRL_mm": "0",
+            "OffCenterAP_mm": "0",
+            "OffCenterFH_mm": "0",
+            "RLAngle_deg": "0",
+            "APAngle_deg": "0",
+            "FHAngle_deg": "0",
+            "TE_ms": "14",
+            "TR_ms": "864",
+            "TI_ms": "0"
+    }
+
+}

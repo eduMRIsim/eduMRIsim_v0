@@ -1,32 +1,14 @@
 class Model:
-    def __init__(self, name, description, T1map_ms, T2map_ms, T2smap_ms, PDmap_ms):
-        self._name = name
-        self._description = description
-        self._T1map_ms = T1map_ms
-        self._T2map_ms = T2map_ms
-        self._T2smap_ms = T2smap_ms
-        self._PDmap_ms = PDmap_ms 
-
-    @property
-    def name(self):
-        return self._name
-    
-    @name.setter
-    def name(self, name):
-        self._name = name 
-
-    @property
-    def T1map_ms(self):
-        return self._T1map_ms
-    
-    @property
-    def T2map_ms(self):
-        return self._T2map_ms
-    
-    @property
-    def T2smap_ms(self):
-        return self._T2smap_ms
-    
-    @property
-    def PDmap_ms(self):
-        return self._PDmap_ms 
+    '''Anatomical model made up of 3D maps which define the tissue properties T1, T2, T2s and PD for each voxel of the model. The dimensions of the model are defined by the XDim, YDim and ZDim parameters. The resolution of the model is defined by the XDimRes, YDimRes and ZDimRes parameters.'''
+    def __init__(self, name: str, data_dict: dict):
+        self.name = name
+        self.T1map_msec = data_dict['T1']
+        self.T2map_msec = data_dict['T2']
+        self.T2smap_msec = data_dict['T2Star']
+        self.PDmap = data_dict['Rho']
+        self.XDim = int(data_dict['XDim'])
+        self.YDim = int(data_dict['YDim'])
+        self.ZDim = int(data_dict['ZDim'])
+        self.XDimRes_mm = float(data_dict['XDimRes'])
+        self.YDimRes_mm = float(data_dict['YDimRes'])
+        self.ZDimRes_mm = float(data_dict['ZDimRes'])
