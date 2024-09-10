@@ -71,6 +71,7 @@ class IdleState(UI_MainWindowState):
         context.scanningModeButton.setEnabled(False)
         context.viewingModeButton.setEnabled(False)
         context.examinationInfoStackedLayout.setCurrentIndex(0)
+        context.editingStackedLayout.setCurrentIndex(0)
         context.scanlistListWidget.setVisible(False)
         context.addScanItemButton.setVisible(False)
         context.startScanButton.setEnabled(False)
@@ -80,6 +81,10 @@ class IdleState(UI_MainWindowState):
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanProgressBar.setValue(0)
+        context.scannedImageFrame.setAcquiredSeries(None)
+        context.scanPlanningWindow1.setAcquiredSeries(None)
+        context.scanPlanningWindow2.setAcquiredSeries(None)
+        context.scanPlanningWindow3.setAcquiredSeries(None)
 
 class MRIfortheBrainState(UI_MainWindowState):
     def update_UI(self, context) -> None:

@@ -82,12 +82,25 @@ class AcquiredSeries:
 class Scanlist:
     def __init__(self):
         self.scanlist_elements = []
-        self.active_idx = 0 
+        self._active_idx = None 
+        self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
         new_scanlist_element = ScanlistElement(name, scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
+        self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
+        if self.active_idx is None:
+            self.active_idx = 0
     
+    @property
+    def active_idx(self):
+        return self._active_idx
+    
+    @active_idx.setter
+    def active_idx(self, idx):
+        self._active_idx = idx
+        self.notify_observers(EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED)
+
     @property
     def active_scanlist_element(self):
         return self.scanlist_elements[self.active_idx]
@@ -107,6 +120,19 @@ class Scanlist:
         else:        
             return completed / len(self.scanlist_elements)
 
+    def add_observer(self, observer):
+        self.observers.append(observer)
+        print("Observer", observer, "added to", self)
+
+    def notify_observers(self, event: EventEnum):
+        for observer in self.observers:
+            observer.update(event)
+            print("Subject", self, "is updating observer", observer, "with event", event)
+
+    def remove_observer(self, observer):
+        self.observers.remove(observer)
+        print("Observer", observer, "removed from", self)
+
 class ScanlistElementStatusEnum(Enum):
     READY_TO_SCAN = auto()
     BEING_MODIFIED = auto()
@@ -117,17 +143,41 @@ class ScanlistElement:
     def __init__(self, name, scan_parameters):
         self.scan_item = ScanItem(name, scan_parameters, self)
         self.acquired_data = None
-        self.status = ScanlistElementStatusEnum.READY_TO_SCAN
+        self._status = ScanlistElementStatusEnum.READY_TO_SCAN
+        self.observers = []
+
+    @property
+    def status(self):
+        return self._status
+    
+    @status.setter
+    def status(self, status):
+        self._status = status
+        self.notify_observers(EventEnum.SCANLIST_ELEMENT_STATUS_CHANGED)
 
     @property
     def name(self):
         return self.scan_item.name
+
+    def add_observer(self, observer):
+        self.observers.append(observer)
+        print("Observer", observer, "added to", self)
+
+    def notify_observers(self, event: EventEnum):
+        for observer in self.observers:
+            observer.update(event)
+            print("Subject", self, "is updating observer", observer, "with event", event)
+
+    def remove_observer(self, observer):
+        self.observers.remove(observer)
+        print("Observer", observer, "removed from", self)
 
 class ScanItem: 
     def __init__(self, name, scan_parameters, scanlist_element):
         self.name = name
         self._scan_parameters = {}
         self.scan_volume = ScanVolume()
+        self.scan_volume.add_observer(self)
         self.scan_parameters = scan_parameters
         self._scan_parameters_original = {}
         for key, value in scan_parameters.items():
@@ -157,7 +207,6 @@ class ScanItem:
                 self.scan_parameters[key] = value
         self.scan_volume.set_scan_volume_geometry(scan_parameters)
 
-
     @property
     def scan_parameters_original(self):
         return self._scan_parameters_original
@@ -183,6 +232,9 @@ class ScanItem:
     def validate_scan_parameters(self, scan_parameters):
         self.valid = True
         self.messages = {}
+        self.scan_parameters = scan_parameters
+        if self.valid == True:
+            self.status = ScanlistElementStatusEnum.READY_TO_SCAN
         
         '''This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid.'''
         # try: scan_parameters["TE"] = float(scan_parameters["TE"])
@@ -234,6 +286,11 @@ class ScanItem:
             
         # else:
         #     self.status = ScanlistElementStatusEnum.INVALID
+
+        def update(self, event):
+            if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
+                parameters = self.scan_volume.get_parameters()
+                self.scan_parameters = parameters 
             
 class ScanVolume:
     ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
@@ -264,7 +321,7 @@ class ScanVolume:
         return np.array([[self.axisX_LPS[0], self.axisY_LPS[0], self.axisZ_LPS[0], self.origin_LPS[0]], [self.axisX_LPS[1], self.axisY_LPS[1], self.axisZ_LPS[1], self.origin_LPS[1]], [self.axisX_LPS[2], self.axisY_LPS[2], self.axisZ_LPS[2], self.origin_LPS[2]], [0, 0, 0, 1]])
    
     def set_scan_volume_geometry(self, scan_parameters: dict):
-        self.N_slices = int(scan_parameters['NSlices'])
+        self.N_slices = int(float(scan_parameters['NSlices']))
         self.slice_gap_mm = float(scan_parameters['SliceGap_mm'])
         self.slice_thickness_mm = float(scan_parameters['SliceThickness_mm'])
         self.extentX_mm = float(scan_parameters['FOVPE_mm'])
@@ -471,10 +528,16 @@ class ScanVolume:
  
     def add_observer(self, observer):
         self.observers.append(observer)
+        print("Observer", observer, "added to", self)
     
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
             observer.update(event)
+            print("Subject", self, "is updating observer", observer, "with event", event)
 
     def remove_observer(self, observer):
         self.observers.remove(observer)
+        print("Observer", observer, "removed from", self)
+
+    def get_parameters(self):
+        return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2]}

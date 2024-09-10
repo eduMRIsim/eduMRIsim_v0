@@ -653,6 +653,9 @@ class ParameterFormLayout(QVBoxLayout):
 
         self.isReadOnly = True
 
+        self.editors = {}
+
+
         # # Connect signals to the custom signal
         # self.TELineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
         # self.TRLineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
@@ -661,8 +664,6 @@ class ParameterFormLayout(QVBoxLayout):
         # self.scanTechniqueComboBox.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
 
     def createForm(self, parameters : dict) -> None:
-        self.editors = {}
-
         # Create form elements based on the data in "parameters".
         for parameter in parameters:
             name = parameter["name"]
@@ -680,12 +681,14 @@ class ParameterFormLayout(QVBoxLayout):
                 parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignLeft)
                 parameter_layout.addWidget(editor, 1, 0, Qt.AlignLeft)
                 parameter_layout.addWidget(HeaderLabel(unit), 1, 1, Qt.AlignLeft)
+                editor.textChanged.connect(lambda: self.formActivatedSignal.emit())
             elif editor_type == "QComboBox":
                 editor = QComboBox()
                 editor.addItems(default_value)
                 editor.setCurrentIndex(0)
                 parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignLeft)
                 parameter_layout.addWidget(editor, 1, 0, Qt.AlignLeft)
+                editor.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
             else:
                 raise ValueError(f"Unknown editor type: {editor_type}") # Raise an error if the editor type is unknown. If the error is raised, the program will stop executing. 
             
@@ -721,26 +724,24 @@ class ParameterFormLayout(QVBoxLayout):
             
     def set_parameters(self, parameters):
         # Set the data into the editors
-        for name, value in parameters.items():
-            if name in self.editors: # Checks if the string name is a key in the self.editors dictionary.
-                editor = self.editors[name] # Get the editor widget from the dictionary.
-                if isinstance(editor, QLineEdit):
-                    editor.setText(str(value))
-                elif isinstance(editor, QComboBox):
-                    index = editor.findText(str(value))
-                    if index != -1:
-                        editor.setCurrentIndex(index)        
+        with block_signals(self.editors.values()):
+            for name, value in parameters.items():
+                if name in self.editors: # Checks if the string name is a key in the self.editors dictionary.
+                    editor = self.editors[name] # Get the editor widget from the dictionary.
+                    if isinstance(editor, QLineEdit):
+                        editor.setText(str(value))
+                    elif isinstance(editor, QComboBox):
+                        index = editor.findText(str(value))
+                        if index != -1:
+                            editor.setCurrentIndex(index)        
 
     def setReadOnly(self, bool : bool):
-        if self.isReadOnly == bool:
-            return
-        else:
-            for editor in self.editors.values():
-                if isinstance(editor, (QLineEdit)):
-                    editor.setReadOnly(bool)
-                if isinstance(editor, (QComboBox)):
-                    editor.setEnabled(not bool)
-            self.isReadOnly = bool
+        for editor in self.editors.values():
+            if isinstance(editor, (QLineEdit)):
+                editor.setReadOnly(bool)
+            if isinstance(editor, (QComboBox)):
+                editor.setEnabled(not bool)
+        self.isReadOnly = bool
 
     def clearForm(self):
         with block_signals(self.editors.values()):
@@ -942,10 +943,13 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
+        print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
             observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
+            print("Subject", self, "is updating observer", observer, "with event", event)
+
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
@@ -1001,14 +1005,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
-    def setDisplayedImage(self, image):
-        self.displayed_image = image
-        if image is not None:
-            self.array = image.image_data
-        else:
-            self.array = None
-        self._displayArray()
-        self._update_scan_volume_display()
 
     def _displayArray(self):
         width, height = 0, 0
@@ -1074,8 +1070,18 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.displayed_image_index = 0 
             self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
         else:
-            self.displayed_image = None
+            self.acquired_series = None
+            self.setDisplayedImage(None)
+
+
+    def setDisplayedImage(self, image):
+        self.displayed_image = image
+        if image is not None:
+            self.array = image.image_data
+        else:
             self.array = None
+        self._displayArray()
+        self._update_scan_volume_display()
 
     def setScanVolume(self, scan_volume: ScanVolume):
         # remove the observer from the previous scan volume
@@ -1333,6 +1339,7 @@ class ImageLabel(QGraphicsView):
 
     def add_observer(self, observer):
         self.observers.append(observer)
+        print("Observer", observer, "added to", self)
 
     def notify_observers(self, window_width, window_level):
         for observer in self.observers:
