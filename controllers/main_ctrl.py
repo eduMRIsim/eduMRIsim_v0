@@ -7,7 +7,7 @@ from PyQt5.QtGui import QIcon
 from views.view_model_dialog_ui import ViewModelDialog
 import numpy as np
 from simulator.model import Model 
-from simulator.scanlist import ScanlistElementStatusEnum
+from simulator.scanlist import ScanItemStatusEnum
 import views.UI_MainWindowState as UI_state 
 from events import EventEnum
 
@@ -80,13 +80,13 @@ class MainController:
         #test icon code
         for item in list:
             list_item = QListWidgetItem(item.name)
-            if item.status == ScanlistElementStatusEnum.READY_TO_SCAN:
+            if item.scan_item.status == ScanItemStatusEnum.READY_TO_SCAN:
                 list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))  
-            elif item.status == ScanlistElementStatusEnum.BEING_MODIFIED:
+            elif item.scan_item.status == ScanItemStatusEnum.BEING_MODIFIED:
                 list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
-            elif item.status == ScanlistElementStatusEnum.INVALID:
+            elif item.scan_item.status == ScanItemStatusEnum.INVALID:
                 list_item.setIcon(QIcon("resources/icons/alert-circle-outline.png"))
-            elif item.status == ScanlistElementStatusEnum.COMPLETE:
+            elif item.scan_item.status == ScanItemStatusEnum.COMPLETE:
                 list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))
             self._ui.scanlistListWidget.addItem(list_item)  
         active_idx = self.scanner.scanlist.active_idx
@@ -108,24 +108,18 @@ class MainController:
         view_model_dialog.exec()    
 
     def handle_parameterFormLayout_activated(self):
-        self.scanner.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.BEING_MODIFIED
+        self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 
     def handle_scanParametersCancelChangesButton_clicked(self):
-        self.scanner.scanlist.active_scan_item.cancel_changes()
-        self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
+        self.scanner.active_scan_item.cancel_changes()
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
-        self.update_scanlistListWidget(self.scanner.scanlist)
         
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self._ui.parameterFormLayout.get_parameters()
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
-        self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
-        self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
-        self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
-        self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
         selected_model_data = self.model_data.get(model_name)
@@ -141,59 +135,59 @@ class MainController:
         self._ui.examinationNameLabel.setText(exam_name)
         self._ui.modelNameLabel.setText(model_name)        
 
-    def handle_scanlist_element_status_change(self, status):
-        if status == ScanlistElementStatusEnum.READY_TO_SCAN:
+    def handle_scan_item_status_change(self, status):
+        if status == ScanItemStatusEnum.READY_TO_SCAN:
             self._ui.state = UI_state.ReadyToScanState()
             self._ui.update_UI()
-        elif status == ScanlistElementStatusEnum.BEING_MODIFIED:
+        elif status == ScanItemStatusEnum.BEING_MODIFIED:
             self._ui.state = UI_state.BeingModifiedState()
             self._ui.update_UI()
-        elif status == ScanlistElementStatusEnum.INVALID:
+        elif status == ScanItemStatusEnum.INVALID:
             self._ui.state = UI_state.InvalidParametersState()
             self._ui.update_UI()
-        elif status == ScanlistElementStatusEnum.COMPLETE:
+        elif status == ScanItemStatusEnum.COMPLETE:
             self._ui.state = UI_state.ScanCompleteState()
             self._ui.update_UI()
-            self._ui.scannedImageFrame.setAcquiredSeries(self.scanner.scanlist.active_scanlist_element.acquired_data)
+            self._ui.scannedImageFrame.setAcquiredSeries(self.scanner.active_scanlist_element.acquired_data)
 
     def handle_scanPlanningWindow1_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         acquired_series = scanlist_element.acquired_data
         self._ui.scanPlanningWindow1.setAcquiredSeries(acquired_series)
-        scan_volume = scanlist_element.scan_item.scan_volume
-        self._ui.scanPlanningWindow1.setScanVolume(scan_volume)
-        self.update_scanlistListWidget(self.scanner.scanlist)
+        self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
 
     def handle_scanPlanningWindow2_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         acquired_series = scanlist_element.acquired_data
         self._ui.scanPlanningWindow2.setAcquiredSeries(acquired_series)
-        self.update_scanlistListWidget(self.scanner.scanlist)
+        self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
 
     def handle_scanPlanningWindow3_dropped(self, selected_index):
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         acquired_series = scanlist_element.acquired_data
         self._ui.scanPlanningWindow3.setAcquiredSeries(acquired_series)
-        self.update_scanlistListWidget(self.scanner.scanlist)
+        self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
 
     def update(self, event):
         if event == EventEnum.SCANLIST_ITEM_ADDED:
             self.update_scanlistListWidget(self.scanner.scanlist)
 
         if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED: 
-            self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
+            self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
             self._ui.editingStackedLayout.setCurrentIndex(0)    
-            self._ui.scannedImageFrame.setAcquiredSeries(self.scanner.scanlist.active_scanlist_element.acquired_data)
+            self._ui.scannedImageFrame.setAcquiredSeries(self.scanner.active_scanlist_element.acquired_data)
             current_list_item = self._ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)
             self._ui.scanlistListWidget.setCurrentItem(current_list_item)
-            self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
-            self.scanner.active_scanlist_element.add_observer(self)
-            self._ui.scanPlanningWindow1.setScanVolume(self.scanner.scanlist.active_scanlist_element.scan_item.scan_volume)
-            self._ui.scanPlanningWindow2.setScanVolume(self.scanner.scanlist.active_scanlist_element.scan_item.scan_volume)
-            self._ui.scanPlanningWindow3.setScanVolume(self.scanner.scanlist.active_scanlist_element.scan_item.scan_volume)
+            self.populate_parameterFormLayout(self.scanner.active_scan_item)
+            self.scanner.active_scan_item.add_observer(self)
+            self._ui.scanPlanningWindow1.setScanVolume(self.scanner.active_scan_item.scan_volume)
+            self._ui.scanPlanningWindow2.setScanVolume(self.scanner.active_scan_item.scan_volume)
+            self._ui.scanPlanningWindow3.setScanVolume(self.scanner.active_scan_item.scan_volume)
 
-        if event == EventEnum.SCANLIST_ELEMENT_STATUS_CHANGED:
-            self.handle_scanlist_element_status_change(self.scanner.scanlist.active_scanlist_element.status)
+        if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
+            self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
             self.update_scanlistListWidget(self.scanner.scanlist)
 
+        if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
+            self.populate_parameterFormLayout(self.scanner.active_scan_item)
             

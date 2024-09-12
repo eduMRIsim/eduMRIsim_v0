@@ -113,7 +113,7 @@ class Scanlist:
         # divide the number of completed scans by the total number of scans
         completed = 0
         for scanlist_element in self.scanlist_elements:
-            if scanlist_element.status == ScanlistElementStatusEnum.COMPLETE:
+            if scanlist_element.scan_item.status == ScanItemStatusEnum.COMPLETE:
                 completed += 1
         if len(self.scanlist_elements) == 0:
             return 0
@@ -126,14 +126,15 @@ class Scanlist:
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            observer.update(event)
             print("Subject", self, "is updating observer", observer, "with event", event)
+            observer.update(event)
+            
 
     def remove_observer(self, observer):
         self.observers.remove(observer)
         print("Observer", observer, "removed from", self)
 
-class ScanlistElementStatusEnum(Enum):
+class ScanItemStatusEnum(Enum):
     READY_TO_SCAN = auto()
     BEING_MODIFIED = auto()
     INVALID = auto()
@@ -141,10 +142,29 @@ class ScanlistElementStatusEnum(Enum):
 
 class ScanlistElement:
     def __init__(self, name, scan_parameters):
-        self.scan_item = ScanItem(name, scan_parameters, self)
+        self.scan_item = ScanItem(name, scan_parameters)
         self.acquired_data = None
-        self._status = ScanlistElementStatusEnum.READY_TO_SCAN
         self.observers = []
+
+    @property
+    def name(self):
+        return self.scan_item.name
+
+class ScanItem: 
+    def __init__(self, name, scan_parameters):
+        self.name = name
+        self._scan_parameters = {}
+        self.scan_volume = ScanVolume()
+        self.scan_volume.add_observer(self)
+        self.observers = []
+        self.scan_parameters = scan_parameters
+        self._scan_parameters_original = {}
+        self.scan_parameters_original = scan_parameters
+        self.messages = {}
+        self.valid = True
+        self._status = ScanItemStatusEnum.READY_TO_SCAN
+
+
 
     @property
     def status(self):
@@ -153,46 +173,7 @@ class ScanlistElement:
     @status.setter
     def status(self, status):
         self._status = status
-        self.notify_observers(EventEnum.SCANLIST_ELEMENT_STATUS_CHANGED)
-
-    @property
-    def name(self):
-        return self.scan_item.name
-
-    def add_observer(self, observer):
-        self.observers.append(observer)
-        print("Observer", observer, "added to", self)
-
-    def notify_observers(self, event: EventEnum):
-        for observer in self.observers:
-            observer.update(event)
-            print("Subject", self, "is updating observer", observer, "with event", event)
-
-    def remove_observer(self, observer):
-        self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
-
-class ScanItem: 
-    def __init__(self, name, scan_parameters, scanlist_element):
-        self.name = name
-        self._scan_parameters = {}
-        self.scan_volume = ScanVolume()
-        self.scan_volume.add_observer(self)
-        self.scan_parameters = scan_parameters
-        self._scan_parameters_original = {}
-        for key, value in scan_parameters.items():
-            self._scan_parameters_original[key] = value
-        self.scanlist_element = scanlist_element
-        self.messages = {}
-        self.valid = True
-
-    @property
-    def status(self):
-        return self.scanlist_element.status
-    
-    @status.setter
-    def status(self, status):
-        self.scanlist_element.status = status
+        self.notify_observers(EventEnum.SCAN_ITEM_STATUS_CHANGED)
 
     @property
     def scan_parameters(self):
@@ -202,10 +183,13 @@ class ScanItem:
     def scan_parameters(self, scan_parameters):
         for key, value in scan_parameters.items():
             try: 
-                self.scan_parameters[key] = float(value) 
+                self._scan_parameters[key] = float(value) 
             except: 
-                self.scan_parameters[key] = value
-        self.scan_volume.set_scan_volume_geometry(scan_parameters)
+                self._scan_parameters[key] = value
+        self.scan_volume.remove_observer(self)
+        self.scan_volume.set_scan_volume_geometry(self.scan_parameters)
+        self.scan_volume.add_observer(self)
+        self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
     @property
     def scan_parameters_original(self):
@@ -219,22 +203,22 @@ class ScanItem:
     
     def cancel_changes(self):
         if self.valid == True:
-            self.status = ScanlistElementStatusEnum.READY_TO_SCAN
+            self.status = ScanItemStatusEnum.READY_TO_SCAN
         else:
-            self.status = ScanlistElementStatusEnum.INVALID
+            self.status = ScanItemStatusEnum.INVALID
 
     def reset_parameters(self):      
         self.scan_parameters = self.scan_parameters_original
         self.valid = True
         self.messages = {}
-        self.status = ScanlistElementStatusEnum.READY_TO_SCAN    
+        self.status = ScanItemStatusEnum.READY_TO_SCAN    
 
     def validate_scan_parameters(self, scan_parameters):
         self.valid = True
         self.messages = {}
         self.scan_parameters = scan_parameters
         if self.valid == True:
-            self.status = ScanlistElementStatusEnum.READY_TO_SCAN
+            self.status = ScanItemStatusEnum.READY_TO_SCAN
         
         '''This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid.'''
         # try: scan_parameters["TE"] = float(scan_parameters["TE"])
@@ -287,11 +271,25 @@ class ScanItem:
         # else:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
-        def update(self, event):
-            if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
+    def update(self, event):
+            if event == EventEnum.SCAN_VOLUME_CHANGED:
                 parameters = self.scan_volume.get_parameters()
                 self.scan_parameters = parameters 
+
+    def add_observer(self, observer):
+        self.observers.append(observer)
+        print("Observer", observer, "added to", self)
+
+    def notify_observers(self, event: EventEnum):
+        for observer in self.observers:
+            print("Subject", self, "is updating observer", observer, "with event", event)
+            observer.update(event)
             
+
+    def remove_observer(self, observer):
+        self.observers.remove(observer)
+        print("Observer", observer, "removed from", self)
+           
 class ScanVolume:
     ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
     def __init__(self):
@@ -346,7 +344,7 @@ class ScanVolume:
         # rotate the axes according to the angle parameters
 
         # first rotate around RL axis
-        angleRL_deg = scan_parameters.get('RL_angle_deg', 0)
+        angleRL_deg = scan_parameters.get('RLAngle_deg', 0)
         # make sure angleRL is type float
         angleRL_deg = float(angleRL_deg)
         # rotate the LPS axes by the angleRL
@@ -357,7 +355,7 @@ class ScanVolume:
         self.axisZ_LPS = np.dot(rotation_matrix_RL, self.axisZ_LPS)
 
         # then rotate around AP axis             
-        angleAP_deg = scan_parameters.get('AP_angle_deg', 0)
+        angleAP_deg = scan_parameters.get('APAngle_deg', 0)
         # make sure angleAP is type float
         angleAP_deg = float(angleAP_deg)
         # rotate the LPS axes by the angleAP
@@ -368,7 +366,7 @@ class ScanVolume:
         self.axisZ_LPS = np.dot(rotation_matrix_AP, self.axisZ_LPS)
 
         # finally rotate around FH axis
-        angleFH_deg = scan_parameters.get('FH_angle_deg', 0)
+        angleFH_deg = scan_parameters.get('FHAngle_deg', 0)
         # make sure angleFH is type float
         angleFH_deg = float(angleFH_deg)
         # rotate the LPS axes by the angleFH
@@ -377,6 +375,8 @@ class ScanVolume:
         self.axisX_LPS = np.dot(rotation_matrix_FH, self.axisX_LPS)
         self.axisY_LPS = np.dot(rotation_matrix_FH, self.axisY_LPS)
         self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)        
+
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
         # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
@@ -430,7 +430,7 @@ class ScanVolume:
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
         # translate the scan volume by the translation vector (which is in LPS coordinates)
         self.origin_LPS += translation_vector_LPS
-        self.notify_observers(EventEnum.SCAN_VOLUME_UPDATED)
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def scan_volume_mm_coords_to_LPS_coords(self, scan_volume_mm_coords: tuple) -> tuple:
         '''Convert scan volume coordinates to LPS coordinates. The scan volume coordinates are in millimeters, and the LPS coordinates are in millimeters. '''
@@ -532,9 +532,9 @@ class ScanVolume:
     
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            observer.update(event)
             print("Subject", self, "is updating observer", observer, "with event", event)
-
+            observer.update(event)
+            
     def remove_observer(self, observer):
         self.observers.remove(observer)
         print("Observer", observer, "removed from", self)

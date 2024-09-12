@@ -947,8 +947,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
-            observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
             print("Subject", self, "is updating observer", observer, "with event", event)
+            observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
+            
 
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
@@ -997,7 +998,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
-        self.scene.addItem(self.scan_volume_display)
+        #self.scene.addItem(self.scan_volume_display)
 
 
     def resizeEvent(self, event: QResizeEvent):
@@ -1038,7 +1039,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.centerOn(width / 2, height / 2)
 
     def update(self, event: EventEnum, **kwargs): 
-        if event == EventEnum.SCAN_VOLUME_UPDATED:
+        if event == EventEnum.SCAN_VOLUME_CHANGED:
             self._update_scan_volume_display()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:

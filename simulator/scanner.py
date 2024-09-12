@@ -1,5 +1,5 @@
 from simulator.examination import Examination
-from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanVolume, ScanlistElementStatusEnum
+from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanVolume, ScanItemStatusEnum
 from simulator.model import Model
 import numpy as np
 from scipy import interpolate
@@ -52,8 +52,8 @@ class Scanner:
             list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
         acquired_series = AcquiredSeries(list_acquired_images)
-        self.scanlist.active_scanlist_element.acquired_data = acquired_series
-        self.scanlist.active_scanlist_element.status = ScanlistElementStatusEnum.COMPLETE
+        self.active_scanlist_element.acquired_data = acquired_series
+        self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
         return acquired_series
 
     def _calculate_signal(self, scan_parameters: dict, model: Model) -> np.ndarray:
