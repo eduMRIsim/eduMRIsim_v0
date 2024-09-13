@@ -1,31 +1,5 @@
 [
-    {
-        "name": "Echo time (TE)",
-        "key": "TE_ms",
-        "editor": "QLineEdit",
-        "unit": "milliseconds",
-        "default_value": "14",
-        "data_type": "float",
-        "description": "This is the time between the excitation pulse and the peak of the echo signal."
-    },
-    {
-        "name": "Repitition time (TR)",
-        "key": "TR_ms",
-        "editor": "QLineEdit",
-        "unit": "milliseconds",
-        "default_value": "864",
-        "data_type": "float",
-        "description": "This is the time between subsequent excitation pulses."
-    },
-    {
-        "name": "Inversion time (TI)",
-        "key": "TI_ms",
-        "editor": "QLineEdit",
-        "unit": "milliseconds",
-        "default_value": "0",
-        "data_type": "float",
-        "description": "This is the time between the inversion pulse and the excitation pulse."	
-    },    
+
     {
         "name": "Scan plane",
         "key": "ScanPlane",
@@ -131,6 +105,50 @@
         "default_value": "0",
         "data_type": "float",
         "description": ""
+    },
+    {
+        "name": "Scan technique",
+        "key": "ScanTechnique",
+        "editor": "QComboBox",
+        "unit": "",
+        "default_value": ["SE", "GE"],
+        "description": "This is the type of scan that is performed. SE stands for spin echo and GE stands for gradient echo."
+    },
+    {
+        "name": "Echo time (TE)",
+        "key": "TE_ms",
+        "editor": "QLineEdit",
+        "unit": "milliseconds",
+        "default_value": "14",
+        "data_type": "float",
+        "description": "This is the time between the excitation pulse and the peak of the echo signal."
+    },
+    {
+        "name": "Repitition time (TR)",
+        "key": "TR_ms",
+        "editor": "QLineEdit",
+        "unit": "milliseconds",
+        "default_value": "864",
+        "data_type": "float",
+        "description": "This is the time between subsequent excitation pulses."
+    },
+    {
+        "name": "Inversion time (TI)",
+        "key": "TI_ms",
+        "editor": "QLineEdit",
+        "unit": "milliseconds",
+        "default_value": "0",
+        "data_type": "float",
+        "description": "This is the time between the inversion pulse and the excitation pulse."	
+    },    
+    { 
+        "name": "Flip angle",
+        "key": "FA_deg",
+        "editor": "QLineEdit",
+        "unit": "degrees",
+        "default_value": "90",
+        "data_type": "float",
+        "description": "This is the angle between the excitation pulse and the longitudinal axis of the magnetization vector."
     }
 ]
 

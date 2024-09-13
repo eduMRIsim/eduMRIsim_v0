@@ -1,8 +1,7 @@
 from enum import Enum, auto
 
-
 class EventEnum(Enum):
-    '''Enum class for events. Each event is represented by a unique value. The values are automatically assigned by the auto() function. The events are used to notify the observers of changes in the model.
+    '''Enum class for events. Each event is represented by a unique value. The values are automatically assigned by the auto() function. The events are used to notify the observers of changes in the model (i.e., model of the model-view-controller architecture which in this app is an abstraction of the scanner).
     
     In the future it might make sense to create a separate class for each event type, but for now, we will keep it simple and use this enum class. It may also make sense in the future to create Event classes that contain more information about the event, such as the object that triggered the event, the data associated with the event, etc instead of using just an enumeration. '''
 

@@ -129,33 +129,28 @@ class Scanlist:
             print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
-
     def remove_observer(self, observer):
         self.observers.remove(observer)
         print("Observer", observer, "removed from", self)
 
 class ScanItemStatusEnum(Enum):
-    READY_TO_SCAN = auto()
-    BEING_MODIFIED = auto()
-    INVALID = auto()
-    COMPLETE = auto()
+    READY_TO_SCAN = auto() # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
+    BEING_MODIFIED = auto() # Scan parameters are being modified by the user on the UI
+    INVALID = auto() # Scan parameters are invalid and the scan item cannot be applied to "scan" the anatomical model
+    COMPLETE = auto() # The scan item has been applied to "scan" the anatomical model. The acquired data is available.
 
 class ScanlistElement:
     def __init__(self, name, scan_parameters):
         self.scan_item = ScanItem(name, scan_parameters)
         self.acquired_data = None
-        self.observers = []
-
-    @property
-    def name(self):
-        return self.scan_item.name
+        self.name = name
 
 class ScanItem: 
     def __init__(self, name, scan_parameters):
         self.name = name
         self._scan_parameters = {}
         self.scan_volume = ScanVolume()
-        self.scan_volume.add_observer(self)
+        self.scan_volume.add_observer(self) # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed. It receives notifications when changes are caused by user interactions with the scan volume display on viewing windows on the UI. 
         self.observers = []
         self.scan_parameters = scan_parameters
         self._scan_parameters_original = {}
@@ -163,8 +158,6 @@ class ScanItem:
         self.messages = {}
         self.valid = True
         self._status = ScanItemStatusEnum.READY_TO_SCAN
-
-
 
     @property
     def status(self):
@@ -186,9 +179,9 @@ class ScanItem:
                 self._scan_parameters[key] = float(value) 
             except: 
                 self._scan_parameters[key] = value
-        self.scan_volume.remove_observer(self)
+        self.scan_volume.remove_observer(self) # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not respond to events that they themselves initiated.
         self.scan_volume.set_scan_volume_geometry(self.scan_parameters)
-        self.scan_volume.add_observer(self)
+        self.scan_volume.add_observer(self) # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
         self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
     @property
@@ -214,13 +207,14 @@ class ScanItem:
         self.status = ScanItemStatusEnum.READY_TO_SCAN    
 
     def validate_scan_parameters(self, scan_parameters):
+        '''This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid.'''
         self.valid = True
         self.messages = {}
         self.scan_parameters = scan_parameters
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
         
-        '''This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid.'''
+        # old code for validating contrast parameters
         # try: scan_parameters["TE"] = float(scan_parameters["TE"])
 
         # except: 
@@ -285,7 +279,6 @@ class ScanItem:
             print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
-
     def remove_observer(self, observer):
         self.observers.remove(observer)
         print("Observer", observer, "removed from", self)

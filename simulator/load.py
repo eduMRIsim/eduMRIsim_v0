@@ -2,9 +2,7 @@ import json
 from scipy.io import loadmat
 import numpy as np
 
-class Loader:
-    @staticmethod
-    def load(jsonFilePath):
+def load_json(jsonFilePath):
         with open(jsonFilePath, 'r') as json_file:
             data = json.load(json_file)
         return data
@@ -63,12 +61,12 @@ def load_model_data(path_to_data):
     data_dict['T2Star'] = T2smap
     data_dict['Rho'] = PDmap
 
-    # Convert T1, T2, T2s from seconds to milliseconds
+    # Convert T1, T2, T2s from seconds to milliseconds. This is necessary because the scan function expects the values in milliseconds.
     data_dict['T1'] =   data_dict['T1']*1000
     data_dict['T2'] =   data_dict['T2']*1000
     data_dict['T2Star'] =   data_dict['T2Star']*1000
     data_dict['Rho'] =  data_dict['Rho']*1000
-    # Convert the resolution from meters to millimeters
+    # Convert the resolution from meters to millimeters. This is necessary because the scan function expects the values in millimeters. 
     data_dict['XDimRes'] =  data_dict['XDimRes']*1000
     data_dict['YDimRes'] =  data_dict['YDimRes']*1000
     data_dict['ZDimRes'] =  data_dict['ZDimRes']*1000

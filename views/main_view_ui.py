@@ -3,13 +3,19 @@ from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, Q
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea, QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
-import numpy as np
-from views.UI_MainWindowState import IdleState
-from contextlib import contextmanager
-from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
-from events import EventEnum
-from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanVolume
 
+import numpy as np
+
+from contextlib import contextmanager
+
+from views.UI_MainWindowState import IdleState
+from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
+
+from simulator.scanlist import AcquiredSeries, ScanVolume
+
+from events import EventEnum
+
+'''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. However, I've noticed that I haven't been fully consistent with this so I realise some of the naming might be confusing. I might change the names in the future. For the SEP project feel free to use whichever convention you find most convenient when adding new PyQt related code.'''
 
 @contextmanager
 def block_signals(widgets):
@@ -116,22 +122,6 @@ class Ui_MainWindow(QMainWindow):
     def stopScanButton(self):
         return self._scanProgressInfoFrame.stopScanButton
 
-    @property
-    def scannerNameLabel(self):
-        return self._scanProgressInfoFrame.scannerNameLabel
-
-    @property
-    def scannerFieldStrengthLabel(self):
-        return self._scanProgressInfoFrame.scannerFieldStrengthLabel  
-    
-    @property
-    def testInfoLabel(self):
-        return self._scanProgressInfoFrame.testInfoLabel
-    
-    @property
-    def testInfoLabel2(self):
-        return self._scanProgressInfoFrame.testInfoLabel2
-    
     @property
     def editingStackedLayout(self):
         return self._editingStackedLayout 
@@ -267,13 +257,11 @@ class PreExaminationInfoFrame(QFrame):
 
     def _createNewExaminationButton(self):
         self._newExaminationButton = PrimaryActionButton("New Examination")
-        #self._newExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
         self._newExaminationButton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.horizontalLayout.addWidget(self._newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def _createLoadExaminationButton(self):
         self._loadExaminationButton = PrimaryActionButton("Load Examination")
-        #self._loadExaminationButton.setStyleSheet("QPushButton { background-color: #0987e0; font-size: 16px; color: white; min-width: 150px; min-height: 100px;border-radius: 5px; }" )
         self._loadExaminationButton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.horizontalLayout.addWidget(self._loadExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -294,14 +282,10 @@ class ScanlistInfoFrame(QFrame):
                 border-radius: 5px; /* Radius for rounded corners */
             }
         """)
-        #self.label.setStyleSheet("QLabel { color: black; }")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._addScanItemButton = PrimaryActionButton("Add Scan Item")
-        #self._addScanItemButton.setVisible(False)
         self._scanlistListWidget = ScanlistListWidget()
-        #self._scanlistListWidget.setVisible(False)
-        #self._scanlistListWidget.setStyleSheet("border: none;")
         self.layout.addWidget(self._scanlistListWidget)
         self.layout.addWidget(self._addScanItemButton)
 
@@ -362,7 +346,6 @@ class ScanProgressInfoFrame(QFrame):
         self.scanner = scanner
         self._createProgressBar()
         self._createScanButtons()
-        #self._createScanInfo(scanner)
 
     @property
     def scanProgressBar(self):
@@ -375,29 +358,9 @@ class ScanProgressInfoFrame(QFrame):
     @property
     def stopScanButton(self):
         return self._stopScanButton
-    
-    @property
-    def scannerNameLabel(self):
-        return self._scannerNameLabel
-    
-    @property
-    def scannerFieldStrengthLabel(self):
-        return self._scannerFieldStrengthLabel
-    
-    @property
-    def testInfoLabel(self):
-        return self._testInfoLabel
-
-    @property
-    def testInfoLabel2(self):
-        return self._testInfoLabel2
-
+ 
     def _createProgressBar(self):
         scanProgressBarLayout = QHBoxLayout()   
-
-        #scanProgressBarLabel = QLabel("0%")
-        #scanProgressBarLabel.setStyleSheet("QLabel { border: none; }")  # Remove border
-        #scanProgressBarLayout.addWidget(scanProgressBarLabel)
 
         self._scanProgressBar = QProgressBar()
 
@@ -422,45 +385,12 @@ class ScanProgressInfoFrame(QFrame):
         scanButtonsLayout = QHBoxLayout()
         
         self._startScanButton = SecondaryActionButton("Start Scan")
-        #self._startScanButton.setStyleSheet("QPushButton { background-color: green; color: #ffffff; }")
         scanButtonsLayout.addWidget(self._startScanButton)
         
         self._stopScanButton = DestructiveActionButton("Stop Scan")
-        #self._stopScanButton.setStyleSheet("QPushButton { background-color: red; color: #ffffff; }") 
         scanButtonsLayout.addWidget(self._stopScanButton)
 
         self.layout.addLayout(scanButtonsLayout)
-
-    def _createScanInfo(self,scanner):
-        scanInfoForm = QFormLayout()
-        scannerName = QLabel(scanner.name)
-        scannerName.setStyleSheet("border: none;")
-        scannerFieldStrength = QLabel(str(scanner.field_strength))
-        scannerFieldStrength.setStyleSheet("border: none;")
-
-
-
-        # Ensure there's no border around labels "Scanner" and "Field strength (T)"
-        self._scannerNameLabel = QLabel("Scanner name:")
-        self._scannerNameLabel.setStyleSheet("border: none;")
-        self._scannerFieldStrengthLabel = QLabel("Field strength (T):")
-        self._scannerFieldStrengthLabel.setStyleSheet("border: none;")
-        #Label for printing info for testing
-        self._testInfo = QLabel("Test info:")
-        self._testInfo.setStyleSheet("border: none;")
-        self._testInfoLabel = QLabel()
-        self._testInfoLabel.setStyleSheet("border: none;")
-        self._testInfo2 = QLabel("Test info2:")
-        self._testInfo2.setStyleSheet("border: none;")
-        self._testInfoLabel2 = QLabel()
-        self._testInfoLabel2.setStyleSheet("border: none;")
-
-        scanInfoForm.addRow(self._scannerNameLabel, scannerName)
-        scanInfoForm.addRow(self._scannerFieldStrengthLabel, scannerFieldStrength)
-        scanInfoForm.addRow(self._testInfo, self._testInfoLabel)
-        scanInfoForm.addRow(self._testInfo2, self._testInfoLabel2)
-
-        self.layout.addLayout(scanInfoForm)
 
 class ScanPlanningWindow(QFrame):
     def __init__(self):
@@ -541,7 +471,7 @@ class ScanParametersTabWidget(QTabWidget):
     def __init__(self):
         super().__init__()
         self.parameterTab = ParameterTab()
-        self.addTab(self.parameterTab, "Contrast")
+        self.addTab(self.parameterTab, "Scan parameters")
         
     @property
     def parameterFormLayout(self):
@@ -578,90 +508,8 @@ class ParameterFormLayout(QVBoxLayout):
 
     def __init__(self):
         super().__init__()
-        
-
-        # self.scanTechniqueComboBox = QComboBox()
-        # self.scanTechniqueComboBox.addItems([""]) # This line is needed because otherwise the QComboBox is not initialized properly. It is required in order to be able to set the combo box to read only. 
-        # self.scanTechniqueComboBox.setFixedHeight(30)
-        # self.scanTechniqueComboBox.setFixedWidth(300)
-        # #self.scanTechniqueComboBox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # self.TELineEdit = QLineEdit()
-        # self.TELineEdit.setFixedHeight(30)
-        # self.TELineEdit.setFixedWidth(300)
-        # #self.TELineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # self.TRLineEdit = QLineEdit()
-        # self.TRLineEdit.setFixedHeight(30)
-        # self.TRLineEdit.setFixedWidth(300)
-        # #self.TRLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # self.TILineEdit = QLineEdit()
-        # self.TILineEdit.setFixedHeight(30)
-        # self.TILineEdit.setFixedWidth(300)
-        # #self.TILineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # self.FALineEdit = QLineEdit()
-        # self.FALineEdit.setFixedHeight(30)
-        # self.FALineEdit.setFixedWidth(300)
-        # #self.FALineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # #self.sliceLineEdit = QLineEdit()
-
-
-        # self.scanTechniqueMessageLabel = QLabel()
-        # self.scanTechniqueMessageLabel.setStyleSheet("color: red")    
-        # self.TEMessageLabel = QLabel()
-        # self.TEMessageLabel.setStyleSheet("color: red")
-        # self.TRMessageLabel = QLabel()
-        # self.TRMessageLabel.setStyleSheet("color: red")
-        # self.TIMessageLabel = QLabel()
-        # self.TIMessageLabel.setStyleSheet("color: red")
-        # self.FAMessageLabel = QLabel()
-        # self.FAMessageLabel.setStyleSheet("color: red")
-        # #self.sliceMessageLabel = QLabel()
-        # #self.sliceMessageLabel.setStyleSheet("color: red")
-
-        # #self.setHorizontalSpacing(10)
-
-        # self.addWidget(QLabel("Scan technique"), 0, 0, Qt.AlignLeft)
-        # self.addWidget(self.scanTechniqueComboBox, 1, 0, Qt.AlignLeft)
-        # self.addWidget(self.scanTechniqueMessageLabel, 2, 0, Qt.AlignLeft)
-
-        # self.addWidget(QLabel("Echo time (TE)"), 3, 0, Qt.AlignLeft)
-        # self.addWidget(self.TELineEdit, 4, 0, Qt.AlignLeft)
-        # self.addWidget(HeaderLabel("milliseconds"), 4, 1)
-        # self.addWidget(self.TEMessageLabel, 5, 0, Qt.AlignLeft)
-
-        # self.addWidget(QLabel("Repetition time (TR)"), 6, 0, Qt.AlignLeft)
-        # self.addWidget(self.TRLineEdit, 7, 0, Qt.AlignLeft)
-        # self.addWidget(HeaderLabel("milliseconds"), 7, 1)
-        # self.addWidget(self.TRMessageLabel, 8, 0, Qt.AlignLeft)
-
-        # self.addWidget(QLabel("Inversion time (TI)"), 9, 0, Qt.AlignLeft)
-        # self.addWidget(self.TILineEdit, 10, 0, Qt.AlignLeft)
-        # self.addWidget(HeaderLabel("milliseconds"), 10, 1)
-        # self.addWidget(self.TIMessageLabel, 11, 0, Qt.AlignLeft)
-
-        # self.addWidget(QLabel("Flip angle (FA)"), 12, 0, Qt.AlignLeft)
-        # self.addWidget(self.FALineEdit, 13, 0, Qt.AlignLeft)
-        # self.addWidget(HeaderLabel("degrees"), 13, 1)
-        # self.addWidget(self.FAMessageLabel, 14, 0, Qt.AlignLeft)
-
-        # #self.addWidget(QLabel("slice:"), 4, 0, Qt.AlignLeft)
-        # #self.addWidget(self.sliceLineEdit, 4, 1, Qt.AlignLeft)
-        # #self.addWidget(self.sliceMessageLabel, 4, 2, Qt.AlignLeft)
-
-        # self.setColumnStretch(0, 10)
-        # self.setColumnStretch(1, 1)
-        # #self.setColumnStretch(2, 2)
-
         self.isReadOnly = True
-
         self.editors = {}
-
-
-        # # Connect signals to the custom signal
-        # self.TELineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
-        # self.TRLineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
-        # self.TILineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
-        # self.FALineEdit.textChanged.connect(lambda: self.formActivatedSignal.emit())
-        # self.scanTechniqueComboBox.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
 
     def createForm(self, parameters : dict) -> None:
         # Create form elements based on the data in "parameters".
@@ -751,175 +599,6 @@ class ParameterFormLayout(QVBoxLayout):
                 elif isinstance(editor, QComboBox):
                     editor.setCurrentIndex(0)
 
-    # def setScanTechniqueComboBox(self, scan_techniques):
-    #     with block_signals([self.scanTechniqueComboBox]):
-    #         self.scanTechniqueComboBox.clear()
-    #         self.scanTechniqueComboBox.addItems(scan_techniques)
-
-    # def setReadOnly(self, isReadOnly):
-    #     if self.isReadOnly == isReadOnly:
-    #         return
-    #     else:
-    #         for row in range(self.rowCount()):
-    #             for col in range(self.columnCount()):
-    #                 item = self.itemAtPosition(row, col)
-    #                 if item and item.widget():
-    #                     # Check if the widget is a QLineEdit or QComboBox and set its read-only state
-    #                     if isinstance(item.widget(), (QLineEdit)):
-    #                         item.widget().setReadOnly(isReadOnly)
-    #                     if isinstance(item.widget(), (QComboBox)):
-    #                         item.widget().setEnabled(not isReadOnly)
-    #         self.isReadOnly = isReadOnly
-
-    # def setData(self, data, messages):
-    #     widgets = [self.TELineEdit, self.TRLineEdit, self.TILineEdit, self.FALineEdit, self.scanTechniqueComboBox]
-
-    #     # Use the block_signals context manager to temporarily block signal emissions
-    #     with block_signals(widgets):
-    #         # Set the data for the widgets without emitting formActivatedSignal
-    #         if data["scan_technique"] == "SE":
-    #             index = self.scanTechniqueComboBox.findText("spin echo")
-    #         if data["scan_technique"] == "GE":
-    #             index = self.scanTechniqueComboBox.findText("gradient echo")
-    #         if index != -1:
-    #             self.scanTechniqueComboBox.setCurrentIndex(index)
-    #         self.TELineEdit.setText(str(data.get("TE", "")))
-    #         self.TRLineEdit.setText(str(data.get("TR", "")))
-    #         self.TILineEdit.setText(str(data.get("TI", "")))
-    #         self.FALineEdit.setText(str(data.get("FA", "")))
-    #         #self.sliceLineEdit.setText(str(data.get("slice", "")))
-
-    #         self.setMessages(messages)
-
-    # def getData(self):
-    #     data = {}
-    #     if self.scanTechniqueComboBox.currentText() == "spin echo":
-    #         data["scan_technique"] = "SE"
-    #     if self.scanTechniqueComboBox.currentText() == "gradient echo":
-    #         data["scan_technique"] = "GE"
-    #     data["TE"] = self.TELineEdit.text()
-    #     data["TR"] = self.TRLineEdit.text()
-    #     data["TI"] = self.TILineEdit.text()
-    #     data["FA"] = self.FALineEdit.text()
-    #     #data["slice"] = self.sliceLineEdit.text()
-
-    #     return data
-
-    # def setMessages(self, messages):
-    #     self.TEMessageLabel.setText(messages.get("TE", ""))
-    #     self.TRMessageLabel.setText(messages.get("TR", ""))
-    #     self.TIMessageLabel.setText(messages.get("TI", ""))
-    #     self.FAMessageLabel.setText(messages.get("FA", ""))
-    #     #self.sliceMessageLabel.setText(messages.get("slice", ""))
-
-    # def clearForm(self):
-    #     widgets = [self.TELineEdit, self.TRLineEdit, self.TILineEdit, self.FALineEdit, self.scanTechniqueComboBox]
-    #     with block_signals(widgets):
-    #         self.TELineEdit.clear()
-    #         self.TRLineEdit.clear()
-    #         self.TILineEdit.clear()
-    #         self.FALineEdit.clear()
-    #         self.scanTechniqueComboBox.setCurrentIndex(0)
-    #         self.setMessages({})
-
-""" #QGraphicsView is a Qt class designed to display the contents of a QGraphicsScene. It provides a 2D view of the scene and allows users to interact with the items within the scene. 
-class ImageLabel(QGraphicsView):
-    def __init__(self):
-        super().__init__()
-
-        # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually. 
-        self.scene = QGraphicsScene(self)
-
-        # Creates a pixmap graphics item that will be added to the scene
-        self.pixmap_item = QGraphicsPixmapItem()
-        self.scene.addItem(self.pixmap_item)
-
-        # Sets the created scene as the scene for the graphics view
-        self.setScene(self.scene)
-
-        # Sets the render hint to enable antialiasing, which makes the image look smoother. Aliasings occur when a high-resolution image is displayed or rendered at a lower resolution, leading to the loss of information and the appearance of stair-stepped edges. Antialiasing techniques smooth out these jagged edges by introducing intermediate colors or shades along the edges of objects.
-        self.setRenderHint(QPainter.Antialiasing, True)
-
-        # Set the background color to black
-        self.setBackgroundBrush(QColor(0, 0, 0))  # RGB values for black
-
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-        # Initialize array attribute to None
-        self.array = None
-        self.current_slice = None
-
-    # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
-    def resizeEvent(self, event: QResizeEvent):
-        super().resizeEvent(event)
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-
-    # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
-    def wheelEvent(self, event):
-
-        # Check if the array is None
-        if self.array is None:
-            # Do nothing and return
-            return
-
-        # Check if the event occurred over the image
-        if self.pixmap_item.isUnderMouse():
-            # angleDelta().y() provides the angle through which the vertical mouse wheel was rotated since the last event in eigths of a degree. The value is positive when the wheel is rotated away from the user and negative when the wheel is rotated towards the user. 120 units * 1/8 = 15 degrees for most mouses. 
-            delta = event.angleDelta().y() / 120
-            current_slice = getattr(self, 'current_slice', 0)
-            new_slice = max(0, min(current_slice + delta, self.array.shape[2] - 1))
-            self.current_slice = int(new_slice)
-            self.displayArray()
-        else:
-            # Allow the base class to handle the event in other cases
-            super().wheelEvent(event)
-
-    #ImageLabel holds a copy of the array of MRI data to be displayed. 
-    def setArray(self, array):
-        # Set the array and make current_slice the middle slice by default
-        self.array = array
-        if array is not None:
-            self.current_slice = array.shape[2] // 2    
-        else:
-            self.current_slice = 0
-            
-    def displayArray(self):
-        width, height = 0, 0
-        if self.array is not None:
-            displayed_slice = getattr(self, 'current_slice', 0)
-
-            # Normalize the slice values for display
-            array_norm = (self.array[:,:,displayed_slice] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
-            array_8bit = (array_norm * 255).astype(np.uint8)
-
-            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
-            image = np.ascontiguousarray(np.array(array_8bit))
-            height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
-
-            # Create a QPixmap - a pixmap which can be displayed in a GUI
-            pixmap = QPixmap.fromImage(qimage)
-            self.pixmap_item.setPixmap(pixmap)
-
-        else:
-            # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format_Grayscale8)
-            black_image.fill(Qt.black)
-            pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)           
-
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-
-        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        self.scene.setSceneRect(0, 0, width, height)
-        # The centerOn method is used to center the view on a particular point within the scene.
-        self.centerOn(width / 2, height / 2)
-  """ 
-
-
-
 class CustomPolygonItem(QGraphicsPolygonItem):        
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
     def __init__(self, parent: QGraphicsPixmapItem):
@@ -950,8 +629,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
             
-
-
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
@@ -959,7 +636,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords = direction_vector_in_pixmap_coords)
 
 class AcquiredSeriesViewer2D(QGraphicsView):
-    '''Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved.'''
+    '''Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved.
+    '''
 
     def __init__(self):
         super().__init__()
@@ -998,14 +676,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
-        #self.scene.addItem(self.scan_volume_display)
-
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-
 
     def _displayArray(self):
         width, height = 0, 0
@@ -1074,11 +749,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.acquired_series = None
             self.setDisplayedImage(None)
 
-
     def setDisplayedImage(self, image):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
+
         else:
             self.array = None
         self._displayArray()
@@ -1103,6 +778,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume_display.setPolygon(QPolygonF())
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
+    '''Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs.'''
     dropEventSignal = pyqtSignal(int)
     def __init__(self):
         super().__init__()
@@ -1126,6 +802,7 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
         event.accept()
 
 class ImageLabel(QGraphicsView):
+    '''Old version of AcquiredSeriesViewer2D. This viewer is still used to display the anatomical model in the model viewing dialog.'''
     def __init__(self):
         super().__init__()
 
@@ -1157,7 +834,7 @@ class ImageLabel(QGraphicsView):
 
         self.observers = []
 
-        self.dragging = False
+        self.middle_mouse_button_pressed = False
         self._displaying = False
 
         self.scene.addItem(self.pixmap_item)
@@ -1348,18 +1025,18 @@ class ImageLabel(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MiddleButton:
-            self.dragging = True
+            self.middle_mouse_button_pressed = True
             self.start_pos = event.pos()
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MiddleButton:
-            self.dragging = False
+            self.middle_mouse_button_pressed = False
 
     def mouseMoveEvent(self, event):
         if self.displaying == False:
             return
 
-        if self.dragging:
+        if self.middle_mouse_button_pressed:
             dx = event.x() - self.start_pos.x()
             dy = self.start_pos.y() - event.y()
 
