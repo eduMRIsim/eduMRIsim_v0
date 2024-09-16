@@ -76,10 +76,32 @@ class SegmentedButton(QWidget):
         # Ensure the clicked button remains checked
         button.setChecked(True)
 
+# class PrimaryActionButton(QPushButton):
+#     def __init__(self, text=""):
+#         super().__init__(text)
+#         self.setStyleSheet(
+#             """
+#             QPushButton {
+#                 background-color: #417d9d;
+#                 color: white;
+#                 border-radius: 5px;
+#                 padding: 5px 20px;
+#             }
+#             QPushButton:hover {
+#                 background-color: #34647d; /* Change to a darker shade on hover */
+#             }
+#             QPushButton:disabled {
+#                 background-color: #aac6d9; /* Lighter shade for disabled state */
+#                 color: #7a7a7a; /* Adjust text color for better readability */
+#             }
+#             """
+            
+#         )
+
 class PrimaryActionButton(QPushButton):
     def __init__(self, text=""):
         super().__init__(text)
-        self.setStyleSheet(
+        self.default_stylesheet = (
             """
             QPushButton {
                 background-color: #417d9d;
@@ -95,14 +117,52 @@ class PrimaryActionButton(QPushButton):
                 color: #7a7a7a; /* Adjust text color for better readability */
             }
             """
-            
         )
+            
+        self.highlighted_stylesheet = (
+            """
+            QPushButton {
+                background-color: #2c566c; /* Darker background for highlighted state */
+                color: white;
+                border-radius: 5px;
+                padding: 5px 20px;
+            }
+            """	
+        )
+
+        self.setStyleSheet(self.default_stylesheet)
+
+    def set_highlighted(self, highlighted: bool):
+        if highlighted:
+            self.setStyleSheet(self.highlighted_stylesheet)
+        else:
+            self.setStyleSheet(self.default_stylesheet)
+
+# class SecondaryActionButton(QPushButton):
+#     def __init__(self, text=""):
+#         super().__init__(text)
+#         self.setStyleSheet(
+#             """
+#             QPushButton {
+#                 background-color: #c1e5f5;
+#                 color: #417d9d;
+#                 border-radius: 5px;
+#                 padding: 5px 20px;
+#             }
+#             QPushButton:hover {
+#                 background-color: #a9d8f3; /* Darker shade on hover */
+#             }
+#             QPushButton:disabled {
+#                 background-color: #e6f3f8; /* Lighter shade for disabled state */
+#                 color: #7a7a7a; /* Adjust text color for better readability */
+#             }
+#             """
+#         )
 
 class SecondaryActionButton(QPushButton):
     def __init__(self, text=""):
         super().__init__(text)
-        self.setStyleSheet(
-            """
+        self.default_stylesheet = """
             QPushButton {
                 background-color: #c1e5f5;
                 color: #417d9d;
@@ -116,8 +176,22 @@ class SecondaryActionButton(QPushButton):
                 background-color: #e6f3f8; /* Lighter shade for disabled state */
                 color: #7a7a7a; /* Adjust text color for better readability */
             }
-            """
-        )
+        """
+        self.highlighted_stylesheet = """
+            QPushButton {
+                background-color: #a9d8f3; /* Darker background for highlighted state */
+                color: #417d9d;
+                border-radius: 5px;
+                padding: 5px 20px;
+            }
+        """
+        self.setStyleSheet(self.default_stylesheet)
+
+    def set_highlighted(self, highlighted: bool):
+        if highlighted:
+            self.setStyleSheet(self.highlighted_stylesheet)
+        else:
+            self.setStyleSheet(self.default_stylesheet)
 
 class TertiaryActionButton(QPushButton):
     def __init__(self, text=""):

@@ -1,29 +1,13 @@
-class UI_MainWindowState():
-    def enter_state(self, context) -> None:
-        pass
+from abc import ABC
 
-    def enter_exam_state(self, context) -> None:
-        pass
-
-    def enter_idle_state(self, context) -> None:
-        pass
-
-    def enter_ready_to_scan_state(self, context) -> None:
-        pass
-
-    def enter_being_modified_state(self, context) -> None:
-        pass
-
-    def enter_invalid_parameters_state(self, context) -> None:
-        pass
-
-    def enter_scan_complete_state(self, context) -> None:
-        pass
+class UI_MainWindowState(ABC):
+    def update_UI(self, context) -> None:
+        MRIfortheBrainState().update_UI(context) # all states will call this method first to implement the UI configuration for the MRI for the brain course. This hides buttons whose functionalities have not been implemented yet. 
 
 class ExamState(UI_MainWindowState):
     name = "ExamState"
-    def enter_state(self, context) -> None:
-        super().enter_state(context)
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
         context.scanningModeButton.setEnabled(True)
         context.viewingModeButton.setEnabled(False)
         context.examinationInfoStackedLayout.setCurrentIndex(1)
@@ -38,39 +22,19 @@ class ExamState(UI_MainWindowState):
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
 
-    def enter_idle_state(self, context) -> None:
-        context.state = IdleState()
-        context.state.enter_state(context)
-
-    def enter_ready_to_scan_state(self, context) -> None:
-        context.state = ReadyToScanState()
-        context.state.enter_state(context)
-
 class ReadyToScanState(ExamState):
     name = "ReadyToScanState"
-    def enter_state(self, context) -> None:
-        super().enter_state(context)
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
         context.startScanButton.setEnabled(True)
         context.stopScanButton.setEnabled(True)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersResetButton.setEnabled(True)
 
-    def enter_being_modified_state(self, context) -> None:
-        context.state = BeingModifiedState()
-        context.state.enter_state(context)
-
-    def enter_invalid_parameters_state(self, context) -> None:
-        context.state = InvalidParametersState()
-        context.state.enter_state(context)
-
-    def enter_scan_complete_state(self, context) -> None:
-        context.state = ScanCompleteState()
-        context.state.enter_state(context)
-
 class BeingModifiedState(ExamState):
     name = "BeingModifiedState"
-    def enter_state(self, context) -> None:
-        super().enter_state(context)
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
         context.scanningModeButton.setEnabled(False)
         context.viewingModeButton.setEnabled(False)
         context.scanlistListWidget.setEnabled(False)
@@ -82,47 +46,45 @@ class BeingModifiedState(ExamState):
         context.scanParametersResetButton.setEnabled(True) 
         context.scanParametersSaveChangesButton.setEnabled(True)
 
-    def enter_ready_to_scan_state(self, context) -> None:
-        context.state = ReadyToScanState()
-        context.state.enter_state(context)
-
-    def enter_invalid_parameters_state(self, context) -> None:
-        context.state = InvalidParametersState()
-        context.state.enter_state(context)
-
 class InvalidParametersState(ExamState):
     name = "InvalidParametersState"
-    def enter_state(self, context) -> None:
-        super().enter_state(context)
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersResetButton.setEnabled(True)
 
-    def enter_being_modified_state(self, context) -> None:
-        context.state = BeingModifiedState()
-        context.state.enter_state(context)
-
 class ScanCompleteState(ExamState):
     name = "ScanCompleteState"
-    def enter_state(self, context) -> None: 
-        super().enter_state(context)        
+    def update_UI(self, context) -> None: 
+        super().update_UI(context)        
 
 class IdleState(UI_MainWindowState):
     name = "IdleState"
-    def enter_state(self, context) -> None:
-        super().enter_state(context)
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
         context.scanningModeButton.setEnabled(False)
         context.viewingModeButton.setEnabled(False)
         context.examinationInfoStackedLayout.setCurrentIndex(0)
+        context.editingStackedLayout.setCurrentIndex(0)
         context.scanlistListWidget.setVisible(False)
+        context.scanlistListWidget.clear()
         context.addScanItemButton.setVisible(False)
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(True)
+        context.parameterFormLayout.clearForm() 
         context.scanParametersCancelChangesButton.setEnabled(False) 
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanProgressBar.setValue(0)
+        context.scannedImageFrame.setAcquiredSeries(None)
+        context.scanPlanningWindow1.setAcquiredSeries(None)
+        context.scanPlanningWindow2.setAcquiredSeries(None)
+        context.scanPlanningWindow3.setAcquiredSeries(None)
 
-    def enter_exam_state(self, context) -> None:
-        context.state = ExamState()
-        context.state.enter_state(context)
+class MRIfortheBrainState(UI_MainWindowState):
+    def update_UI(self, context) -> None:
+        context.loadExaminationButton.setVisible(False)
+        context.stopScanButton.setVisible(False)
+        context.scanningModeButton.setVisible(False)
+        context.viewingModeButton.setVisible(False)
