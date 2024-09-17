@@ -674,6 +674,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
         
+        self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
+        self.scan_volume_display.add_observer(self)
+        
         #  Display scan plane lable
         self.scan_plane_label = QLabel(self)
         self.scan_plane_label.setStyleSheet("color: white; font-size: 18px; background-color: rgba(0, 0, 0, 100); padding: 5px;")
@@ -681,9 +684,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.resize(200, 30)
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item) 
-        self.scan_volume_display.add_observer(self)
-
-        self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
 
     def resizeEvent(self, event: QResizeEvent):
