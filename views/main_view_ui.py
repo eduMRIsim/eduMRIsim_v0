@@ -673,6 +673,15 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         # Initialize array attribute to None
         self.array = None
+        
+        #  Display the scan plane
+        self.scan_plane_label = QLabel(self)
+        self.scan_plane_label.setStyleSheet("color: white; font-size: 18px; background-color: rgba(0, 0, 0, 100); padding: 5px;")
+        self.scan_plane_label.move(10, 10)  # Position the label at the top-left corner
+        self.scan_plane_label.resize(200, 30)  # Adjust the size to fit the text
+
+        self.scan_volume_display = CustomPolygonItem(self.pixmap_item) 
+        self.scan_volume_display.add_observer(self)
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
@@ -753,11 +762,15 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
-
+            # Check the scan plane and update the label
+            scan_plane = checkScanPlane(image.image_geometry)
+            self.scan_plane_label.setText(f"Scan Plane: {scan_plane}")
         else:
             self.array = None
+            self.scan_plane_label.setText("Scan Plane: Unknown")
+
         self._displayArray()
-        self._update_scan_volume_display()
+        self._update_scan_volume_display()      
 
     def setScanVolume(self, scan_volume: ScanVolume):
         # remove the observer from the previous scan volume
@@ -1079,3 +1092,13 @@ class DropImageLabel(ImageLabel):
         selected_index = source_widget.selectedIndexes()[0].row()
         self.dropEventSignal.emit(selected_index)
         event.accept()
+        
+# check the current plane of the image
+def checkScanPlane(geometry):
+    if (geometry.axisZ_LPS == [0, 0, -1]).all() or (geometry.axisZ_LPS == [0, 0, 1]).all():
+        return "Axial"
+    elif (geometry.axisY_LPS == [0, 0, -1]).all() or (geometry.axisY_LPS == [0, 0, 1]).all():
+        return "Coronal"
+    elif (geometry.axisX_LPS == [0, 0, -1]).all() or (geometry.axisX_LPS == [0, 0, 1]).all():
+        return "Sagittal"
+    return "Unknown"
