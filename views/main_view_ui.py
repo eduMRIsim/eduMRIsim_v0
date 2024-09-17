@@ -683,9 +683,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.move(10, 10)  
         self.scan_plane_label.resize(200, 30)
 
-        self.scan_volume_display = CustomPolygonItem(self.pixmap_item) 
-        self.scan_volume_display.add_observer(self)
-
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
         super().resizeEvent(event)
