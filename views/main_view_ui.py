@@ -1113,10 +1113,10 @@ class DropImageLabel(ImageLabel):
         
 # check the current plane of the image
 def checkScanPlane(geometry):
-    if (geometry.axisZ_LPS == [0, 0, -1]).all() or (geometry.axisZ_LPS == [0, 0, 1]).all():
+    if np.array_equal(geometry.axisZ_LPS, [0, 0, 1]) or np.array_equal(geometry.axisZ_LPS, [0, 0, -1]):
         return "Axial"
-    elif (geometry.axisY_LPS == [0, 0, -1]).all() or (geometry.axisY_LPS == [0, 0, 1]).all():
+    elif np.array_equal(geometry.axisZ_LPS, [0, 1, 0]) or np.array_equal(geometry.axisZ_LPS, [0, -1, 0]):
         return "Coronal"
-    elif (geometry.axisX_LPS == [0, 0, -1]).all() or (geometry.axisX_LPS == [0, 0, 1]).all():
+    elif np.array_equal(geometry.axisZ_LPS, [-1, 0, 0]) or np.array_equal(geometry.axisZ_LPS, [1, 0, 0]):
         return "Sagittal"
     return "Unknown"
