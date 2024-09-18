@@ -680,9 +680,16 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         #  Display scan plane label
         self.scan_plane_label = QLabel(self)
         self.scan_plane_label.setAlignment(Qt.AlignRight)
-        self.scan_plane_label.setStyleSheet("color: white; font-size: 18px; padding: 5px; pointer-events: none;")
+        self.scan_plane_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
         self.scan_plane_label.resize(200, 30)
         self.updateLabelPosition()
+        
+        # Display scan name
+        self.scan_name_label = QLabel(self)
+        self.scan_name_label.setAlignment(Qt.AlignLeft)
+        self.scan_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
+        self.scan_name_label.resize(200, 30)
+        self.scan_name_label.move(0, 0)
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
@@ -762,15 +769,23 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.acquired_series = None
             self.setDisplayedImage(None)
 
-    def setDisplayedImage(self, image):
+    def setDisplayedImage(self, image, series_name = "Scan"):
         self.displayed_image = image
         if image is not None:
+            # set image
             self.array = image.image_data
+            
+            # set scan plane
             scan_plane = checkScanPlane(image.image_geometry)
             self.scan_plane_label.setText(f"Scan Plane: {scan_plane}")
+            
+            # set scan name
+            scan_number = self.displayed_image_index + 1  # Scan number based on its position in the list (1-based index)
+            self.scan_name_label.setText(f"{series_name} ({scan_number}) ")
         else:
             self.array = None
             self.scan_plane_label.setText("")
+            self.scan_name_label.setText("")
 
         self._displayArray()
         self._update_scan_volume_display()    
