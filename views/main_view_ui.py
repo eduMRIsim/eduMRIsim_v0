@@ -682,6 +682,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.setAlignment(Qt.AlignRight)
         self.scan_plane_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
         self.scan_plane_label.resize(200, 30)
+        self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.updateLabelPosition()
         
         # Display scan name
@@ -689,6 +690,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_name_label.setAlignment(Qt.AlignLeft)
         self.scan_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
         self.scan_name_label.resize(200, 30)
+        self.scan_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.scan_name_label.move(0, 0)
 
     def resizeEvent(self, event: QResizeEvent):
