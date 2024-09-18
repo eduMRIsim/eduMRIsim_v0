@@ -677,16 +677,23 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
         
-        #  Display scan plane lable
+        #  Display scan plane label
         self.scan_plane_label = QLabel(self)
-        self.scan_plane_label.setStyleSheet("color: white; font-size: 18px; background-color: rgba(0, 0, 0, 100); padding: 5px;")
-        self.scan_plane_label.move(10, 10)  
+        self.scan_plane_label.setAlignment(Qt.AlignRight)
+        self.scan_plane_label.setStyleSheet("color: white; font-size: 18px; padding: 5px; pointer-events: none;")
         self.scan_plane_label.resize(200, 30)
+        self.updateLabelPosition()
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.updateLabelPosition()
+    
+    def updateLabelPosition(self):
+        label_width = self.scan_plane_label.width()
+        label_height = self.scan_plane_label.height()
+        self.scan_plane_label.move(self.width() - label_width, self.height() - label_height)
 
     def _displayArray(self):
         width, height = 0, 0
@@ -759,15 +766,14 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
-            # Check the scan plane and update the label
             scan_plane = checkScanPlane(image.image_geometry)
             self.scan_plane_label.setText(f"Scan Plane: {scan_plane}")
         else:
             self.array = None
-            self.scan_plane_label.setText("Scan Plane: Unknown")
+            self.scan_plane_label.setText("")
 
         self._displayArray()
-        self._update_scan_volume_display()      
+        self._update_scan_volume_display()    
 
     def setScanVolume(self, scan_volume: ScanVolume):
         # remove the observer from the previous scan volume
