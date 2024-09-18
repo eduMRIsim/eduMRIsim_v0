@@ -54,7 +54,7 @@ class ViewModelDialog(QDialog):
         self.layout = QVBoxLayout()
 
         self.model = model
-        self.map = self.model._T1map_ms[:,:,:]
+        self.map = self.model.T1map_ms[:,:,:]
  
 
         # make practice 10x10x10 array with random values
@@ -140,7 +140,7 @@ class ViewModelDialog(QDialog):
         self.setPixmap(self.image_array)
 
     def T1ButtonPressed(self):
-        self.map = self.model._T1map_ms[:,:,:]
+        self.map = self.model.T1map_ms[:,:,:]
         self.image_label.setArray(self.map)
         self.image_label.displayArray()
         self.tissue_property_label.setText("T1 relaxation time")
@@ -148,7 +148,7 @@ class ViewModelDialog(QDialog):
         self.setActiveButton(self.T1Button)
 
     def T2ButtonPressed(self):
-        self.map = self.model._T2map_ms[:,:,:]
+        self.map = self.model.T2map_ms[:,:,:]
         self.image_label.setArray(self.map)
         self.image_label.displayArray()
         self.tissue_property_label.setText("T2 relaxation time")
@@ -156,7 +156,7 @@ class ViewModelDialog(QDialog):
         self.setActiveButton(self.T2Button)
 
     def PDButtonPressed(self):
-        self.map = self.model._PDmap_ms[:,:,:]
+        self.map = self.model.PDmap[:,:,:]
         self.image_label.setArray(self.map)
         self.image_label.displayArray()
         self.tissue_property_label.setText("Proton density")
@@ -164,7 +164,7 @@ class ViewModelDialog(QDialog):
         self.setActiveButton(self.PDButton)
 
     def T2sButtonPressed(self):
-        self.map = self.model._T2smap_ms[:,:,:]
+        self.map = self.model.T2smap_ms[:,:,:]
         self.image_label.setArray(self.map)
         self.image_label.displayArray()
         self.tissue_property_label.setText("T2* relaxation time")
