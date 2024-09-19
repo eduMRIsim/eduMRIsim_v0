@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget
 from PyQt5.QtGui import QMouseEvent, QPixmap, QImage
 import numpy as np
-from views.main_view_ui import ImageLabel
+#from views.main_view_ui import ImageLabel
 #from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
 class ViewWindow(QDialog):
@@ -10,12 +10,23 @@ class ViewWindow(QDialog):
         super().__init__()
 
         self.setWindowTitle("Viewing Mode")
-        #button = QPushButton("Press Me!")
 
-        # setting geometry - size and location of the window
         self.setGeometry(800, 300, 800, 600)
+        #self.showMaximized()
 
-        layout = QGridLayout()
+        # Create a horizontal layout to manage left and right sections
+        main_layout = QHBoxLayout()
+
+        # Create a vertical layout for the left section
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(QLabel("Acquired Images"))
+
+        # Create a widget to hold the left vertical layout
+        left_widget = QWidget()
+        left_widget.setLayout(left_layout)
+
+        # Create a grid layout for the right section
+        right_layout = QGridLayout()
 
         # Style for the cells: white border and black background
         emptyCellStyle = """
@@ -27,26 +38,29 @@ class ViewWindow(QDialog):
 
         emptyWidget1 = QWidget()
         emptyWidget1.setStyleSheet(emptyCellStyle)
-        layout.addWidget(emptyWidget1, 0, 0)
+        right_layout.addWidget(emptyWidget1, 0, 0)
 
         emptyWidget2 = QWidget()
         emptyWidget2.setStyleSheet(emptyCellStyle)
-        layout.addWidget(emptyWidget2, 1, 0)
+        right_layout.addWidget(emptyWidget2, 1, 0)
 
         emptyWidget3 = QWidget()
         emptyWidget3.setStyleSheet(emptyCellStyle)  
-        layout.addWidget(emptyWidget3, 0, 1)
+        right_layout.addWidget(emptyWidget3, 0, 1)
 
         emptyWidget4 = QWidget()
         emptyWidget4.setStyleSheet(emptyCellStyle)
-        layout.addWidget(emptyWidget4, 1, 1)
+        right_layout.addWidget(emptyWidget4, 1, 1)
 
-        # Set the central widget of the Window.
-        widget = QWidget()
-        widget.setLayout(layout)
-        #self.setCentralWidget(widget)
+        # Create a widget to hold the grid layout
+        right_widget = QWidget()
+        right_widget.setLayout(right_layout)
 
-        self.setLayout(layout)
+        # combine left and right into a horizontal layout
+        main_layout.addWidget(left_widget, stretch=1)
+        main_layout.addWidget(right_widget, stretch=3)
+
+        self.setLayout(main_layout)
 
 
 """
