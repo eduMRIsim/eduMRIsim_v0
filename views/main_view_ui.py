@@ -628,12 +628,59 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         for observer in self.observers:
             print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
-            
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mousePressEvent(event)
+
+        # Get the positions of the corners of this intersection polygon.
+        top_left = self.boundingRect().topLeft()
+        top_right = self.boundingRect().topRight()
+        bottom_right = self.boundingRect().bottomRight()
+        bottom_left = self.boundingRect().bottomLeft()
+
+        # Get the x and y coordinates of the mouse event.
+        mouse_pos = event.pos()
+        mouse_pos_x, mouse_pos_y = mouse_pos.x(), mouse_pos.y()
+
+        # Any mouse event for the intersection polygon is exactly one of move or resize (but never both at the same time).
+        # By default, the mouse event is a move event and not a resize event (since this is the most common event).
+        resize_event = False
+
+        # Tolerance value for which pixels are "in the corner".
+        # This value is currently not definitive, and may be changed in the future.
+        corner_tolerance = 10.0
+
+        # Check if the mouse event position is in one of the four corners.
+        # If so, then the mouse event is a resize event; if not, then it is a move event.
+        if abs(mouse_pos_x - top_left.x()) <= corner_tolerance and abs(mouse_pos_y - top_left.y()) <= corner_tolerance: # top left corner
+            resize_event = True
+        elif abs(mouse_pos_x - top_right.x()) <= corner_tolerance and abs(mouse_pos_y - top_right.y()) <= corner_tolerance: # top right corner
+            resize_event = True
+        elif abs(mouse_pos_x - bottom_right.x()) <= corner_tolerance and abs(mouse_pos_y - bottom_right.y()) <= corner_tolerance: # bottom right corner
+            resize_event = True
+        elif abs(mouse_pos_x - bottom_left.x()) <= corner_tolerance and abs(mouse_pos_y - bottom_left.y()) <= corner_tolerance: # bottom left corner
+            resize_event = True
+
+        # We don't want the intersection polygon to move if the user requests to resize it (by clicking in a corner of the polygon).
+        # So set the intersection polygon to be immovable if the mouse event is a resize event.
+        if resize_event:
+            self.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
+
+
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
-        direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
-        self.previous_position_in_pixmap_coords = self.pos()
-        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords = direction_vector_in_pixmap_coords)
+        if not(self.flags() & QGraphicsItem.ItemIsMovable):
+            # Resize event here
+            pass
+        else:
+            # Move event here
+            direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
+            self.previous_position_in_pixmap_coords = self.pos()
+            self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mouseReleaseEvent(event)
+        self.setFlag(QGraphicsItem.ItemIsMovable, enabled=True)
 
 class AcquiredSeriesViewer2D(QGraphicsView):
     '''Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved.
