@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget
 from PyQt5.QtGui import QMouseEvent, QPixmap, QImage
 import numpy as np
+from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D
 #from views.main_view_ui import ImageLabel
 #from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
@@ -14,53 +15,50 @@ class ViewWindow(QDialog):
         self.setGeometry(800, 300, 800, 600)
         #self.showMaximized()
 
-        # Create a horizontal layout to manage left and right sections
+        # initialize horizontal layout 
         main_layout = QHBoxLayout()
 
-        # Create a vertical layout for the left section
+        # vertical layout for the left side
         left_layout = QVBoxLayout()
         left_layout.addWidget(QLabel("Acquired Images"))
+        self._scanlistInfoFrame = ScanlistListWidget()
+        left_layout.addWidget(self._scanlistInfoFrame, stretch=2)
+        #setAcquiredSeries
 
-        # Create a widget to hold the left vertical layout
+        # widget for the left side 
         left_widget = QWidget()
         left_widget.setLayout(left_layout)
 
-        # Create a grid layout for the right section
+        # creates default 2x2 grid
         right_layout = QGridLayout()
+        for i in range(2):
+            for j in range(2):
+                #empty_widget = QWidget()
+                empty_widget = DropWidget()
+                right_layout.addWidget(empty_widget, i, j)
 
-        # Style for the cells: white border and black background
-        emptyCellStyle = """
-        background-color: black;
-        border: 1px solid white;
-        """
-
-       # emptyCellStyle = "border: 1px solid black;"
-
-        emptyWidget1 = QWidget()
-        emptyWidget1.setStyleSheet(emptyCellStyle)
-        right_layout.addWidget(emptyWidget1, 0, 0)
-
-        emptyWidget2 = QWidget()
-        emptyWidget2.setStyleSheet(emptyCellStyle)
-        right_layout.addWidget(emptyWidget2, 1, 0)
-
-        emptyWidget3 = QWidget()
-        emptyWidget3.setStyleSheet(emptyCellStyle)  
-        right_layout.addWidget(emptyWidget3, 0, 1)
-
-        emptyWidget4 = QWidget()
-        emptyWidget4.setStyleSheet(emptyCellStyle)
-        right_layout.addWidget(emptyWidget4, 1, 1)
-
-        # Create a widget to hold the grid layout
+        # widget for the right side
         right_widget = QWidget()
         right_widget.setLayout(right_layout)
 
-        # combine left and right into a horizontal layout
+        # combine left and right into the horizontal layout
         main_layout.addWidget(left_widget, stretch=1)
         main_layout.addWidget(right_widget, stretch=3)
 
         self.setLayout(main_layout)
+
+class DropWidget(DropAcquiredSeriesViewer2D):
+    #class that inherits the functionality to accept drops from DropAcquiredSeriesViewer2D 
+    #adds styling for the cells of the grid
+    def _init_(self):
+        super()._init_()
+
+        #style of the grid cells
+        emptyCellStyle = """
+        background-color: black;
+        border: 1px solid white;
+        """
+        self.setStyleSheet(emptyCellStyle)
 
 
 """
