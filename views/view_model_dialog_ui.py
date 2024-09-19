@@ -1,10 +1,55 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget
 from PyQt5.QtGui import QMouseEvent, QPixmap, QImage
 import numpy as np
 from views.main_view_ui import ImageLabel
-from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
+#from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
+class ViewWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Viewing Mode")
+        #button = QPushButton("Press Me!")
+
+        # setting geometry - size and location of the window
+        self.setGeometry(800, 300, 800, 600)
+
+        layout = QGridLayout()
+
+        # Style for the cells: white border and black background
+        emptyCellStyle = """
+        background-color: black;
+        border: 1px solid white;
+        """
+
+       # emptyCellStyle = "border: 1px solid black;"
+
+        emptyWidget1 = QWidget()
+        emptyWidget1.setStyleSheet(emptyCellStyle)
+        layout.addWidget(emptyWidget1, 0, 0)
+
+        emptyWidget2 = QWidget()
+        emptyWidget2.setStyleSheet(emptyCellStyle)
+        layout.addWidget(emptyWidget2, 1, 0)
+
+        emptyWidget3 = QWidget()
+        emptyWidget3.setStyleSheet(emptyCellStyle)  
+        layout.addWidget(emptyWidget3, 0, 1)
+
+        emptyWidget4 = QWidget()
+        emptyWidget4.setStyleSheet(emptyCellStyle)
+        layout.addWidget(emptyWidget4, 1, 1)
+
+        # Set the central widget of the Window.
+        widget = QWidget()
+        widget.setLayout(layout)
+        #self.setCentralWidget(widget)
+
+        self.setLayout(layout)
+
+
+"""
 class ModelViewLabel(ImageLabel):
 
     mouse_moved_signal = pyqtSignal(int, int, int) 
@@ -178,3 +223,4 @@ class ViewModelDialog(QDialog):
 
     def mouseMoveEvent(self, a0: QMouseEvent) -> None:
             self.tissue_property_value_display.setText("")
+"""
