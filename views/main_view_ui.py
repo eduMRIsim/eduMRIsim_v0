@@ -627,7 +627,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
             print("Subject", self, "is updating observer", observer, "with event", event)
-            observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
+            observer.update(event, direction_vector_in_pixmap_coords = kwargs.get('direction_vector_in_pixmap_coords'), scale_factor_x=kwargs.get('scale_factor_x'), scale_factor_y=kwargs.get('scale_factor_y'))
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         super().mousePressEvent(event)
@@ -670,10 +670,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
         if not(self.flags() & QGraphicsItem.ItemIsMovable):
-            # Resize event here
-            pass
+            scale_factor_x, scale_factor_y = 0.99, 0.99
+            self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y)
         else:
-            # Move event here
             direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
             self.previous_position_in_pixmap_coords = self.pos()
             self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
@@ -769,6 +768,14 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             direction_vector_in_LPS_coords = np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords(direction_vector_in_pixmap_coords)) - np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((0, 0)))
             self.scan_volume.remove_observer(self)
             self.scan_volume.translate_scan_volume(direction_vector_in_LPS_coords)
+            self.scan_volume.add_observer(self)
+
+        if event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
+            scale_factor_x = kwargs['scale_factor_x']
+            scale_factor_y = kwargs['scale_factor_y']
+
+            self.scan_volume.remove_observer(self)
+            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y)
             self.scan_volume.add_observer(self)
 
     def wheelEvent(self, event):

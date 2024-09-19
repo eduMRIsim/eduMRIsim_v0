@@ -425,6 +425,11 @@ class ScanVolume:
         self.origin_LPS += translation_vector_LPS
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
+    def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float):
+        self.extentX_mm *= scale_factor_x
+        self.extentY_mm *= scale_factor_y
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
     def scan_volume_mm_coords_to_LPS_coords(self, scan_volume_mm_coords: tuple) -> tuple:
         '''Convert scan volume coordinates to LPS coordinates. The scan volume coordinates are in millimeters, and the LPS coordinates are in millimeters. '''
         x, y, z = scan_volume_mm_coords
