@@ -15,7 +15,7 @@ class Scanlist:
     @active_idx.setter
     def active_idx(self, idx):
         self._active_idx = idx
-        self.notify_observers(EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED)
+        self.notify_observers(EventEnum.SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED)
 
     def add_scanlist_element(self, name, scan_parameters):
         new_scanlist_element = ScanlistElement(name, scan_parameters)
@@ -24,6 +24,26 @@ class Scanlist:
         if self.active_idx is None:
             self.active_idx = 0        
     
+    def duplicate_scanlist_element(self, index):
+        self.add_scanlist_element(self.scanlist_elements[index].name, self.scanlist_elements[index].scan_item.scan_parameters)
+
+    def remove_scanlist_element(self, index):
+        del self.scanlist_elements[index]
+        if index == self.active_idx:
+            if len(self.scanlist_elements) == 0:
+                self.active_idx = None # if the removed scanlist element was the only one in the list, the active index should be set to None
+            else:
+                if index == len(self.scanlist_elements):
+                    self.active_idx -= 1 # if the removed scanlist element was at the end of the list, the active index should be decremented by 1 
+
+        else:
+            if index < self.active_idx:
+                self.active_idx -= 1 # if the removed scanlist element was before the active index, the active index should be decremented by 1
+            else:
+                self.notify_observers(EventEnum.SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED) # if the removed scanlist element was after the active index, the active index should not change, however, a different scanlist element becomes active, so the observers should be notified
+        self.notify_observers(EventEnum.SCANLIST_ITEM_REMOVED)
+
+
     @property
     def active_scanlist_element(self):
         return self.scanlist_elements[self.active_idx]

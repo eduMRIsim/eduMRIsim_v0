@@ -111,3 +111,7 @@ This command executes the `main.py` script which opens the application.
 
 ## Python isn't added to your system's PATH environment variable 
 This is required for you to be able to run Python commands from any directory on your system. Look [here](https://realpython.com/add-python-to-path/) for further instructions.
+
+# Acknowledgements
+The icons used in this project are from [Eva Icons](https://akveo.github.io/eva-icons/#/), a pack of beautifully crafted open-source icons. You can find more about them at [akveo.github.io/eva-icons](https://akveo.github.io/eva-icons/#/).
+

@@ -45,6 +45,7 @@ class BeingModifiedState(ExamState):
         context.scanParametersCancelChangesButton.setEnabled(True)
         context.scanParametersResetButton.setEnabled(True) 
         context.scanParametersSaveChangesButton.setEnabled(True)
+        context.scanParametersSaveChangesButton.setDefault(True) # This button will be the default button when the user presses the Enter key.
 
 class InvalidParametersState(ExamState):
     name = "InvalidParametersState"

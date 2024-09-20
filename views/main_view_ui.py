@@ -296,6 +296,7 @@ class ScanlistInfoFrame(QFrame):
 class ScanlistListWidget(QListWidget):
     dropEventSignal = pyqtSignal(list)
     itemDeletedSignal = pyqtSignal(QListWidgetItem)
+    itemDuplicatedSignal = pyqtSignal(QListWidgetItem)
     def __init__(self):
         super().__init__()
         self.setStyleSheet("border: none;")
@@ -342,7 +343,11 @@ class ScanlistListWidget(QListWidget):
         widget = e.source()
         # do not accept drops from itself
         if widget == self:
-            e.ignore()
+            # get index of the item that is being dragged
+            index = widget.currentIndex()
+            # get list item corresponding to the index
+            item = widget.itemFromIndex(index)
+            self.itemDuplicatedSignal.emit(item)
         else:    
             selected_indexes = widget.selectedIndexes()
             self.dropEventSignal.emit(selected_indexes)
@@ -351,7 +356,7 @@ class ScanlistListWidget(QListWidget):
     def showContextMenu(self, pos: QPoint):
         item = self.itemAt(pos) 
         if item is not None:
-            menu = QMenu()
+            self.menu = QMenu()
 
             # Create actions for the context menu
             rename_action = QAction("Rename", self)
@@ -369,9 +374,9 @@ class ScanlistListWidget(QListWidget):
             delete_action.setIcon(delete_icon)
 
             # Add the actions to the context menu
-            menu.addAction(rename_action)
-            menu.addAction(duplicate_action)
-            menu.addAction(delete_action)
+            self.menu.addAction(rename_action)
+            self.menu.addAction(duplicate_action)
+            self.menu.addAction(delete_action)
 
            # Connect the actions to their respective slots
             rename_action.triggered.connect(lambda: self.renameItem(item))
@@ -379,7 +384,7 @@ class ScanlistListWidget(QListWidget):
             delete_action.triggered.connect(lambda: self.deleteItem(item))
 
             # Show the context menu at the specified position
-            menu.exec_(self.viewport().mapToGlobal(pos))
+            self.menu.exec_(self.viewport().mapToGlobal(pos))
 
             item.setBackground(Qt.white)
 
@@ -387,14 +392,17 @@ class ScanlistListWidget(QListWidget):
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         self.editItem(item)
 
-    def duplicateItem(self, item):
-        print("Duplicate item")
-
-
     def deleteItem(self, item):
-        print("Delete item")
+        self.menu.close()
         self.itemDeletedSignal.emit(item)
-        self.takeItem(self.row(item))
+
+    def duplicateItem(self, item):
+        print("duplicate action clicked on menu")
+        # exit the menu
+        self.menu.close()
+        self.itemDuplicatedSignal.emit(item)
+
+
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):

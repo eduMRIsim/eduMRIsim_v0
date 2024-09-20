@@ -4,8 +4,8 @@ from views.view_model_dialog_ui import ViewModelDialog
 from views.qmodels import DictionaryModel
 import views.UI_MainWindowState as UI_state 
 
-from PyQt5.QtWidgets import QListWidgetItem
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QListWidgetItem, QShortcut
+from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
 
 from simulator.load import load_json, load_model_data
@@ -34,10 +34,14 @@ class MainController:
         #self.ui.scanlistListWidget.itemDoubleClicked.connect(self.handle_scanlistListWidget_dclicked)
         self.ui.scanlistListWidget.itemChanged.connect(self.handle_scanlistListWidget_itemChanged)
         self.ui.scanlistListWidget.itemDeletedSignal.connect(self.handle_scanlistListWidget_itemDeleted)
+        self.ui.scanlistListWidget.itemDuplicatedSignal.connect(self.handle_scanlistListWidget_itemDuplicated)
         self.ui.viewModelButton.clicked.connect(self.handle_viewModelButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
         self.ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
         self.ui.scanParametersCancelChangesButton.clicked.connect(self.handle_scanParametersCancelChangesButton_clicked)
+        #save_changes_shortcut = QShortcut(QKeySequence("Enter"), self.ui.scanParametersSaveChangesButton)
+        save_changes_shortcut = QShortcut(QKeySequence("Return"), self.ui.scanParametersSaveChangesButton)
+        save_changes_shortcut.activated.connect(self.handle_scanParametersSaveChangesButton_clicked)
         self.ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
         self.ui.scanParametersResetButton.clicked.connect(self.handle_scanParametersResetButton_clicked)
         self.ui.startScanButton.clicked.connect(self.handle_startScanButton_clicked)  
@@ -52,8 +56,11 @@ class MainController:
         self.scanner.scanlist.rename_scanlist_element(self.ui.scanlistListWidget.row(item), item.text())
 
     def handle_scanlistListWidget_itemDeleted(self, item):
-        print("item deleted")
-        print("what should happen to active index when deleting item?")
+        self.scanner.scanlist.remove_scanlist_element(self.ui.scanlistListWidget.row(item))
+
+    def handle_scanlistListWidget_itemDuplicated(self, item):
+        print("duplicate signal received", "item:", item)
+        self.scanner.scanlist.duplicate_scanlist_element(self.ui.scanlistListWidget.row(item))
 
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
@@ -255,18 +262,24 @@ class MainController:
         if event == EventEnum.SCANLIST_ITEM_ADDED:
             self.update_scanlistListWidget(self.scanner.scanlist)
 
-        if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED: 
-            self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.ui.editingStackedLayout.setCurrentIndex(0) # Switch to scan parameter editor view
-            self.ui.scannedImageFrame.setArray(self.scanner.active_scanlist_element.acquired_data) # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
-            self.ui.scannedImageFrame.displayArray()
-            current_list_item = self.ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)
-            self.ui.scanlistListWidget.setCurrentItem(current_list_item)
-            self.populate_parameterFormLayout(self.scanner.active_scan_item)
-            self.scanner.active_scan_item.add_observer(self)
-            # self.ui.scanPlanningWindow1.setScanVolume(self.scanner.active_scan_item.scan_volume) 
-            # self.ui.scanPlanningWindow2.setScanVolume(self.scanner.active_scan_item.scan_volume)
-            # self.ui.scanPlanningWindow3.setScanVolume(self.scanner.active_scan_item.scan_volume)
+        if event == EventEnum.SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED: 
+            if self.scanner.scanlist.active_idx == None:
+                self.ui.state = UI_state.ExamState()
+            else:
+                self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
+                self.ui.editingStackedLayout.setCurrentIndex(0) # Switch to scan parameter editor view
+                self.ui.scannedImageFrame.setArray(self.scanner.active_scanlist_element.acquired_data) # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
+                self.ui.scannedImageFrame.displayArray()
+                current_list_item = self.ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)
+                self.ui.scanlistListWidget.setCurrentItem(current_list_item)
+                self.populate_parameterFormLayout(self.scanner.active_scan_item)
+                self.scanner.active_scan_item.add_observer(self)
+                # self.ui.scanPlanningWindow1.setScanVolume(self.scanner.active_scan_item.scan_volume) 
+                # self.ui.scanPlanningWindow2.setScanVolume(self.scanner.active_scan_item.scan_volume)
+                # self.ui.scanPlanningWindow3.setScanVolume(self.scanner.active_scan_item.scan_volume)
+
+        if event == EventEnum.SCANLIST_ITEM_REMOVED:
+            self.update_scanlistListWidget(self.scanner.scanlist)
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
@@ -274,4 +287,6 @@ class MainController:
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
+
+
             

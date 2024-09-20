@@ -12,7 +12,7 @@ class EventEnum(Enum):
     # Scanlist events
     SCANLIST_ITEM_ADDED = auto() # Event for when a scanlist item is added to the scanlist
     SCANLIST_ITEM_REMOVED = auto() # Event for when a scanlist item is removed from the scanlist
-    SCANLIST_ACTIVE_INDEX_CHANGED = auto() # Event for when the active index of the scanlist is changed
+    SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED = auto() # Event for when the active index of the scanlist is changed OR for when a different scanlist element in the scanlist becomes active
 
     # Scan item events
     SCAN_ITEM_STATUS_CHANGED = auto() # Event for when the status of a scanlist element is changed, e.g., from 'BEING_MODIFIED' to 'READY_TO_SCAN'
