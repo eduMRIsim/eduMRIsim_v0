@@ -775,6 +775,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
             self.scan_volume.remove_observer(self)
             self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y)
+            self._update_scan_volume_display()
             self.scan_volume.add_observer(self)
 
     def wheelEvent(self, event):
