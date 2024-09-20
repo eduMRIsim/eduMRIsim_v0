@@ -266,9 +266,9 @@ class ScanItem:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
     def update(self, event):
-            if event == EventEnum.SCAN_VOLUME_CHANGED:
-                parameters = self.scan_volume.get_parameters()
-                self.scan_parameters = parameters 
+        if event == EventEnum.SCAN_VOLUME_CHANGED:
+            parameters = self.scan_volume.get_parameters()
+            self.scan_parameters = parameters
 
     def add_observer(self, observer):
         self.observers.append(observer)

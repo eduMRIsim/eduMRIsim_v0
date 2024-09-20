@@ -599,7 +599,7 @@ class ParameterFormLayout(QVBoxLayout):
                 elif isinstance(editor, QComboBox):
                     editor.setCurrentIndex(0)
 
-class CustomPolygonItem(QGraphicsPolygonItem):        
+class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
     def __init__(self, parent: QGraphicsPixmapItem):
         super().__init__(parent)
@@ -627,7 +627,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
             print("Subject", self, "is updating observer", observer, "with event", event)
-            observer.update(event, direction_vector_in_pixmap_coords = kwargs.get('direction_vector_in_pixmap_coords'), scale_factor_x=kwargs.get('scale_factor_x'), scale_factor_y=kwargs.get('scale_factor_y'))
+            observer.update(event, direction_vector_in_pixmap_coords=kwargs.get('direction_vector_in_pixmap_coords'), scale_factor_x=kwargs.get('scale_factor_x'), scale_factor_y=kwargs.get('scale_factor_y'))
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         super().mousePressEvent(event)
@@ -665,7 +665,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # So set the intersection polygon to be immovable if the mouse event is a resize event.
         if resize_event:
             self.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
-
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
