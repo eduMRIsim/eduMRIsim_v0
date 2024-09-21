@@ -627,7 +627,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
             print("Subject", self, "is updating observer", observer, "with event", event)
-            observer.update(event, direction_vector_in_pixmap_coords=kwargs.get('direction_vector_in_pixmap_coords'), scale_factor_x=kwargs.get('scale_factor_x'), scale_factor_y=kwargs.get('scale_factor_y'))
+            observer.update(event, direction_vector_in_pixmap_coords=kwargs.get('direction_vector_in_pixmap_coords'), scale_coords_x_pixmap=kwargs.get('scale_coords_x_pixmap'), scale_coords_y_pixmap=kwargs.get('scale_coords_y_pixmap'))
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         super().mousePressEvent(event)
@@ -669,8 +669,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
         if not(self.flags() & QGraphicsItem.ItemIsMovable):
-            scale_factor_x, scale_factor_y = 0.99, 0.99
-            self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y)
+            scale_coords_x_pixmap = event.pos().x()
+            scale_coords_y_pixmap = event.pos().y()
+            self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_coords_x_pixmap=scale_coords_x_pixmap, scale_coords_y_pixmap=scale_coords_y_pixmap)
         else:
             direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
             self.previous_position_in_pixmap_coords = self.pos()
@@ -770,11 +771,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume.add_observer(self)
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
-            scale_factor_x = kwargs['scale_factor_x']
-            scale_factor_y = kwargs['scale_factor_y']
+            scale_coords_x_pixmap = kwargs['scale_coords_x_pixmap']
+            scale_coords_y_pixmap = kwargs['scale_coords_y_pixmap']
+            scale_coords_x_image_mm, scale_coords_y_image_mm, _ = self.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords((scale_coords_x_pixmap, scale_coords_y_pixmap))
 
             self.scan_volume.remove_observer(self)
-            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y)
+            self.scan_volume.scale_scan_volume(scale_coords_x_pixmap, scale_coords_y_pixmap)
             self._update_scan_volume_display()
             self.scan_volume.add_observer(self)
 
