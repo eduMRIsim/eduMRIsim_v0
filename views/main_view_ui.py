@@ -608,6 +608,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.observers = []
         self.previous_position_in_pixmap_coords = None
+        self.size_x = None
+        self.size_y = None
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         super().setPolygon(polygon_in_polygon_coords)
@@ -666,11 +668,17 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         if resize_event:
             self.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
 
+        # size_x and size_y should be constant, so only set them if they are not set yet (i.e. if they are still None)
+        if self.size_x is None:
+            self.size_x = self.boundingRect().width()
+        if self.size_y is None:
+            self.size_y = self.boundingRect().height()
+
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
         if not(self.flags() & QGraphicsItem.ItemIsMovable):
-            scale_coords_x_pixmap = event.pos().x()
-            scale_coords_y_pixmap = event.pos().y()
+            scale_coords_x_pixmap = self.size_x / 2 - event.pos().x()
+            scale_coords_y_pixmap = self.size_y / 2 - event.pos().y()
             self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_coords_x_pixmap=scale_coords_x_pixmap, scale_coords_y_pixmap=scale_coords_y_pixmap)
         else:
             direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
