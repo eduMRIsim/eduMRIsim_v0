@@ -1,8 +1,9 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage
+from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
+from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget, QListView
+
+from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent
 import numpy as np
-from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D
+from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D, ExamCardTab
 #from views.main_view_ui import ImageLabel
 #from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
@@ -26,12 +27,18 @@ class ViewWindow(QDialog):
         left_layout.addWidget(self.Button, stretch=2)
         self.Button.clicked.connect(self.exitViewingMode)
 
+        #example data for the list
+        test_data = ["Item 1", "Item 2", "Item 3"]
+        self.model = QStringListModel(test_data)
+
         #list of acquired images
         left_layout.addWidget(QLabel("Acquired Images"))
-        self._scanlistInfoFrame = ScanlistListWidget()
-        left_layout.addWidget(self._scanlistInfoFrame, stretch=2)
-        #setAcquiredSeries
+        self._acquiredlistView = AcquiredList()
+        left_layout.addWidget(self._acquiredlistView, stretch=2)
 
+        #populate list with the data
+        self.acquiredlistView.acquiredlistView.setModel(self.model)
+      
         # widget for the left side 
         left_widget = QWidget()
         left_widget.setLayout(left_layout)
@@ -56,12 +63,37 @@ class ViewWindow(QDialog):
 
     def exitViewingMode(self):
         QDialog.close(self)
+    
+    @property
+    def acquiredlistView(self):
+        return self._acquiredlistView
+
+class AcquiredList(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self._acquiredlistView = QListView()
+        self._acquiredlistView.setDragDropMode(QListView.DragOnly)
+        self._acquiredlistView.setSelectionMode(QListView.SingleSelection)
+
+        def dragMoveEvent(self, e: QDragMoveEvent) -> None:
+            e.accept()
+
+        #self._acquiredlistView.setEditTriggers(QListView.NoEditTriggers) #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
+        self.layout.addWidget(self._acquiredlistView)
+    
+    @property
+    def acquiredlistView(self):
+        return self._acquiredlistView
 
 class DropWidget(DropAcquiredSeriesViewer2D):
-    #class that inherits the functionality to accept drops from DropAcquiredSeriesViewer2D 
-    #adds styling for the cells of the grid
+    #class that inherits the functionality to accept drops from DropAcquiredSeriesViewer2D and adds styling for the cells of the grid
+    #only accepts scanned item as a drop
     def _init_(self):
         super()._init_()
+
+        self.setAcceptDrops(True)
 
         #style of the grid cells
         emptyCellStyle = """
