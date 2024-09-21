@@ -20,6 +20,13 @@ class ViewWindow(QDialog):
 
         # vertical layout for the left side
         left_layout = QVBoxLayout()
+
+        #planning view button
+        self.Button = QPushButton("Planning View",self)
+        left_layout.addWidget(self.Button, stretch=2)
+        self.Button.clicked.connect(self.exitViewingMode)
+
+        #list of acquired images
         left_layout.addWidget(QLabel("Acquired Images"))
         self._scanlistInfoFrame = ScanlistListWidget()
         left_layout.addWidget(self._scanlistInfoFrame, stretch=2)
@@ -46,6 +53,9 @@ class ViewWindow(QDialog):
         main_layout.addWidget(right_widget, stretch=3)
 
         self.setLayout(main_layout)
+
+    def exitViewingMode(self):
+        QDialog.close(self)
 
 class DropWidget(DropAcquiredSeriesViewer2D):
     #class that inherits the functionality to accept drops from DropAcquiredSeriesViewer2D 
