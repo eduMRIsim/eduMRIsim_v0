@@ -681,7 +681,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label = QLabel(self)
         self.scan_plane_label.setAlignment(Qt.AlignRight)
         self.scan_plane_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
-        self.scan_plane_label.resize(200, 30)
+        self.scan_plane_label.resize(100, 30)
         self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.updateLabelPosition()
         
@@ -689,7 +689,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_name_label = QLabel(self)
         self.scan_name_label.setAlignment(Qt.AlignLeft)
         self.scan_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
-        self.scan_name_label.resize(200, 30)
+        self.scan_name_label.resize(100, 100)
         self.scan_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.scan_name_label.move(0, 0)
 
@@ -700,9 +700,20 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.updateLabelPosition()
     
     def updateLabelPosition(self):
-        label_width = self.scan_plane_label.width()
-        label_height = self.scan_plane_label.height()
-        self.scan_plane_label.move(self.width() - label_width, self.height() - label_height)
+        if self.scan_plane_label.pixmap() is not None:
+            label_width = self.scan_plane_label.pixmap().width()
+            label_height = self.scan_plane_label.pixmap().height()
+        else:
+            label_width = 0 
+            label_height = 0  
+
+        padding = 10 
+        x_pos = self.width() - label_width - padding
+        y_pos = self.height() - label_height - padding
+        self.scan_plane_label.move(x_pos, y_pos)
+        self.scan_plane_label.adjustSize() 
+        self.scan_plane_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 
     def _displayArray(self):
         width, height = 0, 0
@@ -771,26 +782,31 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.acquired_series = None
             self.setDisplayedImage(None)
 
-    def setDisplayedImage(self, image, series_name = "Scan"):
+    def setDisplayedImage(self, image, series_name="Scan"):
         self.displayed_image = image
         if image is not None:
-            # set image
             self.array = image.image_data
-            
-            # set scan plane
+
+            # Determine the scan plane
             scan_plane = checkScanPlane(image.image_geometry)
-            self.scan_plane_label.setText(f"Scan Plane: {scan_plane}")
+            icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
+            pixmap = QPixmap(icon_path)
+            scaled_pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.scan_plane_label.setPixmap(scaled_pixmap)
+            self.scan_plane_label.resize(scaled_pixmap.width(), scaled_pixmap.height())
             
-            # set scan name
-            scan_number = self.displayed_image_index + 1  # Scan number based on its position in the list (1-based index)
+            # Set the scan name
+            scan_number = self.displayed_image_index + 1
             self.scan_name_label.setText(f"{series_name} ({scan_number}) ")
+            
+            self.updateLabelPosition()
         else:
             self.array = None
-            self.scan_plane_label.setText("")
+            self.scan_plane_label.clear()
             self.scan_name_label.setText("")
 
         self._displayArray()
-        self._update_scan_volume_display()    
+        self._update_scan_volume_display()
 
     def setScanVolume(self, scan_volume: ScanVolume):
         # remove the observer from the previous scan volume
