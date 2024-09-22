@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
 from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget, QListView
 
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent
+from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
 import numpy as np
 from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D, ExamCardTab
 #from views.main_view_ui import ImageLabel
@@ -43,12 +43,19 @@ class ViewWindow(QDialog):
         left_widget = QWidget()
         left_widget.setLayout(left_layout)
 
+        #
+        emptyCellStyle = """
+        background-color: black;
+        border: 1px solid white;
+        """
+   
         # creates default 2x2 grid
         right_layout = QGridLayout()
         for i in range(2):
             for j in range(2):
-                #empty_widget = QWidget()
-                empty_widget = DropWidget()
+                empty_widget = QWidget()
+                #empty_widget = DropWidget()
+                empty_widget.setStyleSheet(emptyCellStyle)
                 right_layout.addWidget(empty_widget, i, j)
 
         # widget for the right side
@@ -86,23 +93,7 @@ class AcquiredList(QWidget):
     @property
     def acquiredlistView(self):
         return self._acquiredlistView
-
-class DropWidget(DropAcquiredSeriesViewer2D):
-    #class that inherits the functionality to accept drops from DropAcquiredSeriesViewer2D and adds styling for the cells of the grid
-    #only accepts scanned item as a drop
-    def _init_(self):
-        super()._init_()
-
-        self.setAcceptDrops(True)
-
-        #style of the grid cells
-        emptyCellStyle = """
-        background-color: black;
-        border: 1px solid white;
-        """
-        self.setStyleSheet(emptyCellStyle)
-
-
+        
 """
 class ModelViewLabel(ImageLabel):
 
