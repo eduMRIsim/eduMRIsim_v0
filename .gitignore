@@ -159,10 +159,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-__pycache__/
-myvenv/
-.DS_Store
-*.pyc
-
-.idea/
-.vscode/
