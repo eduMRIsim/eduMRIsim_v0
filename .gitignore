@@ -1,4 +1,7 @@
 venv/
+myvenv/
 docs/
 unused_code/
 __pycache__/ 
+myvenv/
+.DS_Store
