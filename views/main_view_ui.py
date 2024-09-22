@@ -786,7 +786,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             if isinstance(item, QGraphicsLineItem) and item != self.scan_volume_display:
                 self.scene.removeItem(item)
 
-        if not intersection_points:
+        if not intersection_points or len(intersection_points) != 4:
+            return
+
+        # Check if slices should be visible in this view
+        if not self._are_slices_visible():
             return
 
         slice_positions = self.scan_volume.calculate_slice_positions()
@@ -796,13 +800,30 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             relative_pos = (z + total_thickness / 2) / total_thickness
             start = self._interpolate_point(intersection_points[0], intersection_points[3], relative_pos)
             end = self._interpolate_point(intersection_points[1], intersection_points[2], relative_pos)
-            
-            line = QGraphicsLineItem(start.x(), start.y(), end.x(), end.y())
+
+            line = QGraphicsLineItem(start[0], start[1], end[0], end[1])
             line.setPen(QPen(Qt.red, 1))
             self.scene.addItem(line)
 
+    def _are_slices_visible(self):
+        if self.displayed_image is None or self.scan_volume is None:
+            return False
+
+        # Get the normal vector of the image plane
+        image_normal = np.array(self.displayed_image.image_geometry.axisZ_LPS)
+        
+        # Get the slice direction of the scan volume
+        slice_direction = np.array(self.scan_volume.axisZ_LPS)
+        
+        # Calculate the dot product
+        dot_product = np.abs(np.dot(image_normal, slice_direction))
+        
+        # If the dot product is close to 0, the slice planes are nearly parallel to the view plane
+        # and should be visible. If it's close to 1, they're nearly perpendicular and shouldn't be visible.
+        return dot_product < 0.7  # You can adjust this threshold as needed
+
     def _interpolate_point(self, p1, p2, t):
-        return QPointF(p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t)
+        return (p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t)
     
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     '''Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs.'''
