@@ -681,17 +681,17 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label = QLabel(self)
         self.scan_plane_label.setAlignment(Qt.AlignRight)
         self.scan_plane_label.setStyleSheet("padding: 5px;")
-        self.scan_plane_label.resize(100, 30)
+        self.scan_plane_label.resize(100, 100)
         self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.updateLabelPosition()
         
         # Display scan name
-        self.scan_name_label = QLabel(self)
-        self.scan_name_label.setAlignment(Qt.AlignLeft)
-        self.scan_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
-        self.scan_name_label.resize(100, 100)
-        self.scan_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.scan_name_label.move(0, 0)
+        self.series_name_label = QLabel(self)
+        self.series_name_label.setAlignment(Qt.AlignLeft)
+        self.series_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
+        self.series_name_label.resize(200, 50)
+        self.series_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.series_name_label.move(0, 0)
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
@@ -771,25 +771,23 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         elif delta == 0:
             new_displayed_image_index = displayed_image_index
         self.displayed_image_index = new_displayed_image_index
-        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
+        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index], self.acquired_series.scan_plane, self.acquired_series.series_name)
 
     def setAcquiredSeries(self, acquired_series : AcquiredSeries):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0 
-            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index], self.acquired_series.scan_plane, self.acquired_series.series_name)
         else:
             self.acquired_series = None
             self.setDisplayedImage(None)
 
-    def setDisplayedImage(self, image, series_name="Scan"):
+    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
-            print("Image attributes:", image.__dict__)
 
             # Determine the scan plane
-            scan_plane = checkScanPlane(image.image_geometry)
             icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
             pixmap = QPixmap(icon_path)
             scaled_pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -798,13 +796,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             
             # Set the scan name
             scan_number = self.displayed_image_index + 1
-            self.scan_name_label.setText(f"{series_name} ({scan_number}) ")
+            self.series_name_label.setText(f"{series_name} ({scan_number}) ")
             
             self.updateLabelPosition()
         else:
             self.array = None
             self.scan_plane_label.clear()
-            self.scan_name_label.setText("")
+            self.series_name_label.setText("")
 
         self._displayArray()
         self._update_scan_volume_display()
@@ -1129,13 +1127,3 @@ class DropImageLabel(ImageLabel):
         selected_index = source_widget.selectedIndexes()[0].row()
         self.dropEventSignal.emit(selected_index)
         event.accept()
-        
-# check the current plane of the image
-def checkScanPlane(geometry):
-    if np.array_equal(geometry.axisZ_LPS, [0, 0, 1]) or np.array_equal(geometry.axisZ_LPS, [0, 0, -1]):
-        return "Axial"
-    elif np.array_equal(geometry.axisZ_LPS, [0, 1, 0]) or np.array_equal(geometry.axisZ_LPS, [0, -1, 0]):
-        return "Coronal"
-    elif np.array_equal(geometry.axisZ_LPS, [-1, 0, 0]) or np.array_equal(geometry.axisZ_LPS, [1, 0, 0]):
-        return "Sagittal"
-    return "Unknown"
