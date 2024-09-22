@@ -77,8 +77,11 @@ class AcquiredImage:
 
 class AcquiredSeries:
     '''A series of acquired images. The acquired images are 2D.'''
-    def __init__(self, list_acquired_images: list[AcquiredImage]):
+    def __init__(self, series_name, scan_plane, list_acquired_images: list[AcquiredImage]):
+        self.series_name = series_name
+        self.scan_plane = scan_plane
         self.list_acquired_images = list_acquired_images
+        
          
 class Scanlist:
     def __init__(self):
