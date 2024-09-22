@@ -16,6 +16,8 @@ class Scanner:
     def scan(self) -> AcquiredSeries:
         '''Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume.'''
         scan_item = self.active_scan_item
+        series_name = scan_item.name
+        scan_plane = scan_item.scan_parameters['ScanPlane']
         signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(scan_item.scan_parameters, self.model)
         list_acquired_images = []
         n_slices = int(scan_item.scan_parameters['NSlices'])
@@ -29,7 +31,7 @@ class Scanner:
             acquired_image = AcquiredImage(image_data, image_geometry)
             list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
-        acquired_series = AcquiredSeries(list_acquired_images)
+        acquired_series = AcquiredSeries(series_name, scan_plane, list_acquired_images)
         self.active_scanlist_element.acquired_data = acquired_series
         self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
         return acquired_series

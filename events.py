@@ -7,7 +7,8 @@ class EventEnum(Enum):
 
     # Scan volume events
     SCAN_VOLUME_DISPLAY_TRANSLATED = auto() # Event for when the scan volume display is translated, i.e., when the user moves the scan volume display object in a viewing window on the UI
-    SCAN_VOLUME_CHANGED = auto() # Event for when the scan volume is updated, i.e., when the scan volume parameters are changed 
+    SCAN_VOLUME_CHANGED = auto() # Event for when the scan volume is updated, i.e., when the scan volume parameters are changed
+    SCAN_VOLUME_DISPLAY_ROTATED = auto() # Event for when the scan volume is rotated
     
     # Scanlist events
     SCANLIST_ITEM_ADDED = auto() # Event for when a scanlist item is added to the scanlist

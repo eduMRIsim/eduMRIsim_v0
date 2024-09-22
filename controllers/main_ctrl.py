@@ -3,7 +3,8 @@ from PyQt5.QtCore import QSettings
 from controllers.settings_mgr import SettingsManager
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
-from views.view_model_dialog_ui import ViewModelDialog
+#from views.view_model_dialog_ui import ViewModelDialog
+from views.view_model_dialog_ui import ViewWindow
 from views.qmodels import DictionaryModel
 import views.UI_MainWindowState as UI_state 
 
@@ -132,8 +133,10 @@ class MainController:
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
     def handle_viewModelButton_clicked(self):
-        view_model_dialog = ViewModelDialog(self.scanner.model)
-        view_model_dialog.exec()    
+        #view_model_dialog = ViewModelDialog(self.scanner.model)
+        #view_model_dialog.exec()    
+        view_model_window = ViewWindow()
+        view_model_window.exec_()
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED

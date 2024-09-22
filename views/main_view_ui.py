@@ -1,14 +1,16 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QSettings, QByteArray, QMetaType
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent, QSettings, QByteArray, QMetaType
 from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
-                             QApplication)
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
-    QFont, QPolygonF
+    QFont, QPolygonF, QPen
 
 import numpy as np
+
+import math
 
 from contextlib import contextmanager
 
@@ -29,6 +31,7 @@ naming convention used in Python. Most of the PyQt related code in eduRMIsim use
 However, I've noticed that I haven't been fully consistent with this so I realise some of the naming might be 
 confusing. I might change the names in the future. For the SEP project feel free to use whichever convention you find 
 most convenient when adding new PyQt related code.'''
+
 
 
 @contextmanager
@@ -224,6 +227,7 @@ class Ui_MainWindow(QMainWindow):
 
         return rightLayout
 
+
     def save_widget_state(self):
         settings = SettingsManager.get_instance().settings
         settings.beginGroup("WidgetState")
@@ -284,7 +288,6 @@ class Ui_MainWindow(QMainWindow):
             self.state = IdleState()
 
         self.restore_widget_states()
-
 
 class ModeSwitchButtonsLayout(QHBoxLayout):
     def __init__(self):
@@ -730,17 +733,119 @@ class ParameterFormLayout(QVBoxLayout):
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
 
-    def __init__(self, parent: QGraphicsPixmapItem):
+
+    def __init__(self, parent: QGraphicsPixmapItem, viewer):
         super().__init__(parent)
         self.setPen(Qt.red)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.observers = []
         self.previous_position_in_pixmap_coords = None
+        self.slice_lines = []
+        self.scan_volume = None
+        self.displayed_image = None
+
+        # Added viewer to update the scan view of the scan area with the selected rotation handler
+        # It does not rotate when the other do without this viewer
+        self.viewer = viewer
+
+        # Parameters for rotation
+        self.previous_handle_position = None
+        self.is_rotating = False
+        self.centroid = QPointF(0, 0)
+        self.previous_angle = 0.0
+        self.rotation_handle_offset = None
+
+        # Create the rotation handles. Use 8 in the case of polygon not being rectangular. Might not be accurate to real MRI, not sure how real machine handles this
+        self.rotation_handles = []
+        for i in range(8):
+            handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
+            handle.setBrush(Qt.red)
+            handle.setFlag(QGraphicsItem.ItemIsMovable, False)
+            handle.setAcceptedMouseButtons(Qt.LeftButton)
+            handle.setAcceptHoverEvents(True)
+            handle.setCursor(Qt.OpenHandCursor)
+            # Assign event handler to each handle
+            handle.mousePressEvent = lambda event, h=handle: self.handle_rotation_handle_press(event, h)
+            self.rotation_handles.append(handle)
+
+        # Initial positioning of the rotation handle
+        self.update_rotation_handle_positions()
+
+    def setScanVolume(self, scan_volume):
+        self.scan_volume = scan_volume
+
+    def update_rotation_handle_positions(self):
+        ''' Update the positions of the rotation handlers '''
+        if self.polygon().isEmpty() or not self.rotation_handle_offsets:
+            return
+        if not self.isVisible():
+            for handle in self.rotation_handles:
+                handle.setVisible(False)
+            return
+
+        if self.polygon().isEmpty() or not self.rotation_handle_offsets:
+            for handle in self.rotation_handles:
+                handle.setVisible(False)
+            return
+
+        polygon = self.polygon()
+        n_points = len(polygon)
+
+        # Calculate centroid in local coordinates
+        centroid_x = sum(point.x() for point in polygon) / n_points
+        centroid_y = sum(point.y() for point in polygon) / n_points
+        centroid_local = QPointF(centroid_x, centroid_y)
+
+        # Update each rotation handle position
+        for i, offset in enumerate(self.rotation_handle_offsets):
+            if i >= len(self.rotation_handles):
+                break
+            handle = self.rotation_handles[i]
+            handle_pos_local = centroid_local + offset
+            handle.setPos(handle_pos_local)
+            handle.setVisible(True)
+
+        # Hide any extra handles
+        for i in range(len(self.rotation_handle_offsets), len(self.rotation_handles)):
+            self.rotation_handles[i].setVisible(False)
+
+        # Initialize previous handle position in scene coordinates
+        if self.previous_handle_position is None and self.rotation_handles:
+            self.previous_handle_position = self.mapToScene(self.rotation_handles[0].pos())
+
+    # Custom setVisible for rotation handles
+    def setVisible(self, visible: bool):
+        super().setVisible(visible)
+        for handle in self.rotation_handles:
+            handle.setVisible(visible)
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
+        n_points = len(polygon_in_polygon_coords)
+        # If the polygon is empty, clear the rotation handles and exit early. This check prevents a crash
+        if n_points == 0:
+            super().setPolygon(polygon_in_polygon_coords)
+            for handle in self.rotation_handles:
+                handle.setVisible(False)
+            self.rotation_handle_offsets = []
+            return
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
+
+        # Calculate centroid in local coordinates
+        centroid_x = sum(point.x() for point in polygon_in_polygon_coords) / n_points
+        centroid_y = sum(point.y() for point in polygon_in_polygon_coords) / n_points
+        centroid_polygon = QPointF(centroid_x, centroid_y)
+
+        # Compute the offsets for each corner
+        self.rotation_handle_offsets = []
+        for i in range(n_points):
+            corner_point = polygon_in_polygon_coords[i]
+            offset = corner_point - centroid_polygon
+            self.rotation_handle_offsets.append(offset)
+
+        # Update rotation handles positions
+        self.update_rotation_handle_positions()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
         polygon_in_polygon_coords = QPolygonF()
@@ -748,6 +853,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
+        self.update_slice_lines()
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
@@ -756,15 +862,149 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
             print("Subject", self, "is updating observer", observer, "with event", event)
-            observer.update(event, direction_vector_in_pixmap_coords=kwargs['direction_vector_in_pixmap_coords'])
+            #observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
+            observer.update(event, **kwargs)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(),
                                                     self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
+
+        self.update_rotation_handle_positions()
         self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
                               direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
+
+    # Detecting mouse for rotation. Uses scene events since other method did not work
+    def handle_rotation_handle_press(self, event: QGraphicsSceneMouseEvent, handle):
+        '''Initiate rotation when the rotation handle is pressed'''
+        self.is_rotating = True
+        self.active_handle = handle  # Keep track of which handle is active
+        self.previous_handle_position = event.scenePos()
+        handle.setCursor(Qt.ClosedHandCursor)
+
+        # Calculate centroid in scene coordinates
+        polygon = self.polygon()
+        if polygon.isEmpty():
+            self.centroid = QPointF(0, 0)
+        else:
+            centroid_local = QPointF(
+                sum(point.x() for point in polygon) / len(polygon),
+                sum(point.y() for point in polygon) / len(polygon)
+            )
+            self.centroid = self.mapToScene(centroid_local)
+
+        # Calculate initial angle
+        dx = self.previous_handle_position.x() - self.centroid.x()
+        dy = self.previous_handle_position.y() - self.centroid.y()
+        self.previous_angle = math.atan2(dy, dx)
+
+    def handle_scene_mouse_move(self, event: QGraphicsSceneMouseEvent):
+        if not self.is_rotating:
+            return
+
+        new_pos = event.scenePos()
+        dx = new_pos.x() - self.centroid.x()
+        dy = new_pos.y() - self.centroid.y()
+        new_angle = math.atan2(dy, dx)
+
+        angle_diff_rad = new_angle - self.previous_angle
+        angle_diff_rad = (angle_diff_rad + math.pi) % (2 * math.pi) - math.pi
+        angle_diff_deg = math.degrees(angle_diff_rad)
+
+        self.previous_angle = new_angle
+        self.previous_handle_position = new_pos
+
+        rotation_axis = self.get_rotation_axis()
+
+        self.notify_observers(
+            EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+            rotation_angle_deg=angle_diff_deg,
+            rotation_axis=rotation_axis
+        )
+
+        # Update display so the currently selected polygon also rotates
+        self.viewer._update_scan_volume_display()
+        self.viewer.viewport().update()
+        QApplication.processEvents()
+        self.update_rotation_handle_positions()
+
+    def handle_scene_mouse_release(self, event: QGraphicsSceneMouseEvent):
+        self.is_rotating = False
+        if hasattr(self, 'active_handle') and self.active_handle:
+            self.active_handle.setCursor(Qt.OpenHandCursor)
+            self.active_handle = None
+
+    def get_rotation_axis(self):
+        '''Determine the rotation axis based on the displayed image plane'''
+        plane = self.viewer.displayed_image.image_geometry.plane
+
+        if plane is None:
+            raise ValueError("Image plane is not set in ImageGeometry.")
+
+        plane = plane.lower()
+
+        if plane == 'axial':
+            return 'FH'
+        elif plane == 'sagittal':
+            return 'RL'
+        elif plane == 'coronal':
+            return 'AP'
+        else:
+            raise ValueError(f"Unknown plane: {plane}")
+
+    def set_scan_volume(self, scan_volume):
+        self.scan_volume = scan_volume
+        self.update_slice_lines()
+
+    def set_displayed_image(self, displayed_image):
+        self.displayed_image = displayed_image
+        self.update_slice_lines()
+
+    def update_slice_lines(self):
+        # Remove existing slice lines
+        for line in self.slice_lines:
+            self.scene().removeItem(line)
+        self.slice_lines.clear()
+
+        if not self.scan_volume or not self.displayed_image or not self._are_slices_visible():
+            return
+
+        polygon = self.polygon()
+        if polygon.isEmpty() or polygon.size() < 4:
+            return
+
+        slice_positions = self.scan_volume.calculate_slice_positions()
+        total_thickness = self.scan_volume.extentZ_mm
+
+        for z in slice_positions:
+            relative_pos = (z + total_thickness / 2) / total_thickness
+            start = self._interpolate_point(polygon[0], polygon[3], relative_pos)
+            end = self._interpolate_point(polygon[1], polygon[2], relative_pos)
+
+            line = QGraphicsLineItem(start.x(), start.y(), end.x(), end.y(), self)
+            line.setPen(QPen(Qt.red, 1))
+            self.slice_lines.append(line)
+
+    def _are_slices_visible(self):
+        if not self.displayed_image or not self.scan_volume:
+            return False
+
+        image_normal = np.array(self.displayed_image.image_geometry.axisZ_LPS)
+        slice_direction = np.array(self.scan_volume.axisZ_LPS)
+        dot_product = np.abs(np.dot(image_normal, slice_direction))
+        return dot_product > 0.3
+
+    def _interpolate_point(self, p1, p2, t):
+        return QPointF(p1.x() + (p2.x() - p1.x()) * t, p1.y() + (p2.y() - p1.y()) * t)
+
+
+class MiddleLineItem(QGraphicsPolygonItem):
+    '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
+
+    def __init__(self, parent: QGraphicsPixmapItem):
+        super().__init__(parent)
+        self.setPen(Qt.yellow)
 
 
 class AcquiredSeriesViewer2D(QGraphicsView):
@@ -806,14 +1046,66 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
 
-        self.scan_volume_display = CustomPolygonItem(
-            self.pixmap_item)  # Create a custom polygon item that is a child of the pixmap item
+
+        self.scan_volume_display = CustomPolygonItem(self.pixmap_item,
+                                                     self)  # Create a custom polygon item that is a child of the pixmap item
+
+        self.middle_lines_display = MiddleLineItem(self.pixmap_item)  # adds middle lines of current scan volume
+
+        # self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
+
         self.scan_volume_display.add_observer(self)
+
+        #  Display scan plane label
+        self.scan_plane_label = QLabel(self)
+        self.scan_plane_label.setAlignment(Qt.AlignRight)
+        self.scan_plane_label.setStyleSheet("padding: 5px;")
+        self.scan_plane_label.resize(100, 100)
+        self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.updateLabelPosition()
+
+        # Display scan name
+        self.series_name_label = QLabel(self)
+        self.series_name_label.setAlignment(Qt.AlignLeft)
+        self.series_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
+        self.series_name_label.resize(200, 50)
+        self.series_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.series_name_label.move(0, 0)
+
+        self.scene.installEventFilter(self)
+
+    # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
+    def eventFilter(self, source, event):
+        if event.type() == QEvent.GraphicsSceneMouseMove:
+            if self.scan_volume_display and self.scan_volume_display.is_rotating:
+                self.scan_volume_display.handle_scene_mouse_move(event)
+                return True
+        elif event.type() == QEvent.GraphicsSceneMouseRelease:
+            if self.scan_volume_display and self.scan_volume_display.is_rotating:
+                self.scan_volume_display.handle_scene_mouse_release(event)
+                return True
+        return super().eventFilter(source, event)
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.'''
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.updateLabelPosition()
+
+    def updateLabelPosition(self):
+        if self.scan_plane_label.pixmap() is not None:
+            label_width = self.scan_plane_label.pixmap().width()
+            label_height = self.scan_plane_label.pixmap().height()
+        else:
+            label_width = 0
+            label_height = 0
+
+        padding = 10
+        x_pos = self.width() - label_width - padding
+        y_pos = self.height() - label_height - padding
+        self.scan_plane_label.move(x_pos, y_pos)
+        self.scan_plane_label.adjustSize()
+        self.scan_plane_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def _displayArray(self):
         width, height = 0, 0
@@ -852,12 +1144,19 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
             direction_vector_in_pixmap_coords = (
-                kwargs['direction_vector_in_pixmap_coords'].x(), kwargs['direction_vector_in_pixmap_coords'].y())
+              kwargs['direction_vector_in_pixmap_coords'].x(), kwargs['direction_vector_in_pixmap_coords'].y())
             direction_vector_in_LPS_coords = np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords(
                 direction_vector_in_pixmap_coords)) - np.array(
                 self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((0, 0)))
             self.scan_volume.remove_observer(self)
             self.scan_volume.translate_scan_volume(direction_vector_in_LPS_coords)
+            self.scan_volume.add_observer(self)
+        elif event == EventEnum.SCAN_VOLUME_DISPLAY_ROTATED:
+            rotation_angle_deg = kwargs['rotation_angle_deg']
+            rotation_axis = kwargs['rotation_axis']
+            rotation_angle_rad = np.deg2rad(rotation_angle_deg)
+            self.scan_volume.remove_observer(self)
+            self.scan_volume.rotate_scan_volume(rotation_angle_rad, rotation_axis)
             self.scan_volume.add_observer(self)
 
     def wheelEvent(self, event):
@@ -876,24 +1175,43 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         elif delta == 0:
             new_displayed_image_index = displayed_image_index
         self.displayed_image_index = new_displayed_image_index
-        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
+        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                               self.acquired_series.scan_plane, self.acquired_series.series_name)
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
-            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
+
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
         else:
             self.acquired_series = None
             self.setDisplayedImage(None)
 
-    def setDisplayedImage(self, image):
+    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
+            self.scan_volume_display.set_displayed_image(image)
 
+            # Determine the scan plane
+            icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
+            pixmap = QPixmap(icon_path)
+            scaled_pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.scan_plane_label.setPixmap(scaled_pixmap)
+            self.scan_plane_label.resize(scaled_pixmap.width(), scaled_pixmap.height())
+
+            # Set the scan name
+            scan_number = self.displayed_image_index + 1
+            self.series_name_label.setText(f"{series_name} ({scan_number}) ")
+
+            self.updateLabelPosition()
         else:
             self.array = None
+            self.scan_plane_label.clear()
+            self.series_name_label.setText("")
+
         self._displayArray()
         self._update_scan_volume_display()
 
@@ -905,10 +1223,21 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_volume = scan_volume
         self.scan_volume.add_observer(self)
         # update the intersection polygon
+        self.scan_volume_display.set_scan_volume(scan_volume)
         self._update_scan_volume_display()
 
     def _update_scan_volume_display(self):
         '''Updates the intersection polygon between the scan volume and the displayed image.'''
+        if self.displayed_image is not None and self.scan_volume is not None:
+            intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(
+                self.displayed_image)
+
+            self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
+        else:
+            self.scan_volume_display.setPolygon(QPolygonF())
+        self.scan_volume_display.update_slice_lines()
+
+    def _update_scan_volume_display(self):
         if self.displayed_image is not None and self.scan_volume is not None:
             intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(
                 self.displayed_image)
