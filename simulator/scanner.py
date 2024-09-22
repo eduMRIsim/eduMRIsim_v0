@@ -134,12 +134,3 @@ class Scanner:
             return state
         else:
             print("No examination to save state for")
-
-    def restore_state(self, state):
-        # Deserialize the state of the scanner
-        # self.examination = state.get('current_examination')
-        # self.examination.scanlist = state.get('scanlist')
-        # self.examination.scanlist.active_scan_item = state.get('active_scan_item')
-        # self. = state.get('anatomical_model')
-        # Restore other relevant attributes
-        pass

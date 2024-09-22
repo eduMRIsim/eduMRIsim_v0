@@ -229,13 +229,10 @@ class Ui_MainWindow(QMainWindow):
 
         settings.beginGroup("WidgetState")
 
-
-        settings.setValue("scanlistListWidget", self.scanlistListWidget.save_state())
-        # settings.setValue("parameterFormLayout", self.parameterFormLayout)
+        # Scan parameters
         settings.setValue("_parameterFormLayout_params", self.parameterFormLayout.save_state())
-        settings.setValue("_scanProgressInfoFrame", self._scanlistInfoFrame.scanlistListWidget.save_state())
-        # settings.setValue("ExaminationInfoStackedLayout", self.examinationInfoStackedLayout)
 
+        # UI labels
         settings.setValue("examinationNameLabel", self.examinationNameLabel.text())
         settings.setValue("modelNameLabel", self.modelNameLabel.text())
         settings.setValue("scanProgressBar", self.scanProgressBar.value())
@@ -246,16 +243,13 @@ class Ui_MainWindow(QMainWindow):
         settings = self.settings
         settings.beginGroup("WidgetState")
 
-        # self._scanlistInfoFrame.scanlistListWidget.restore_state(settings.value("scanlistListWidget", type=dict))
-        # self._parameterFormLayout = settings.value("parameterFormLayout", type=QVBoxLayout)
+        # Scan parameters
         self.parameterFormLayout.set_parameters(settings.value("_parameterFormLayout_params", type=dict))
-        # self._scanlistInfoFrame.scanlistListWidget.restore_state(settings.value("_scanProgressInfoFrame", type=dict))
-        # self._examinationInfoStackedLayout = settings.value("ExaminationInfoStackedLayout", type=QStackedLayout)
-        # Restore the state of each widget
+
+        # UI labels
         self.examinationNameLabel.setText(settings.value("examinationNameLabel", "", type=str))
         self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
         self.scanProgressBar.setValue(int(settings.value("scanProgressBar", 0)))
-        # Add more widgets as needed
 
         settings.endGroup()
 
@@ -268,6 +262,7 @@ class Ui_MainWindow(QMainWindow):
         settings.setValue("scannerState", self.scanner.save_state())
         self.save_widget_state()
 
+    # This function executes automatically right before the main window is closed
     def closeEvent(self, a0):
         self.save_settings()
         print('Settings saved')
@@ -278,7 +273,7 @@ class Ui_MainWindow(QMainWindow):
 
         self.restoreGeometry(settings.value("geometry", type=QByteArray))
         self.restoreState(settings.value("windowState", type=QByteArray))
-        state_name = settings.value("currentState", type=str)
+        state_name = settings.value("currentState", defaultValue="IdleState", type=str)
         state_class = globals().get(state_name)
 
         if state_class:
@@ -287,7 +282,6 @@ class Ui_MainWindow(QMainWindow):
             print(f"Warning: State '{state_name}' not found. Defaulting to IdleState.")
             self.state = IdleState()
 
-        # self.scanner.restore_state(settings.value("scannerState", type=dict))
         self.restore_widget_states()
 
 
