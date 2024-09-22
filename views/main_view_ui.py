@@ -855,6 +855,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.array = None
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item, self) # Create a custom polygon item that is a child of the pixmap item
+
+        self.middle_lines_display = MiddleLineItem(self.pixmap_item) # adds middle lines of current scan volume
+        
+        # self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
+
         
         self.scan_volume_display.add_observer(self)
         
