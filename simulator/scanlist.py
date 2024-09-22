@@ -86,6 +86,7 @@ class Scanlist:
         self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
+        print("Added newww")
         new_scanlist_element = ScanlistElement(name, scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)

@@ -1,3 +1,5 @@
+from PyQt5.QtCore import QSettings
+
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.view_model_dialog_ui import ViewModelDialog
@@ -21,6 +23,8 @@ class MainController:
     def __init__(self, scanner, ui) -> None:
         self.scanner = scanner
         self.ui = ui
+
+        self.settings = QSettings("Eindhoven University of Technology", "eduMRIsim")
 
         self.load_examination_dialog_ui = LoadExaminationDialog() # Not yet implemented since it is not yet possible to save/load examinations.
         self.new_examination_dialog_ui = NewExaminationDialog() 
@@ -58,12 +62,18 @@ class MainController:
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
         self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))      
 
+    def prepare_model_data(self):
+        jsonFilePath = 'repository/models/models.json'
+        self.model_data = load_json(jsonFilePath)
+        model_names = list(self.model_data.keys())
+        self.populate_modelComboBox(model_names)
+
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
         self.model_data = load_json(jsonFilePath)
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
-        self.new_examination_dialog_ui.exec()    
+        self.new_examination_dialog_ui.exec()
 
     def populate_modelComboBox(self, list):
         self.new_examination_dialog_ui.modelComboBox.clear()
@@ -82,6 +92,10 @@ class MainController:
     def populate_examCardListView(self, exam_card_data):
         self.exam_card_qmodel = DictionaryModel(exam_card_data)
         self.ui.examCardListView.setModel(self.exam_card_qmodel)
+
+    def handle_add_to_scanlist_name(self, name):
+        # load scan parameters json file
+        scan_parameters = load_json("scan_parameters/scan_parameters.json")
 
     def handle_add_to_scanlist(self, selected_indexes):
         # Executed when the user drags and drops items from the examCardListView to the scanlistListWidget.
@@ -169,6 +183,9 @@ class MainController:
         self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
+        self.settings.setValue("exam_name", exam_name)
+        self.settings.setValue("model_name", model_name)
+
         selected_model_data = self.model_data.get(model_name)
         file_path = selected_model_data.get("file_path", None)
         model_data = load_model_data(file_path)
