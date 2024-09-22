@@ -6,7 +6,7 @@ from views.view_model_dialog_ui import ViewModelDialog
 from views.qmodels import DictionaryModel
 import views.UI_MainWindowState as UI_state 
 
-from PyQt5.QtWidgets import QListWidgetItem
+from PyQt5.QtWidgets import QListWidgetItem, QApplication
 from PyQt5.QtGui import QIcon
 
 from simulator.load import load_json, load_model_data
@@ -24,7 +24,9 @@ class MainController:
         self.scanner = scanner
         self.ui = ui
 
-        self.settings = QSettings("Eindhoven University of Technology", "eduMRIsim")
+        settings_file = "./settings.ini"
+        print(QApplication.applicationDirPath())
+        self.settings = QSettings(settings_file, QSettings.IniFormat)
 
         self.load_examination_dialog_ui = LoadExaminationDialog() # Not yet implemented since it is not yet possible to save/load examinations.
         self.new_examination_dialog_ui = NewExaminationDialog() 

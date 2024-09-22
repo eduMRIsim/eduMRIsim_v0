@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGr
                              QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
+                             QApplication)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
     QFont, QPolygonF
 
@@ -51,7 +52,9 @@ class Ui_MainWindow(QMainWindow):
     def __init__(self, scanner):
         super().__init__()
 
-        self.settings = QSettings("Eindhoven University of Technology", "eduMRIsim")
+
+        settings_file = "./settings.ini"
+        self.settings = QSettings(settings_file, QSettings.IniFormat)
 
         self.centralWidget = QWidget(self)
 
@@ -249,7 +252,7 @@ class Ui_MainWindow(QMainWindow):
         # UI labels
         self.examinationNameLabel.setText(settings.value("examinationNameLabel", "", type=str))
         self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
-        self.scanProgressBar.setValue(int(settings.value("scanProgressBar", 0)))
+        self.scanProgressBar.setValue(int(settings.value("scanProgressBar", 0, type=int)))
 
         settings.endGroup()
 

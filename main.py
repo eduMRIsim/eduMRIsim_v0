@@ -29,7 +29,11 @@ class App(QApplication):
         # Create a MainController object. The MainController object is responsible for connecting the UI with the scanner functionalities.
         self.main_controller = MainController(self.scanner, self.main_view)
 
-        settings = QSettings("Eindhoven University of Technology", "eduMRIsim")
+        # The settings file are for now saved in the working directory. This might change in the future to a more appropriate location such as native app data directory.
+        settings_file = "./settings.ini"
+
+        settings = QSettings(settings_file, QSettings.IniFormat)
+        # settings.setDefaultFormat(QSettings.IniFormat)
         state_name = settings.value("currentState", defaultValue="IdleState", type=str)
 
         if state_name == "ScanCompleteState" or state_name == "ReadyToScanState":
