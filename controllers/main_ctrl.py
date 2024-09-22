@@ -1,5 +1,6 @@
 from PyQt5.QtCore import QSettings
 
+from controllers.settings_mgr import SettingsManager
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.view_model_dialog_ui import ViewModelDialog
@@ -24,17 +25,13 @@ class MainController:
         self.scanner = scanner
         self.ui = ui
 
-        settings_file = "./settings.ini"
-        print(QApplication.applicationDirPath())
-        self.settings = QSettings(settings_file, QSettings.IniFormat)
-
-        self.load_examination_dialog_ui = LoadExaminationDialog() # Not yet implemented since it is not yet possible to save/load examinations.
+        self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog() 
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting signals from UI to functions that handle the signals.
 
         # Signals related to examinations 
-        self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.exec())
+        self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.open_file_dialog())
         self.ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
 
@@ -185,8 +182,10 @@ class MainController:
         self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
-        self.settings.setValue("exam_name", exam_name)
-        self.settings.setValue("model_name", model_name)
+        settings = SettingsManager.get_instance().settings
+
+        settings.setValue("exam_name", exam_name)
+        settings.setValue("model_name", model_name)
 
         selected_model_data = self.model_data.get(model_name)
         file_path = selected_model_data.get("file_path", None)

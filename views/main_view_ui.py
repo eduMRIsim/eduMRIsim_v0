@@ -12,6 +12,7 @@ import numpy as np
 
 from contextlib import contextmanager
 
+from controllers.settings_mgr import SettingsManager
 from views.UI_MainWindowState import IdleState
 from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
     TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
@@ -51,10 +52,6 @@ def block_signals(widgets):
 class Ui_MainWindow(QMainWindow):
     def __init__(self, scanner):
         super().__init__()
-
-
-        settings_file = "./settings.ini"
-        self.settings = QSettings(settings_file, QSettings.IniFormat)
 
         self.centralWidget = QWidget(self)
 
@@ -228,8 +225,7 @@ class Ui_MainWindow(QMainWindow):
         return rightLayout
 
     def save_widget_state(self):
-        settings = self.settings
-
+        settings = SettingsManager.get_instance().settings
         settings.beginGroup("WidgetState")
 
         # Scan parameters
@@ -243,7 +239,8 @@ class Ui_MainWindow(QMainWindow):
         settings.endGroup()
 
     def restore_widget_states(self):
-        settings = self.settings
+        settings = SettingsManager.get_instance().settings
+
         settings.beginGroup("WidgetState")
 
         # Scan parameters
@@ -258,7 +255,8 @@ class Ui_MainWindow(QMainWindow):
 
     # Save the state of the main window
     def save_settings(self):
-        settings = self.settings
+        settings = SettingsManager.get_instance().settings
+
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
         settings.setValue("currentState", self.state.name)
@@ -272,7 +270,7 @@ class Ui_MainWindow(QMainWindow):
         super().closeEvent(a0)
 
     def restore_settings(self):
-        settings = self.settings
+        settings = SettingsManager.get_instance().settings
 
         self.restoreGeometry(settings.value("geometry", type=QByteArray))
         self.restoreState(settings.value("windowState", type=QByteArray))
