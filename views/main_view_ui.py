@@ -1,8 +1,12 @@
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent
-from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy, QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea, QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF, QPen
+from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+                             QGridLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
+    QFont, QPolygonF, QPen
 
 import numpy as np
 
@@ -11,13 +15,15 @@ import math
 from contextlib import contextmanager
 
 from views.UI_MainWindowState import IdleState
-from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
+from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
+    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 from simulator.scanlist import AcquiredSeries, ScanVolume
 
 from events import EventEnum
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. However, I've noticed that I haven't been fully consistent with this so I realise some of the naming might be confusing. I might change the names in the future. For the SEP project feel free to use whichever convention you find most convenient when adding new PyQt related code.'''
+
 
 @contextmanager
 def block_signals(widgets):
@@ -36,12 +42,12 @@ def block_signals(widgets):
         for widget in widgets:
             widget.blockSignals(False)
 
+
 class Ui_MainWindow(QMainWindow):
     def __init__(self, scanner):
         super().__init__()
 
         self.centralWidget = QWidget(self)
-
 
         self.layout = QHBoxLayout()
         self.centralWidget.setLayout(self.layout)
@@ -54,14 +60,14 @@ class Ui_MainWindow(QMainWindow):
 
         self._state = IdleState()
         self.update_UI()
-    
+
     def update_UI(self):
         self.state.update_UI(self)
 
     @property
     def state(self):
         return self._state
-    
+
     @state.setter
     def state(self, state):
         self._state = state
@@ -70,28 +76,28 @@ class Ui_MainWindow(QMainWindow):
     @property
     def scanningModeButton(self):
         return self._modeSwitchButtonsLayout.scanningModeButton
-    
+
     @property
     def viewingModeButton(self):
         self._modeSwitchButtonsLayout.viewingModeButton
         return self._modeSwitchButtonsLayout.viewingModeButton
-    
+
     @property
     def examinationInfoStackedLayout(self):
         return self._examinationInfoStackedLayout
-    
+
     @property
     def newExaminationButton(self):
         return self._preExaminationInfoFrame.newExaminationButton
-    
+
     @property
     def loadExaminationButton(self):
         return self._preExaminationInfoFrame.loadExaminationButton
-    
+
     @property
     def examinationNameLabel(self):
         return self._examinationInfoFrame.section1_text
-    
+
     @property
     def modelNameLabel(self):
         return self._examinationInfoFrame.section2_text
@@ -99,7 +105,7 @@ class Ui_MainWindow(QMainWindow):
     @property
     def viewModelButton(self):
         return self._examinationInfoFrame.section2_view_button
-    
+
     @property
     def stopExaminationButton(self):
         return self._examinationInfoFrame.section1_stop_button
@@ -107,7 +113,7 @@ class Ui_MainWindow(QMainWindow):
     @property
     def addScanItemButton(self):
         return self._scanlistInfoFrame.addScanItemButton
-    
+
     @property
     def scanlistListWidget(self):
         return self._scanlistInfoFrame.scanlistListWidget
@@ -126,20 +132,20 @@ class Ui_MainWindow(QMainWindow):
 
     @property
     def editingStackedLayout(self):
-        return self._editingStackedLayout 
-    
+        return self._editingStackedLayout
+
     @property
     def parameterFormLayout(self):
         return self._scanParametersWidget.parameterFormLayout
-    
-    @property 
+
+    @property
     def scanParametersSaveChangesButton(self):
         return self._scanParametersWidget.scanParametersSaveChangesButton
-    
-    @property 
+
+    @property
     def scanParametersCancelChangesButton(self):
         return self._scanParametersWidget.scanParametersCancelChangesButton
-    
+
     @property
     def scanParametersResetButton(self):
         return self._scanParametersWidget.scanParametersResetButton
@@ -147,32 +153,31 @@ class Ui_MainWindow(QMainWindow):
     @property
     def examCardListView(self):
         return self._examCardTab.examCardListView
-    
+
     @property
     def scannedImageFrame(self):
-        return self._scannedImageFrame 
-     
-    @property 
+        return self._scannedImageFrame
+
+    @property
     def scanPlanningWindow1(self):
         return self.scanPlanningWindow.ImageLabelTuple[0]
-    
+
     @property
-    def scanPlanningWindow2(self):  
+    def scanPlanningWindow2(self):
         return self.scanPlanningWindow.ImageLabelTuple[1]
 
     @property
     def scanPlanningWindow3(self):
-        return self.scanPlanningWindow.ImageLabelTuple[2]   
+        return self.scanPlanningWindow.ImageLabelTuple[2]
 
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
-        self.layout.addLayout(leftLayout, stretch = 1)
+        self.layout.addLayout(leftLayout, stretch=1)
 
         rightLayout = self._createRightLayout()
-        self.layout.addLayout(rightLayout, stretch = 3)
- 
-    def _createLeftLayout(self) -> QHBoxLayout:
+        self.layout.addLayout(rightLayout, stretch=3)
 
+    def _createLeftLayout(self) -> QHBoxLayout:
         leftLayout = QVBoxLayout()
 
         self._modeSwitchButtonsLayout = ModeSwitchButtonsLayout()
@@ -180,7 +185,8 @@ class Ui_MainWindow(QMainWindow):
 
         self._preExaminationInfoFrame = PreExaminationInfoFrame()
         self._examinationInfoFrame = InfoFrame("Examination", "Model")
-        self._examinationInfoStackedLayout = ExaminationInfoStackedLayout(self._preExaminationInfoFrame, self._examinationInfoFrame)
+        self._examinationInfoStackedLayout = ExaminationInfoStackedLayout(self._preExaminationInfoFrame,
+                                                                          self._examinationInfoFrame)
         leftLayout.addLayout(self._examinationInfoStackedLayout, stretch=1)
 
         self._scanlistInfoFrame = ScanlistInfoFrame()
@@ -190,13 +196,12 @@ class Ui_MainWindow(QMainWindow):
         leftLayout.addWidget(self._scanProgressInfoFrame, stretch=1)
 
         return leftLayout
-    
-    def _createRightLayout(self) -> QVBoxLayout:
 
-        rightLayout = QVBoxLayout() 
+    def _createRightLayout(self) -> QVBoxLayout:
+        rightLayout = QVBoxLayout()
 
         self.scanPlanningWindow = ScanPlanningWindow()
-        rightLayout.addWidget(self.scanPlanningWindow,stretch=1)
+        rightLayout.addWidget(self.scanPlanningWindow, stretch=1)
 
         bottomLayout = QHBoxLayout()
 
@@ -209,10 +214,11 @@ class Ui_MainWindow(QMainWindow):
         self._scannedImageFrame = AcquiredSeriesViewer2D()
         bottomLayout.addWidget(self._scannedImageFrame, stretch=1)
 
-        rightLayout.addLayout(bottomLayout,stretch=1)
+        rightLayout.addLayout(bottomLayout, stretch=1)
 
         return rightLayout
-    
+
+
 class ModeSwitchButtonsLayout(QHBoxLayout):
     def __init__(self):
         super().__init__()
@@ -220,14 +226,15 @@ class ModeSwitchButtonsLayout(QHBoxLayout):
         self._viewingModeButton = TertiaryActionButton("Viewing Mode")
         self.addWidget(self._scanningModeButton)
         self.addWidget(self._viewingModeButton)
-    
+
     @property
     def scanningModeButton(self):
         return self._scanningModeButton
-    
-    @property 
+
+    @property
     def viewingModeButton(self):
         return self._viewingModeButton
+
 
 class ExaminationInfoStackedLayout(QStackedLayout):
     def __init__(self, preExaminationInfoFrame, examinationInfoFrame):
@@ -236,6 +243,7 @@ class ExaminationInfoStackedLayout(QStackedLayout):
         self.examination_info_frame = examinationInfoFrame
         self.addWidget(self._preExaminationInfoFrame)
         self.addWidget(self.examination_info_frame)
+
 
 class PreExaminationInfoFrame(QFrame):
     def __init__(self):
@@ -270,11 +278,12 @@ class PreExaminationInfoFrame(QFrame):
     @property
     def newExaminationButton(self):
         return self._newExaminationButton
-    
+
     @property
     def loadExaminationButton(self):
         return self._loadExaminationButton
-    
+
+
 class ScanlistInfoFrame(QFrame):
     def __init__(self):
         super().__init__()
@@ -299,23 +308,22 @@ class ScanlistInfoFrame(QFrame):
     def scanlistListWidget(self):
         return self._scanlistListWidget
 
+
 class ScanlistListWidget(QListWidget):
     dropEventSignal = pyqtSignal(list)
+
     def __init__(self):
         super().__init__()
         self.setStyleSheet("border: none;")
         self.setDragDropMode(self.DragDrop)
         self.setSelectionMode(self.SingleSelection)
         self.setAcceptDrops(True)
-  
-
 
     def mouseDoubleClickEvent(self, event):
         item = self.itemAt(event.pos())
         if item is not None:
             self.setCurrentItem(item)
             self.itemDoubleClicked.emit(item)  # Manually emit the itemDoubleClicked signal
-
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
         e.accept()
@@ -329,10 +337,11 @@ class ScanlistListWidget(QListWidget):
         # do not accept drops from itself
         if widget == self:
             e.ignore()
-        else:    
+        else:
             selected_indexes = widget.selectedIndexes()
             self.dropEventSignal.emit(selected_indexes)
-            e.accept()        
+            e.accept()
+
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):
@@ -352,17 +361,17 @@ class ScanProgressInfoFrame(QFrame):
     @property
     def scanProgressBar(self):
         return self._scanProgressBar
-    
+
     @property
     def startScanButton(self):
         return self._startScanButton
-    
+
     @property
     def stopScanButton(self):
         return self._stopScanButton
- 
+
     def _createProgressBar(self):
-        scanProgressBarLayout = QHBoxLayout()   
+        scanProgressBarLayout = QHBoxLayout()
 
         self._scanProgressBar = QProgressBar()
 
@@ -377,22 +386,22 @@ class ScanProgressInfoFrame(QFrame):
             QProgressBar::chunk {
                 background-color: #6bcc7a; /* Set the color of the progress bar chunk */
             }
-        """)        
+        """)
         scanProgressBarLayout.addWidget(self._scanProgressBar)
-        
 
         self.layout.addLayout(scanProgressBarLayout)
-        
+
     def _createScanButtons(self):
         scanButtonsLayout = QHBoxLayout()
-        
+
         self._startScanButton = SecondaryActionButton("Start Scan")
         scanButtonsLayout.addWidget(self._startScanButton)
-        
+
         self._stopScanButton = DestructiveActionButton("Stop Scan")
         scanButtonsLayout.addWidget(self._stopScanButton)
 
         self.layout.addLayout(scanButtonsLayout)
+
 
 class ScanPlanningWindow(QFrame):
     def __init__(self):
@@ -404,12 +413,14 @@ class ScanPlanningWindow(QFrame):
         for label in self.ImageLabelTuple:
             layout.addWidget(label, stretch=1)
 
+
 class EditingStackedLayout(QStackedLayout):
     def __init__(self, scanParametersWidget, examCardTabWidget):
         super().__init__()
         self.addWidget(scanParametersWidget)
         self.addWidget(examCardTabWidget)
-        
+
+
 class ScanParametersWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -421,21 +432,21 @@ class ScanParametersWidget(QWidget):
     @property
     def parameterFormLayout(self):
         return self.scanParametersTabWidget.parameterFormLayout
-    
-    @property 
+
+    @property
     def scanParametersSaveChangesButton(self):
         return self._scanParametersSaveChangesButton
-    
-    @property 
+
+    @property
     def scanParametersCancelChangesButton(self):
         return self._scanParametersCancelChangesButton
-    
+
     @property
     def scanParametersResetButton(self):
         return self._scanParametersResetButton
 
     def _createScanParametersTabWidget(self):
-        self.scanParametersTabWidget = ScanParametersTabWidget() 
+        self.scanParametersTabWidget = ScanParametersTabWidget()
         self.layout.addWidget(self.scanParametersTabWidget)
 
     def _createButtons(self):
@@ -445,14 +456,18 @@ class ScanParametersWidget(QWidget):
         self._scanParametersResetButton = DestructiveActionButton("Reset")
         buttonsLayout.addWidget(self._scanParametersSaveChangesButton, 1)
         buttonsLayout.addWidget(self._scanParametersCancelChangesButton, 1)
-        buttonsLayout.addSpacerItem(QSpacerItem(self._scanParametersSaveChangesButton.sizeHint().width(), self._scanParametersSaveChangesButton.sizeHint().height(), QSizePolicy.Expanding, QSizePolicy.Minimum))
+        buttonsLayout.addSpacerItem(QSpacerItem(self._scanParametersSaveChangesButton.sizeHint().width(),
+                                                self._scanParametersSaveChangesButton.sizeHint().height(),
+                                                QSizePolicy.Expanding, QSizePolicy.Minimum))
         buttonsLayout.addWidget(self._scanParametersResetButton, 1)
-        self.layout.addLayout(buttonsLayout)        
-    
+        self.layout.addLayout(buttonsLayout)
+
+
 class ExamCardTabWidget(QTabWidget):
     def __init__(self, examCardTab):
         super().__init__()
         self.addTab(examCardTab, "Scan items")
+
 
 class ExamCardTab(QWidget):
     def __init__(self):
@@ -462,22 +477,25 @@ class ExamCardTab(QWidget):
         self._examCardListView = QListView()
         self._examCardListView.setDragDropMode(QListView.DragOnly)
         self._examCardListView.setSelectionMode(QListView.ExtendedSelection)
-        self._examCardListView.setEditTriggers(QListView.NoEditTriggers) #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
+        self._examCardListView.setEditTriggers(
+            QListView.NoEditTriggers)  #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
         self.layout.addWidget(self._examCardListView)
-    
+
     @property
     def examCardListView(self):
         return self._examCardListView
+
 
 class ScanParametersTabWidget(QTabWidget):
     def __init__(self):
         super().__init__()
         self.parameterTab = ParameterTab()
         self.addTab(self.parameterTab, "Scan parameters")
-        
+
     @property
     def parameterFormLayout(self):
         return self.parameterTab.parameterFormLayout
+
 
 class ParameterTab(QScrollArea):
     def __init__(self):
@@ -485,7 +503,7 @@ class ParameterTab(QScrollArea):
         container_widget = self.createContainerWidget()
         self.setWidget(container_widget)
         self.setWidgetResizable(True)
-    
+
     def createContainerWidget(self):
         self.horizontalLayout = QHBoxLayout()
         self.layout = QVBoxLayout()
@@ -495,7 +513,7 @@ class ParameterTab(QScrollArea):
         self.layout.addItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
         #self.horizontalLayout.addItem(QSpacerItem(10, 0,  QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.horizontalLayout.addLayout(self.layout)
-        self.horizontalLayout.addItem(QSpacerItem(0, 0,  QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.horizontalLayout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.setStyleSheet("QLineEdit { border: 1px solid  #BFBFBF; }")
         containerWidget = QWidget()
         containerWidget.setLayout(self.horizontalLayout)
@@ -503,8 +521,9 @@ class ParameterTab(QScrollArea):
 
     @property
     def parameterFormLayout(self):
-        return self._parameterFormLayout    
-    
+        return self._parameterFormLayout
+
+
 class ParameterFormLayout(QVBoxLayout):
     formActivatedSignal = pyqtSignal()
 
@@ -513,7 +532,7 @@ class ParameterFormLayout(QVBoxLayout):
         self.isReadOnly = True
         self.editors = {}
 
-    def createForm(self, parameters : dict) -> None:
+    def createForm(self, parameters: dict) -> None:
         # Create form elements based on the data in "parameters".
         for parameter in parameters:
             name = parameter["name"]
@@ -540,14 +559,15 @@ class ParameterFormLayout(QVBoxLayout):
                 parameter_layout.addWidget(editor, 1, 0, Qt.AlignLeft)
                 editor.currentIndexChanged.connect(lambda: self.formActivatedSignal.emit())
             else:
-                raise ValueError(f"Unknown editor type: {editor_type}") # Raise an error if the editor type is unknown. If the error is raised, the program will stop executing. 
-            
+                raise ValueError(
+                    f"Unknown editor type: {editor_type}")  # Raise an error if the editor type is unknown. If the error is raised, the program will stop executing.
+
             editor.setFixedHeight(30)
             editor.setFixedWidth(300)
             editor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
             # Add the editor widget to the layout.
-        
+
             self.addLayout(parameter_layout)
 
             # Add a vertical spacer (with expandable space)
@@ -569,23 +589,23 @@ class ParameterFormLayout(QVBoxLayout):
                 parameters[name] = editor.currentText()
             else:
                 raise ValueError(f"Unknown editor type: {type(editor)}")
-            
+
         return parameters
-            
+
     def set_parameters(self, parameters):
         # Set the data into the editors
         with block_signals(self.editors.values()):
             for name, value in parameters.items():
-                if name in self.editors: # Checks if the string name is a key in the self.editors dictionary.
-                    editor = self.editors[name] # Get the editor widget from the dictionary.
+                if name in self.editors:  # Checks if the string name is a key in the self.editors dictionary.
+                    editor = self.editors[name]  # Get the editor widget from the dictionary.
                     if isinstance(editor, QLineEdit):
                         editor.setText(str(value))
                     elif isinstance(editor, QComboBox):
                         index = editor.findText(str(value))
                         if index != -1:
-                            editor.setCurrentIndex(index)        
+                            editor.setCurrentIndex(index)
 
-    def setReadOnly(self, bool : bool):
+    def setReadOnly(self, bool: bool):
         for editor in self.editors.values():
             if isinstance(editor, (QLineEdit)):
                 editor.setReadOnly(bool)
@@ -601,8 +621,10 @@ class ParameterFormLayout(QVBoxLayout):
                 elif isinstance(editor, QComboBox):
                     editor.setCurrentIndex(0)
 
-class CustomPolygonItem(QGraphicsPolygonItem):        
+
+class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
+
     def __init__(self, parent: QGraphicsPixmapItem, viewer):
         super().__init__(parent)
         self.setPen(Qt.red)
@@ -613,7 +635,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.slice_lines = []
         self.scan_volume = None
         self.displayed_image = None
-
 
         # Added viewer to update the scan view of the scan area with the selected rotation handler
         # It does not rotate when the other do without this viewer
@@ -690,7 +711,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         for handle in self.rotation_handles:
             handle.setVisible(visible)
 
-
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         n_points = len(polygon_in_polygon_coords)
         # If the polygon is empty, clear the rotation handles and exit early. This check prevents a crash
@@ -735,13 +755,15 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             print("Subject", self, "is updating observer", observer, "with event", event)
             #observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
             observer.update(event, **kwargs)
-            
+
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
-        direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
+        direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(),
+                                                    self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
         self.update_rotation_handle_positions()
-        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords = direction_vector_in_pixmap_coords)
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
+                              direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
 
     # Detecting mouse for rotation. Uses scene events since other method did not work
     def handle_rotation_handle_press(self, event: QGraphicsSceneMouseEvent, handle):
@@ -821,7 +843,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         else:
             raise ValueError(f"Unknown plane: {plane}")
 
-
     def set_scan_volume(self, scan_volume):
         self.scan_volume = scan_volume
         self.update_slice_lines()
@@ -864,9 +885,16 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         dot_product = np.abs(np.dot(image_normal, slice_direction))
         return dot_product > 0.3
 
-
     def _interpolate_point(self, p1, p2, t):
         return QPointF(p1.x() + (p2.x() - p1.x()) * t, p1.y() + (p2.y() - p1.y()) * t)
+
+
+class MiddleLineItem(QGraphicsPolygonItem):
+    '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
+
+    def __init__(self, parent: QGraphicsPixmapItem):
+        super().__init__(parent)
+        self.setPen(Qt.yellow)
 
 
 class AcquiredSeriesViewer2D(QGraphicsView):
@@ -908,13 +936,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
 
-        self.scan_volume_display = CustomPolygonItem(self.pixmap_item, self) # Create a custom polygon item that is a child of the pixmap item
+        self.scan_volume_display = CustomPolygonItem(self.pixmap_item,
+                                                     self)  # Create a custom polygon item that is a child of the pixmap item
 
-        self.middle_lines_display = MiddleLineItem(self.pixmap_item) # adds middle lines of current scan volume
+        self.middle_lines_display = MiddleLineItem(self.pixmap_item)  # adds middle lines of current scan volume
 
         # self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
-
-
 
         self.scan_volume_display.add_observer(self)
 
@@ -949,7 +976,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         return super().eventFilter(source, event)
 
     def resizeEvent(self, event: QResizeEvent):
-        '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
+        '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.'''
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
         self.updateLabelPosition()
@@ -969,13 +996,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.adjustSize()
         self.scan_plane_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-
     def _displayArray(self):
         width, height = 0, 0
         if self.array is not None:
 
             # Normalize the slice values for display
-            array_norm = (self.array[:,:] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
+            array_norm = (self.array[:, :] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
             array_8bit = (array_norm * 255).astype(np.uint8)
 
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
@@ -992,7 +1018,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             black_image = QImage(1, 1, QImage.Format_Grayscale8)
             black_image.fill(Qt.black)
             pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)           
+            self.pixmap_item.setPixmap(pixmap)
 
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
@@ -1001,13 +1027,16 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # The centerOn method is used to center the view on a particular point within the scene.
         self.centerOn(width / 2, height / 2)
 
-    def update(self, event: EventEnum, **kwargs): 
+    def update(self, event: EventEnum, **kwargs):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
             self._update_scan_volume_display()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
-            direction_vector_in_pixmap_coords = (kwargs['direction_vector_in_pixmap_coords'].x(), kwargs['direction_vector_in_pixmap_coords'].y())
-            direction_vector_in_LPS_coords = np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords(direction_vector_in_pixmap_coords)) - np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((0, 0)))
+            direction_vector_in_pixmap_coords = (
+            kwargs['direction_vector_in_pixmap_coords'].x(), kwargs['direction_vector_in_pixmap_coords'].y())
+            direction_vector_in_LPS_coords = np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords(
+                direction_vector_in_pixmap_coords)) - np.array(
+                self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((0, 0)))
             self.scan_volume.remove_observer(self)
             self.scan_volume.translate_scan_volume(direction_vector_in_LPS_coords)
             self.scan_volume.add_observer(self)
@@ -1025,21 +1054,25 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             # Do nothing and return
             return
         displayed_image_index = self.displayed_image_index
-        delta = event.angleDelta().y() 
+        delta = event.angleDelta().y()
         if delta > 0:
-            new_displayed_image_index = max(0, min(displayed_image_index + 1, len(self.acquired_series.list_acquired_images) - 1))
+            new_displayed_image_index = max(0, min(displayed_image_index + 1,
+                                                   len(self.acquired_series.list_acquired_images) - 1))
         elif delta < 0:
-            new_displayed_image_index = max(0, min(displayed_image_index - 1, len(self.acquired_series.list_acquired_images) - 1))
+            new_displayed_image_index = max(0, min(displayed_image_index - 1,
+                                                   len(self.acquired_series.list_acquired_images) - 1))
         elif delta == 0:
             new_displayed_image_index = displayed_image_index
         self.displayed_image_index = new_displayed_image_index
-        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index], self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                               self.acquired_series.scan_plane, self.acquired_series.series_name)
 
-    def setAcquiredSeries(self, acquired_series : AcquiredSeries):
+    def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
             self.acquired_series = acquired_series
-            self.displayed_image_index = 0 
-            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index], self.acquired_series.scan_plane, self.acquired_series.series_name)
+            self.displayed_image_index = 0
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
         else:
             self.acquired_series = None
             self.setDisplayedImage(None)
@@ -1080,21 +1113,21 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # update the intersection polygon
         self.scan_volume_display.set_scan_volume(scan_volume)
         self._update_scan_volume_display()
-    
+
     def _update_scan_volume_display(self):
         '''Updates the intersection polygon between the scan volume and the displayed image.'''
         if self.displayed_image is not None and self.scan_volume is not None:
-            intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
+            intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(
+                self.displayed_image)
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
-        else: 
+        else:
             self.scan_volume_display.setPolygon(QPolygonF())
         self.scan_volume_display.update_slice_lines()
 
-
-
     def _update_scan_volume_display(self):
         if self.displayed_image is not None and self.scan_volume is not None:
-            intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
+            intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(
+                self.displayed_image)
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
         else:
             self.scan_volume_display.setPolygon(QPolygonF())
@@ -1103,6 +1136,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     '''Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs.'''
     dropEventSignal = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
@@ -1124,8 +1158,10 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
         self.dropEventSignal.emit(selected_index)
         event.accept()
 
+
 class ImageLabel(QGraphicsView):
     '''Old version of AcquiredSeriesViewer2D. This viewer is still used to display the anatomical model in the model viewing dialog.'''
+
     def __init__(self):
         super().__init__()
 
@@ -1171,7 +1207,7 @@ class ImageLabel(QGraphicsView):
     @property
     def displaying(self):
         return self._displaying
-    
+
     @displaying.setter
     def displaying(self, bool):
         if bool == True:
@@ -1187,7 +1223,7 @@ class ImageLabel(QGraphicsView):
     @property
     def current_slice(self):
         return self._current_slice
-    
+
     @current_slice.setter
     def current_slice(self, value):
         self._current_slice = value
@@ -1203,7 +1239,7 @@ class ImageLabel(QGraphicsView):
     @property
     def window_level(self):
         return self._window_level
-    
+
     @window_level.setter
     def window_level(self, value):
         self._window_level = value
@@ -1225,7 +1261,7 @@ class ImageLabel(QGraphicsView):
             # Do nothing and return
             return
 
-        delta = event.angleDelta().y() 
+        delta = event.angleDelta().y()
         current_slice = getattr(self, 'current_slice', 0)
         if delta > 0:
             new_slice = max(0, min(current_slice + 1, self.array.shape[2] - 1))
@@ -1236,19 +1272,18 @@ class ImageLabel(QGraphicsView):
         self.current_slice = int(new_slice)
         self.displayArray()
 
-
-    #ImageLabel holds a copy of the array of MRI data to be displayed. 
+    #ImageLabel holds a copy of the array of MRI data to be displayed.
     def setArray(self, array):
         # Set the array and make current_slice the middle slice by default
         self.array = array
         if array is not None:
             self.displaying = True
-            self.current_slice = array.shape[2] // 2    
+            self.current_slice = array.shape[2] // 2
             window_width, window_level = self.calculate_window_width_level(method='percentile')
-            self.set_window_width_level(window_width, window_level) 
+            self.set_window_width_level(window_width, window_level)
         else:
             self.displaying = False
-           
+
     def displayArray(self):
         width, height = 0, 0
         if self.displaying == True:
@@ -1272,7 +1307,7 @@ class ImageLabel(QGraphicsView):
             black_image = QImage(1, 1, QImage.Format_Grayscale8)
             black_image.fill(Qt.black)
             pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)           
+            self.pixmap_item.setPixmap(pixmap)
 
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
@@ -1284,15 +1319,16 @@ class ImageLabel(QGraphicsView):
     def update_text_item(self):
         # set text
         text = f"Slice: {self.current_slice + 1}/{self.array.shape[2]}\nWW: {self.window_width:.2f}\nWL: {self.window_level:.2f}"
-        self.text_item.setPlainText(text) # setPlainText() sets the text of the text item to the specified text.
+        self.text_item.setPlainText(text)  # setPlainText() sets the text of the text item to the specified text.
 
         # set position of text
-        pixmap_rect = self.pixmap_item.boundingRect() # boundingRect() returns the bounding rectangle of the pixmap item in the pixmap's local coordinates.
+        pixmap_rect = self.pixmap_item.boundingRect()  # boundingRect() returns the bounding rectangle of the pixmap item in the pixmap's local coordinates.
         # set position of text to the bottom right corner of the pixmap
-        text_rect = self.text_item.boundingRect() # boundingRect() returns the bounding rectangle of the text item in the text item's local coordinates.
-        x = pixmap_rect.right() - text_rect.width() - 5 # Adjusted to the right by 10 pixels for padding
-        y = pixmap_rect.bottom() - text_rect.height() - 5 # Adjusted to the bottom by 10 pixels for padding
-        self.text_item.setPos(x, y) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+        text_rect = self.text_item.boundingRect()  # boundingRect() returns the bounding rectangle of the text item in the text item's local coordinates.
+        x = pixmap_rect.right() - text_rect.width() - 5  # Adjusted to the right by 10 pixels for padding
+        y = pixmap_rect.bottom() - text_rect.height() - 5  # Adjusted to the bottom by 10 pixels for padding
+        self.text_item.setPos(x,
+                              y)  # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
 
     def calculate_window_width_level(self, method='std', **kwargs):
         """
@@ -1304,9 +1340,10 @@ class ImageLabel(QGraphicsView):
 
         Returns:
         tuple: (window_width, window_level)
-        """        
+        """
 
-        array = self.array[:,:,self.array.shape[2] // 2] # window width and level will be calculate based on middle slice of array 
+        array = self.array[:, :,
+                self.array.shape[2] // 2]  # window width and level will be calculate based on middle slice of array
 
         if method == 'std':
             std_multiplier = kwargs.get('std_multiplier', 2)
@@ -1315,8 +1352,10 @@ class ImageLabel(QGraphicsView):
         elif method == 'percentile':
             lower_percentile = kwargs.get('lower_percentile', 5)
             upper_percentile = kwargs.get('upper_percentile', 95)
-            lower_percentile_value = np.percentile(array, lower_percentile) # value blow which lower_percentile of the data lies
-            upper_percentile_value = np.percentile(array, upper_percentile) # value below which upper_percentile of the data lies
+            lower_percentile_value = np.percentile(array,
+                                                   lower_percentile)  # value blow which lower_percentile of the data lies
+            upper_percentile_value = np.percentile(array,
+                                                   upper_percentile)  # value below which upper_percentile of the data lies
             window_width = upper_percentile_value - lower_percentile_value
             window_level = lower_percentile_value + window_width / 2
         elif method == 'none':
@@ -1334,7 +1373,8 @@ class ImageLabel(QGraphicsView):
         Returns:
         numpy.ndarray: The windowed array of the displayed slice (normalized).
         """
-        windowed_array = np.clip(self.array[:,:,self.current_slice], self.window_level - self.window_width / 2, self.window_level + self.window_width / 2)
+        windowed_array = np.clip(self.array[:, :, self.current_slice], self.window_level - self.window_width / 2,
+                                 self.window_level + self.window_width / 2)
         windowed_array = (windowed_array - (self.window_level - self.window_width / 2)) / self.window_width
         return windowed_array
 
@@ -1363,10 +1403,10 @@ class ImageLabel(QGraphicsView):
             dx = event.x() - self.start_pos.x()
             dy = self.start_pos.y() - event.y()
 
-            window_level = max(0, self.window_level + dy*0.001)
-            window_width = max(0,self.window_width + dx*0.001)
+            window_level = max(0, self.window_level + dy * 0.001)
+            window_width = max(0, self.window_width + dx * 0.001)
 
-            self.start_pos = event.pos()    
+            self.start_pos = event.pos()
 
             self.set_window_width_level(window_width, window_level)
             self.displayArray()
@@ -1380,8 +1420,10 @@ class ImageLabel(QGraphicsView):
         else:
             pass
 
+
 class DropImageLabel(ImageLabel):
     dropEventSignal = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
