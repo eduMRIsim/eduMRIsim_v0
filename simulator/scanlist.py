@@ -426,8 +426,8 @@ class ScanVolume:
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def scale_scan_volume(self, scale_coords_x_image_mm: float, scale_coords_y_image_mm: float):
-        self.extentX_mm = scale_coords_x_image_mm * 2
-        self.extentY_mm = scale_coords_y_image_mm * 2
+        self.extentX_mm = abs(scale_coords_x_image_mm * 2)
+        self.extentY_mm = abs(scale_coords_y_image_mm * 2)
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def scan_volume_mm_coords_to_LPS_coords(self, scan_volume_mm_coords: tuple) -> tuple:
