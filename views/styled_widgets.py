@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QPushButton, QFrame, QHBoxLayout, QWidget, QLabel, QVBoxLayout, QGridLayout, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QPushButton, QFrame, QHBoxLayout, QWidget, QLabel, QVBoxLayout, QGridLayout, QSpacerItem, \
+    QSizePolicy
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
+
 
 class SegmentedButtonFrame(QFrame):
     def __init__(self, button_texts, parent=None):
@@ -27,6 +29,7 @@ class SegmentedButtonFrame(QFrame):
         """
 
         self.setStyleSheet(stylesheet)
+
 
 class SegmentedButton(QWidget):
     def __init__(self, button_texts, parent=None):
@@ -62,19 +65,20 @@ class SegmentedButton(QWidget):
                 border: none;
             }
             """
-        )            
+        )
 
     def handle_button_click(self, checked):
         # Get the button that emitted the signal
         button = self.sender()
-        
+
         # Deselect all other buttons when a button is clicked
         for other_button in self.buttons:
             if other_button != button:
-                other_button.setChecked(False)        
+                other_button.setChecked(False)
 
-        # Ensure the clicked button remains checked
+                # Ensure the clicked button remains checked
         button.setChecked(True)
+
 
 # class PrimaryActionButton(QPushButton):
 #     def __init__(self, text=""):
@@ -95,7 +99,7 @@ class SegmentedButton(QWidget):
 #                 color: #7a7a7a; /* Adjust text color for better readability */
 #             }
 #             """
-            
+
 #         )
 
 class PrimaryActionButton(QPushButton):
@@ -118,7 +122,7 @@ class PrimaryActionButton(QPushButton):
             }
             """
         )
-            
+
         self.highlighted_stylesheet = (
             """
             QPushButton {
@@ -127,7 +131,7 @@ class PrimaryActionButton(QPushButton):
                 border-radius: 5px;
                 padding: 5px 20px;
             }
-            """	
+            """
         )
 
         self.setStyleSheet(self.default_stylesheet)
@@ -137,6 +141,7 @@ class PrimaryActionButton(QPushButton):
             self.setStyleSheet(self.highlighted_stylesheet)
         else:
             self.setStyleSheet(self.default_stylesheet)
+
 
 # class SecondaryActionButton(QPushButton):
 #     def __init__(self, text=""):
@@ -193,6 +198,7 @@ class SecondaryActionButton(QPushButton):
         else:
             self.setStyleSheet(self.default_stylesheet)
 
+
 class TertiaryActionButton(QPushButton):
     def __init__(self, text=""):
         super().__init__(text)
@@ -214,6 +220,7 @@ class TertiaryActionButton(QPushButton):
             """
         )
 
+
 class DestructiveActionButton(QPushButton):
     def __init__(self, text=""):
         super().__init__(text)
@@ -233,10 +240,11 @@ class DestructiveActionButton(QPushButton):
                 color: #7a7a7a; /* Adjust text color for better readability */
             }
             """
-        ) 
+        )
+
 
 class InfoFrame(QFrame):
-    def __init__(self, exam_name, model_name):  
+    def __init__(self, exam_name, model_name):
         super().__init__()
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -338,7 +346,6 @@ class InfoFrame(QFrame):
 #         layout.addWidget(section2_header)
 #         layout.addWidget(self.section2_text)
 #         layout.addLayout(section2_button_layout)
-
 
 
 class HeaderLabel(QLabel):

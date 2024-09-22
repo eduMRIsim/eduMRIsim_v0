@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent, QSettings, QByteArray, QMetaType
 from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
@@ -14,15 +14,24 @@ import math
 
 from contextlib import contextmanager
 
+from controllers.settings_mgr import SettingsManager
 from views.UI_MainWindowState import IdleState
 from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
     TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 from simulator.scanlist import AcquiredSeries, ScanVolume
 
+from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
+    IdleState, MRIfortheBrainState
+
 from events import EventEnum
 
-'''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. However, I've noticed that I haven't been fully consistent with this so I realise some of the naming might be confusing. I might change the names in the future. For the SEP project feel free to use whichever convention you find most convenient when adding new PyQt related code.'''
+'''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
+naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. 
+However, I've noticed that I haven't been fully consistent with this so I realise some of the naming might be 
+confusing. I might change the names in the future. For the SEP project feel free to use whichever convention you find 
+most convenient when adding new PyQt related code.'''
+
 
 
 @contextmanager
@@ -219,6 +228,67 @@ class Ui_MainWindow(QMainWindow):
         return rightLayout
 
 
+    def save_widget_state(self):
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("WidgetState")
+
+        # Scan parameters
+        settings.setValue("_parameterFormLayout_params", self.parameterFormLayout.save_state())
+
+        # UI labels
+        settings.setValue("examinationNameLabel", self.examinationNameLabel.text())
+        settings.setValue("modelNameLabel", self.modelNameLabel.text())
+        settings.setValue("scanProgressBar", self.scanProgressBar.value())
+
+        settings.endGroup()
+
+    def restore_widget_states(self):
+        settings = SettingsManager.get_instance().settings
+
+        settings.beginGroup("WidgetState")
+
+        # Scan parameters
+        self.parameterFormLayout.set_parameters(settings.value("_parameterFormLayout_params", type=dict))
+
+        # UI labels
+        self.examinationNameLabel.setText(settings.value("examinationNameLabel", "", type=str))
+        self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
+        self.scanProgressBar.setValue(int(settings.value("scanProgressBar", 0, type=int)))
+
+        settings.endGroup()
+
+    # Save the state of the main window
+    def save_settings(self):
+        settings = SettingsManager.get_instance().settings
+
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
+        settings.setValue("currentState", self.state.name)
+        settings.setValue("scannerState", self.scanner.save_state())
+        self.save_widget_state()
+
+    # This function executes automatically right before the main window is closed
+    def closeEvent(self, a0):
+        self.save_settings()
+        print('Settings saved')
+        super().closeEvent(a0)
+
+    def restore_settings(self):
+        settings = SettingsManager.get_instance().settings
+
+        self.restoreGeometry(settings.value("geometry", type=QByteArray))
+        self.restoreState(settings.value("windowState", type=QByteArray))
+        state_name = settings.value("currentState", defaultValue="IdleState", type=str)
+        state_class = globals().get(state_name)
+
+        if state_class:
+            self.state = state_class()
+        else:
+            print(f"Warning: State '{state_name}' not found. Defaulting to IdleState.")
+            self.state = IdleState()
+
+        self.restore_widget_states()
+
 class ModeSwitchButtonsLayout(QHBoxLayout):
     def __init__(self):
         super().__init__()
@@ -342,6 +412,24 @@ class ScanlistListWidget(QListWidget):
             self.dropEventSignal.emit(selected_indexes)
             e.accept()
 
+    def save_state(self):
+        state = {
+            'items': [self.item(i).text() for i in range(self.count())],
+            'selected': self.currentRow()
+        }
+
+        return state
+
+    def restore_state(self, state):
+        self.clear()
+        items = state.get('items', [])
+        for item in items:
+            self.addItem(item)
+
+        selected = state.get('selected', -1)
+        if selected != -1:
+            self.setCurrentRow(state['selected'])
+
 
 class ScanProgressInfoFrame(QFrame):
     def __init__(self, scanner):
@@ -390,6 +478,17 @@ class ScanProgressInfoFrame(QFrame):
         scanProgressBarLayout.addWidget(self._scanProgressBar)
 
         self.layout.addLayout(scanProgressBarLayout)
+
+    def save_state(self):
+        return {
+            'progress': self._scanProgressBar.value()
+        }
+
+    def restore_state(self, state):
+        if state is not None:
+            self._scanProgressBar.setValue(state.get('progress', 0))
+        else:
+            print("Warning: No state found for ScanProgressInfoFrame.")
 
     def _createScanButtons(self):
         scanButtonsLayout = QHBoxLayout()
@@ -577,6 +676,15 @@ class ParameterFormLayout(QVBoxLayout):
             # Store the editor widget in the dictionary for later access.
             self.editors[parameter_key] = editor
 
+    def save_state(self):
+        params = self.get_parameters()
+        return params
+
+    # def restore_state(self, state):
+    #     if state is not None:
+    #         self.set_parameters(state)
+    #     else:
+    #         print("Warning: No state found for parameterFormLayout.")
     def get_parameters(self):
         # Create a dictionary to store the current values of the editor widgets.
         parameters = {}
@@ -624,6 +732,7 @@ class ParameterFormLayout(QVBoxLayout):
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
+
 
     def __init__(self, parent: QGraphicsPixmapItem, viewer):
         super().__init__(parent)
@@ -761,6 +870,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(),
                                                     self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
+
         self.update_rotation_handle_positions()
         self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
                               direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
@@ -936,6 +1046,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
 
+
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item,
                                                      self)  # Create a custom polygon item that is a child of the pixmap item
 
@@ -1033,7 +1144,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
             direction_vector_in_pixmap_coords = (
-            kwargs['direction_vector_in_pixmap_coords'].x(), kwargs['direction_vector_in_pixmap_coords'].y())
+              kwargs['direction_vector_in_pixmap_coords'].x(), kwargs['direction_vector_in_pixmap_coords'].y())
             direction_vector_in_LPS_coords = np.array(self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords(
                 direction_vector_in_pixmap_coords)) - np.array(
                 self.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((0, 0)))
@@ -1071,6 +1182,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
+
             self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
                                    self.acquired_series.scan_plane, self.acquired_series.series_name)
         else:
@@ -1119,6 +1231,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         if self.displayed_image is not None and self.scan_volume is not None:
             intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(
                 self.displayed_image)
+
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
         else:
             self.scan_volume_display.setPolygon(QPolygonF())
