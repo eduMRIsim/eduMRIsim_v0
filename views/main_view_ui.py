@@ -673,14 +673,47 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         # Initialize array attribute to None
         self.array = None
-
+        
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
+        
+        #  Display scan plane label
+        self.scan_plane_label = QLabel(self)
+        self.scan_plane_label.setAlignment(Qt.AlignRight)
+        self.scan_plane_label.setStyleSheet("padding: 5px;")
+        self.scan_plane_label.resize(100, 100)
+        self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.updateLabelPosition()
+        
+        # Display scan name
+        self.series_name_label = QLabel(self)
+        self.series_name_label.setAlignment(Qt.AlignLeft)
+        self.series_name_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
+        self.series_name_label.resize(200, 50)
+        self.series_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.series_name_label.move(0, 0)
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.updateLabelPosition()
+    
+    def updateLabelPosition(self):
+        if self.scan_plane_label.pixmap() is not None:
+            label_width = self.scan_plane_label.pixmap().width()
+            label_height = self.scan_plane_label.pixmap().height()
+        else:
+            label_width = 0 
+            label_height = 0  
+
+        padding = 10 
+        x_pos = self.width() - label_width - padding
+        y_pos = self.height() - label_height - padding
+        self.scan_plane_label.move(x_pos, y_pos)
+        self.scan_plane_label.adjustSize() 
+        self.scan_plane_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 
     def _displayArray(self):
         width, height = 0, 0
@@ -738,24 +771,39 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         elif delta == 0:
             new_displayed_image_index = displayed_image_index
         self.displayed_image_index = new_displayed_image_index
-        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
+        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index], self.acquired_series.scan_plane, self.acquired_series.series_name)
 
     def setAcquiredSeries(self, acquired_series : AcquiredSeries):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0 
-            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index])
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index], self.acquired_series.scan_plane, self.acquired_series.series_name)
         else:
             self.acquired_series = None
             self.setDisplayedImage(None)
 
-    def setDisplayedImage(self, image):
+    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
 
+            # Determine the scan plane
+            icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
+            pixmap = QPixmap(icon_path)
+            scaled_pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.scan_plane_label.setPixmap(scaled_pixmap)
+            self.scan_plane_label.resize(scaled_pixmap.width(), scaled_pixmap.height())
+            
+            # Set the scan name
+            scan_number = self.displayed_image_index + 1
+            self.series_name_label.setText(f"{series_name} ({scan_number}) ")
+            
+            self.updateLabelPosition()
         else:
             self.array = None
+            self.scan_plane_label.clear()
+            self.series_name_label.setText("")
+
         self._displayArray()
         self._update_scan_volume_display()
 
