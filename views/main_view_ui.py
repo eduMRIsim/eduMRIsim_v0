@@ -608,6 +608,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.observers = []
         self.previous_position_in_pixmap_coords = None
+        self.slice_lines = []
+        self.scan_volume = None
+        self.displayed_image = None
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         super().setPolygon(polygon_in_polygon_coords)
@@ -619,6 +622,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
+        self.update_slice_lines()
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
@@ -634,6 +638,54 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
         self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords = direction_vector_in_pixmap_coords)
+
+    
+    def set_scan_volume(self, scan_volume):
+        self.scan_volume = scan_volume
+        self.update_slice_lines()
+
+    def set_displayed_image(self, displayed_image):
+        self.displayed_image = displayed_image
+        self.update_slice_lines()
+
+    def update_slice_lines(self):
+        # Remove existing slice lines
+        for line in self.slice_lines:
+            self.scene().removeItem(line)
+        self.slice_lines.clear()
+
+        if not self.scan_volume or not self.displayed_image or not self._are_slices_visible():
+            return
+
+        polygon = self.polygon()
+        if polygon.isEmpty() or polygon.size() < 4:
+            return
+
+        slice_positions = self.scan_volume.calculate_slice_positions()
+        total_thickness = self.scan_volume.extentZ_mm
+
+        for z in slice_positions:
+            relative_pos = (z + total_thickness / 2) / total_thickness
+            start = self._interpolate_point(polygon[0], polygon[3], relative_pos)
+            end = self._interpolate_point(polygon[1], polygon[2], relative_pos)
+
+            line = QGraphicsLineItem(start.x(), start.y(), end.x(), end.y(), self)
+            line.setPen(QPen(Qt.red, 1))
+            self.slice_lines.append(line)
+
+    def _are_slices_visible(self):
+        if not self.displayed_image or not self.scan_volume:
+            return False
+
+        image_normal = np.array(self.displayed_image.image_geometry.axisZ_LPS)
+        slice_direction = np.array(self.scan_volume.axisZ_LPS)
+        dot_product = np.abs(np.dot(image_normal, slice_direction))
+        return dot_product > 0.3
+
+
+    def _interpolate_point(self, p1, p2, t):
+        return QPointF(p1.x() + (p2.x() - p1.x()) * t, p1.y() + (p2.y() - p1.y()) * t)
+
 
 class AcquiredSeriesViewer2D(QGraphicsView):
     '''Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved.
@@ -752,8 +804,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def setDisplayedImage(self, image):
         self.displayed_image = image
         if image is not None:
-            self.array = image.image_data
-
+            self.array = image.image_data            
+            self.scan_volume_display.set_displayed_image(image)
         else:
             self.array = None
         self._displayArray()
@@ -767,6 +819,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_volume = scan_volume
         self.scan_volume.add_observer(self)
         # update the intersection polygon
+        self.scan_volume_display.set_scan_volume(scan_volume)
         self._update_scan_volume_display()
     
     def _update_scan_volume_display(self):
@@ -774,52 +827,19 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         if self.displayed_image is not None and self.scan_volume is not None:
             intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
+        else: 
+            self.scan_volume_display.setPolygon(QPolygonF())
+        self.scan_volume_display.update_slice_lines()
 
-            self._draw_slice_lines(intersection_in_pixmap_coords)
+
+    
+    def _update_scan_volume_display(self):
+        if self.displayed_image is not None and self.scan_volume is not None:
+            intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
+            self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
         else: 
             self.scan_volume_display.setPolygon(QPolygonF())
 
-
-    def _draw_slice_lines(self, intersection_points):
-        # Remove existing slice lines
-        for item in self.scene.items():
-            if isinstance(item, QGraphicsLineItem) and item != self.scan_volume_display:
-                self.scene.removeItem(item)
-
-        if not intersection_points or len(intersection_points) != 4:
-            return
-
-        # Check if slices should be visible in this view
-        if not self._are_slices_visible():
-            return
-
-        slice_positions = self.scan_volume.calculate_slice_positions()
-        total_thickness = self.scan_volume.extentZ_mm
-
-        for z in slice_positions:
-            relative_pos = (z + total_thickness / 2) / total_thickness
-            start = self._interpolate_point(intersection_points[0], intersection_points[3], relative_pos)
-            end = self._interpolate_point(intersection_points[1], intersection_points[2], relative_pos)
-
-            line = QGraphicsLineItem(start[0], start[1], end[0], end[1])
-            line.setPen(QPen(Qt.red, 1))
-            self.scene.addItem(line)
-
-    def _are_slices_visible(self):
-        if self.displayed_image is None or self.scan_volume is None:
-            return False
-
-        image_normal = np.array(self.displayed_image.image_geometry.axisZ_LPS)
-        
-        slice_direction = np.array(self.scan_volume.axisZ_LPS)
-        
-        dot_product = np.abs(np.dot(image_normal, slice_direction))
-        
-
-        return dot_product > 0.7
-
-    def _interpolate_point(self, p1, p2, t):
-        return (p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t)
     
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     '''Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs.'''

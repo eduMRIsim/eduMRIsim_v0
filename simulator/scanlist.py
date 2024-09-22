@@ -130,7 +130,7 @@ class Scanlist:
             observer.update(event)
             
     def remove_observer(self, observer):
-        self.observers.remove(observer)
+        self.observers.remove(observer) 
         print("Observer", observer, "removed from", self)
 
 class ScanItemStatusEnum(Enum):
@@ -162,6 +162,10 @@ class ScanItem:
     @property
     def status(self):
         return self._status
+    
+    @property
+    def axisZ_LPS(self):
+        return self.axisZ_LPS
     
     @status.setter
     def status(self, status):
