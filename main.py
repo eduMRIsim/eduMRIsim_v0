@@ -32,7 +32,7 @@ class App(QApplication):
 
         # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
         self.settings_manager = SettingsManager(self.scanner, self.main_controller, self.main_view, "settings.ini")
-        self.settings_manager.setup_settings()
+        self.settings_manager.setup_settings(None)
 
 
     def setup_scan_parameter_form(self):
