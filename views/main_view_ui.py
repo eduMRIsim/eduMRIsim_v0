@@ -646,12 +646,12 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
-        super().mouseMoveEvent(event)
         if not(self.flags() & QGraphicsItem.ItemIsMovable):
             scale_coords_x_pixmap = self.size_x / 2 - event.pos().x()
             scale_coords_y_pixmap = self.size_y / 2 - event.pos().y()
             self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_coords_x_pixmap=scale_coords_x_pixmap, scale_coords_y_pixmap=scale_coords_y_pixmap)
         else:
+            super().mouseMoveEvent(event)
             direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
             self.previous_position_in_pixmap_coords = self.pos()
             self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
