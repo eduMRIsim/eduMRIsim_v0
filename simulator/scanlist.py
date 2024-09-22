@@ -374,7 +374,11 @@ class ScanVolume:
 
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
-    def calculate_from_edges_intersection_points_pixamp(self, edges: list[tuple], acquired_image: AcquiredImage) -> list[np.array]:
+    def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
+        # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
+
+        # list the edges of the scan volume in scan volume coordinates. For each edge, find the intersection points (if any) with the 2D acquired image. 
+        edges = self._list_edges_of_scan_volume()
         list_intersection_pts_LPS = []
         acquired_image_geometry = acquired_image.image_geometry
         origin_acq_im = acquired_image_geometry.origin_LPS
@@ -400,13 +404,6 @@ class ScanVolume:
         list_intersection_pts_pixmap = sorted(list_intersection_pts_pixmap, key=lambda pt: np.arctan2(pt[1] - centroid[1], pt[0] - centroid[0]))
 
         return list_intersection_pts_pixmap
-
-    def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
-        # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
-        # list the edges of the scan volume in scan volume coordinates. For each edge, find the intersection points (if any) with the 2D acquired image. Also find middle line of scan and intersection with the acquired image.
-        edges, middle_lines = self._list_edges_of_scan_volume()
-
-        return (self.calculate_from_edges_intersection_points_pixamp(edges, acquired_image), self.calculate_from_edges_intersection_points_pixamp(middle_lines, acquired_image))
 
     def _get_geometry_parameters(self) -> dict:
         geometry_parameters = {}
@@ -476,19 +473,7 @@ class ScanVolume:
             (front_bottom_left, back_bottom_left)
         ]
 
-        front_left = (front_top_left - front_bottom_left) / 2 + front_bottom_left
-        front_right = (front_top_right - front_bottom_right) / 2 + front_bottom_right
-        back_left = (back_top_left - back_bottom_left) / 2 + back_bottom_left
-        back_right = (back_top_right - back_bottom_right) / 2 + back_bottom_right
-
-        middle_lines = [
-            (front_left, front_right),
-            (front_right, back_right),
-            (back_right, back_left),
-            (back_left, front_left)
-        ]
-
-        return edges, middle_lines 
+        return edges 
 
     def _line_plane_intersection(self, origin_plane, axisX_plane, axisY_plane, start_pt_line, end_pt_line) -> list[np.array]:
         
