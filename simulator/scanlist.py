@@ -534,3 +534,10 @@ class ScanVolume:
 
     def get_parameters(self):
         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2]}
+    
+    def calculate_slice_positions(self):
+        slice_positions = []
+        for i in range(self.N_slices):
+            z_position = -self.extentZ_mm / 2 + i * (self.slice_thickness_mm + self.slice_gap_mm)
+            slice_positions.append(z_position)
+        return slice_positions

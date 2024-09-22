@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea, QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF, QPen
 
 import numpy as np
 
@@ -774,9 +774,36 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         if self.displayed_image is not None and self.scan_volume is not None:
             intersection_in_pixmap_coords = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_in_pixmap_coords)
+
+            self._draw_slice_lines(intersection_in_pixmap_coords)
         else: 
             self.scan_volume_display.setPolygon(QPolygonF())
 
+
+    def _draw_slice_lines(self, intersection_points):
+        # Remove existing slice lines
+        for item in self.scene.items():
+            if isinstance(item, QGraphicsLineItem) and item != self.scan_volume_display:
+                self.scene.removeItem(item)
+
+        if not intersection_points:
+            return
+
+        slice_positions = self.scan_volume.calculate_slice_positions()
+        total_thickness = self.scan_volume.extentZ_mm
+
+        for z in slice_positions:
+            relative_pos = (z + total_thickness / 2) / total_thickness
+            start = self._interpolate_point(intersection_points[0], intersection_points[3], relative_pos)
+            end = self._interpolate_point(intersection_points[1], intersection_points[2], relative_pos)
+            
+            line = QGraphicsLineItem(start.x(), start.y(), end.x(), end.y())
+            line.setPen(QPen(Qt.red, 1))
+            self.scene.addItem(line)
+
+    def _interpolate_point(self, p1, p2, t):
+        return QPointF(p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t)
+    
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     '''Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs.'''
     dropEventSignal = pyqtSignal(int)
