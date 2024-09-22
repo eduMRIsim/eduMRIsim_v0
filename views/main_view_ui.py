@@ -680,7 +680,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         #  Display scan plane label
         self.scan_plane_label = QLabel(self)
         self.scan_plane_label.setAlignment(Qt.AlignRight)
-        self.scan_plane_label.setStyleSheet("color: white; font-size: 14px; padding: 5px;")
+        self.scan_plane_label.setStyleSheet("padding: 5px;")
         self.scan_plane_label.resize(100, 30)
         self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.updateLabelPosition()
@@ -786,6 +786,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
+            print("Image attributes:", image.__dict__)
 
             # Determine the scan plane
             scan_plane = checkScanPlane(image.image_geometry)
