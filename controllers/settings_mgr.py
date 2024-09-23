@@ -1,5 +1,4 @@
 from PyQt5.QtCore import QSettings
-
 from events import EventEnum
 from simulator.scanner import Scanner
 
@@ -72,3 +71,13 @@ class SettingsManager:
 
     def set_settings(self, settings):
         self.settings = settings
+
+    def export_settings(self, settings_file: str = None) -> None:
+        self.settings.sync()
+        self.main_view.save_settings()
+
+        settings_tmp = QSettings(settings_file, QSettings.IniFormat)
+        settings_tmp.clear()
+
+        for key in self.settings.allKeys():
+            settings_tmp.setValue(key, self.settings.value(key))

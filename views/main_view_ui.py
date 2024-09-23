@@ -106,8 +106,16 @@ class Ui_MainWindow(QMainWindow):
         return self._preExaminationInfoFrame.loadExaminationButton
 
     @property
+    def exportExaminationButton(self):
+        return self._examinationInfoFrame.section3_export_button
+
+    @property
     def examinationNameLabel(self):
         return self._examinationInfoFrame.section1_text
+
+    @property
+    def exportTextBox(self):
+        return self._examinationInfoFrame.section3_text
 
     @property
     def modelNameLabel(self):

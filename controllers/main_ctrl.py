@@ -27,14 +27,16 @@ class MainController:
         self.ui = ui
 
         self.load_examination_dialog_ui = LoadExaminationDialog()
-        self.new_examination_dialog_ui = NewExaminationDialog() 
+        self.new_examination_dialog_ui = NewExaminationDialog()
 
-        # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting signals from UI to functions that handle the signals.
+        # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
+        # signals from UI to functions that handle the signals.
 
         # Signals related to examinations 
         self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.open_file_dialog())
         self.ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
+        self.ui.exportExaminationButton.clicked.connect(self.handle_exportExaminationButton_clicked)
 
         # Signals related to scanlist
         self.ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
@@ -68,6 +70,13 @@ class MainController:
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
 
+    def handle_exportExaminationButton_clicked(self):
+        tmp = self.ui.exportTextBox.text()
+
+        settings_manager = SettingsManager.get_instance()
+
+        settings_manager.export_settings(f"./{tmp}.ini")
+
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
         self.model_data = load_json(jsonFilePath)
@@ -92,10 +101,6 @@ class MainController:
     def populate_examCardListView(self, exam_card_data):
         self.exam_card_qmodel = DictionaryModel(exam_card_data)
         self.ui.examCardListView.setModel(self.exam_card_qmodel)
-
-    def handle_add_to_scanlist_name(self, name):
-        # load scan parameters json file
-        scan_parameters = load_json("scan_parameters/scan_parameters.json")
 
     def handle_add_to_scanlist(self, selected_indexes):
         # Executed when the user drags and drops items from the examCardListView to the scanlistListWidget.
