@@ -61,6 +61,7 @@ class ViewWindow(QDialog):
         # widget for the right side
         right_widget = QWidget()
         right_widget.setLayout(right_layout)
+        #self.clearLayout(left_layout)
 
         # combine left and right into the horizontal layout
         main_layout.addWidget(left_widget, stretch=1)
@@ -70,6 +71,22 @@ class ViewWindow(QDialog):
 
     def exitViewingMode(self):
         QDialog.close(self)
+
+    """"
+    def clearLayout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+
+            if item.widget():
+                widget = item.widget()
+                widget.deleteLater()
+
+            if item.layout():
+                sub_layout = item.layout()
+                self.clearLayout(sub_layout)
+
+        layout.removeItem(item)
+    """
     
     @property
     def acquiredlistView(self):

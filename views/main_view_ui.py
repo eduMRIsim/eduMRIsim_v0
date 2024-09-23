@@ -187,6 +187,30 @@ class Ui_MainWindow(QMainWindow):
 
         rightLayout = self._createRightLayout()
         self.layout.addLayout(rightLayout, stretch=3)
+        #self.clearLayout(rightLayout)
+
+    def _createViewWindow(self):
+        leftLayout = self._createLeftLayout()
+        self.layout.addLayout(leftLayout, stretch=1)
+
+        rightLayout = self._createRightViewLayout()
+        self.layout.addLayout(rightLayout, stretch=3)
+
+    def _createRightViewLayout(self) -> QGridLayout:
+        rightlayout = QGridLayout()
+
+        emptyCellStyle = """
+        background-color: black;
+        border: 1px solid white;
+        """
+        for i in range(2):
+            for j in range(2):
+                empty_widget = QWidget()
+                #empty_widget = DropWidget()
+                empty_widget.setStyleSheet(emptyCellStyle)
+                rightlayout.addWidget(empty_widget, i, j)
+
+        return rightlayout
 
     def _createLeftLayout(self) -> QHBoxLayout:
         leftLayout = QVBoxLayout()
@@ -228,7 +252,21 @@ class Ui_MainWindow(QMainWindow):
         rightLayout.addLayout(bottomLayout, stretch=1)
 
         return rightLayout
+    
+    # Function that clears the content of a layout
+    def clearLayout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
 
+            if item.widget():
+                widget = item.widget()
+                widget.deleteLater()
+
+            if item.layout():
+                sub_layout = item.layout()
+                self.clearLayout(sub_layout)
+
+        layout.removeItem(item)
 
     def save_widget_state(self):
         settings = SettingsManager.get_instance().settings

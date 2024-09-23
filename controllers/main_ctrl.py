@@ -45,18 +45,18 @@ class MainController:
         self.ui.viewModelButton.clicked.connect(self.handle_viewModelButton_clicked)
 
         # Signals related to scan parameters
-        self.ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
-        self.ui.scanParametersCancelChangesButton.clicked.connect(self.handle_scanParametersCancelChangesButton_clicked)
-        self.ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
-        self.ui.scanParametersResetButton.clicked.connect(self.handle_scanParametersResetButton_clicked)
+        #self.ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
+        #self.ui.scanParametersCancelChangesButton.clicked.connect(self.handle_scanParametersCancelChangesButton_clicked)
+        #self.ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
+        #self.ui.scanParametersResetButton.clicked.connect(self.handle_scanParametersResetButton_clicked)
 
         # Signals related to scanning
         self.ui.startScanButton.clicked.connect(self.scanner.scan)  
 
         # Signals related to scan planning windows
-        self.ui.scanPlanningWindow1.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
-        self.ui.scanPlanningWindow2.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
-        self.ui.scanPlanningWindow3.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
+        #self.ui.scanPlanningWindow1.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
+        #self.ui.scanPlanningWindow2.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
+        #self.ui.scanPlanningWindow3.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
@@ -132,9 +132,7 @@ class MainController:
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
-    def handle_viewModelButton_clicked(self):
-        #view_model_dialog = ViewModelDialog(self.scanner.model)
-        #view_model_dialog.exec()    
+    def handle_viewModelButton_clicked(self):   
         view_model_window = ViewWindow()
         view_model_window.exec_()
 
@@ -209,7 +207,7 @@ class MainController:
 
         if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED: 
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.ui.editingStackedLayout.setCurrentIndex(0) # Switch to scan parameter editor view
+            #self.ui.editingStackedLayout.setCurrentIndex(0) # Switch to scan parameter editor view
             self.ui.scannedImageFrame.setAcquiredSeries(self.scanner.active_scanlist_element.acquired_data) # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
             current_list_item = self.ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
