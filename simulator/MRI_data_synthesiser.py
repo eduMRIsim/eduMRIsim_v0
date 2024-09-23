@@ -1,6 +1,9 @@
-from simulator.model import Model
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
+
+from simulator.model import Model
+
 
 class MRIDataSynthesiser:
     def __init__(self):

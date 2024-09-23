@@ -1,14 +1,15 @@
 import sys
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QFont
 
-from events import EventEnum
-from simulator.scanner import Scanner
+from PyQt5.QtCore import QSettings
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QApplication
+
 from controllers.main_ctrl import MainController
 from controllers.settings_mgr import SettingsManager
-from views.main_view_ui import Ui_MainWindow
+from events import EventEnum
 from simulator.load import load_json
-from PyQt5.QtCore import QSettings
+from simulator.scanner import Scanner
+from views.main_view_ui import Ui_MainWindow
 
 
 class App(QApplication):

@@ -1,32 +1,26 @@
+import math
+from contextlib import contextmanager
+
+import numpy as np
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent, QSettings, QByteArray, QMetaType
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
+    QFont, QPolygonF, QPen
 from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
                              QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
-    QFont, QPolygonF, QPen
-
-import numpy as np
-
-import math
-
-from keys import Keys
-
-from contextlib import contextmanager
 
 from controllers.settings_mgr import SettingsManager
-from views.UI_MainWindowState import IdleState
-from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
-    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
-
+from events import EventEnum
+from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
-
+from views.UI_MainWindowState import IdleState
 from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
     IdleState, MRIfortheBrainState
-
-from events import EventEnum
+from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
+    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
 naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. 

@@ -1,21 +1,18 @@
 from PyQt5.QtCore import QSettings
-
-from controllers.settings_mgr import SettingsManager
-from views.new_examination_dialog_ui import NewExaminationDialog
-from views.load_examination_dialog_ui import LoadExaminationDialog
-#from views.view_model_dialog_ui import ViewModelDialog
-from views.view_model_dialog_ui import ViewWindow
-from views.qmodels import DictionaryModel
-import views.UI_MainWindowState as UI_state 
-
-from PyQt5.QtWidgets import QListWidgetItem, QApplication
 from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QListWidgetItem, QApplication
 
-from simulator.load import load_json, load_model_data
-from simulator.model import Model 
-from simulator.scanlist import ScanItemStatusEnum
-
+import views.UI_MainWindowState as UI_state
+from controllers.settings_mgr import SettingsManager
 from events import EventEnum
+from simulator.load import load_json, load_model_data
+from simulator.model import Model
+from simulator.scanlist import ScanItemStatusEnum
+from views.load_examination_dialog_ui import LoadExaminationDialog
+from views.new_examination_dialog_ui import NewExaminationDialog
+from views.qmodels import DictionaryModel
+# from views.view_model_dialog_ui import ViewModelDialog
+from views.view_model_dialog_ui import ViewWindow
 
 
 class MainController:
