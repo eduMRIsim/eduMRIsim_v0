@@ -81,8 +81,8 @@ class AcquiredSeries:
         self.series_name = series_name
         self.scan_plane = scan_plane
         self.list_acquired_images = list_acquired_images
-        
-         
+
+
 class Scanlist:
     def __init__(self):
         self.scanlist_elements = []
@@ -90,6 +90,7 @@ class Scanlist:
         self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
+        print("Added newww")
         new_scanlist_element = ScanlistElement(name, scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
@@ -167,6 +168,10 @@ class ScanItem:
     def status(self):
         return self._status
     
+    @property
+    def axisZ_LPS(self):
+        return self.axisZ_LPS
+
     @status.setter
     def status(self, status):
         self._status = status
@@ -363,7 +368,7 @@ class ScanVolume:
         # self.axisY_LPS = np.dot(rotation_matrix_RL, self.axisY_LPS)
         # self.axisZ_LPS = np.dot(rotation_matrix_RL, self.axisZ_LPS)
 
-        # # then rotate around AP axis             
+        # # then rotate around AP axis
         # angleAP_deg = scan_parameters.get('APAngle_deg', 0)
         # # make sure angleAP is type float
         # angleAP_deg = float(angleAP_deg)
@@ -383,7 +388,7 @@ class ScanVolume:
         # rotation_matrix_FH = np.array([[np.cos(angleFH_rad), -np.sin(angleFH_rad), 0], [np.sin(angleFH_rad), np.cos(angleFH_rad), 0], [0, 0, 1]])
         # self.axisX_LPS = np.dot(rotation_matrix_FH, self.axisX_LPS)
         # self.axisY_LPS = np.dot(rotation_matrix_FH, self.axisY_LPS)
-        # self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)        
+        # self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)
 
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
@@ -444,7 +449,7 @@ class ScanVolume:
         # translate the scan volume by the translation vector (which is in LPS coordinates)
         self.origin_LPS += translation_vector_LPS
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
-    
+
     # Event reciever for rotation using rotation handlers
     def rotate_scan_volume(self, rotation_angle_rad, rotation_axis):
         '''This function computes the new angle using rotation angle and axis'''
@@ -467,7 +472,7 @@ class ScanVolume:
         # Update the axis vectors based on the new rotation angles
         self.update_axis_vectors()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
-    
+
     def update_axis_vectors(self):
         '''Updates the scan area for rotation purposes'''
         # Reset axes to initial state
@@ -649,3 +654,10 @@ class ScanVolume:
     # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):
          return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane}
+
+    def calculate_slice_positions(self):
+        slice_positions = []
+        for i in range(self.N_slices):
+            z_position = -self.extentZ_mm / 2 + i * (self.slice_thickness_mm + self.slice_gap_mm)
+            slice_positions.append(z_position)
+        return slice_positions
