@@ -1,4 +1,5 @@
 venv/
+myvenv/
 docs/
 unused_code/
 .idea/
