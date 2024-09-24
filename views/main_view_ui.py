@@ -1,7 +1,10 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF
-from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QEvent
+from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+                             QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea, QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
+                             QGraphicsEllipseItem, QApplication)
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
 
 import numpy as np
@@ -601,19 +604,120 @@ class ParameterFormLayout(QVBoxLayout):
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
-    def __init__(self, parent: QGraphicsPixmapItem):
+    def __init__(self, parent: QGraphicsPixmapItem, viewer):
         super().__init__(parent)
         self.setPen(Qt.red)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.observers = []
         self.previous_position_in_pixmap_coords = None
-        self.size_x = None
-        self.size_y = None
+
+        # Scale parameters, including scale handles.
+        self.is_being_scaled = False
+        self.scale_handles = []
+        for i in range(8):
+            handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
+            handle.setPen(Qt.yellow)
+            handle.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
+            handle.setAcceptedMouseButtons(Qt.LeftButton)
+            handle.setAcceptHoverEvents(True)
+            handle.setCursor(Qt.PointingHandCursor)
+            handle.mousePressEvent = lambda event, hdl=handle: self.scale_handle_press_event_handler(event, hdl)
+            self.scale_handles.append(handle)
+        self.scale_handle_offsets = []
+        self.active_scale_handle = None
+        self.scene_center = QPointF(0.0, 0.0)
+        self.previous_scale_handle_position = None
+        self.viewer = viewer
+
+        # Set the initial position of the scale handles.
+        self.update_scale_handle_positions()
+
+    def update_scale_handle_positions(self):
+        # Get the current polygon and its number of points.
+        polygon = self.polygon()
+        number_of_points = len(polygon)
+
+        # Error case, avoids division by zero.
+        if number_of_points == 0:
+            return
+
+        # Find the local center of the polygon's points.
+        local_center = QPointF(sum(point.x() for point in polygon) / number_of_points, sum(point.y() for point in polygon) / number_of_points)
+
+        # Set the new handle positions based on the local center and the offsets.
+        # Also, show only the first few handles.
+        for i, offset in enumerate(self.scale_handle_offsets):
+            if i >= len(self.scale_handles):
+                break
+            handle = self.scale_handles[i]
+            handle_pos_local = local_center + offset
+            handle.setPos(handle_pos_local)
+            handle.setVisible(True)
+
+        # Hide the remaining handles.
+        for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
+            self.scale_handles[i].setVisible(False)
+
+    def scale_handle_press_event_handler(self, event: QGraphicsSceneMouseEvent, handle):
+        self.is_being_scaled = True
+        self.active_scale_handle = handle  # Keep track of which handle is active
+        self.previous_scale_handle_position = event.scenePos()
+        handle.setCursor(Qt.ClosedHandCursor)
+
+        polygon = self.polygon()
+        number_of_points = len(polygon)
+
+        if number_of_points == 0:
+            self.scene_center = QPointF(0.0, 0.0)
+        else:
+            self.scene_center = QPointF(sum(point.x() for point in polygon) / number_of_points, sum(point.y() for point in polygon) / number_of_points)
+            self.scene_center = self.mapToScene(self.scene_center)
+
+    def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
+        if not self.is_being_scaled:
+            return
+
+        new_position = event.scenePos()
+        if self.previous_scale_handle_position.x() == self.scene_center.x():
+            scale_factor_x = 1.0
+        else:
+            scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(self.previous_scale_handle_position.x() - self.scene_center.x())
+        if self.previous_scale_handle_position.y() == self.scene_center.y():
+            scale_factor_y = 1.0
+        else:
+            scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(self.previous_scale_handle_position.y() - self.scene_center.y())
+
+        self.previous_scale_handle_position = new_position
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y)
+        self.update_scale_handle_positions()
+
+    def scale_handle_release_event_handler(self, event: QGraphicsSceneMouseEvent):
+        self.is_being_scaled = False
+        if self.active_scale_handle is not None:
+            self.active_scale_handle.setCursor(Qt.OpenHandCursor)
+            self.active_scale_handle = None
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
+        number_of_points = len(polygon_in_polygon_coords)
+        if number_of_points == 0:
+            super().setPolygon(polygon_in_polygon_coords)
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            self.scale_handle_offsets = []
+            return
+
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
+
+        local_center = QPointF(sum(point.x() for point in polygon_in_polygon_coords) / number_of_points, sum(point.y() for point in polygon_in_polygon_coords) / number_of_points)
+
+        self.scale_handle_offsets = []
+        for point in polygon_in_polygon_coords:
+            offset = point - local_center
+            self.scale_handle_offsets.append(offset)
+
+        self.update_scale_handle_positions()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
         polygon_in_polygon_coords = QPolygonF()
@@ -629,71 +733,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
             print("Subject", self, "is updating observer", observer, "with event", event)
-            observer.update(event, direction_vector_in_pixmap_coords=kwargs.get('direction_vector_in_pixmap_coords'), scale_coords_x_pixmap=kwargs.get('scale_coords_x_pixmap'), scale_coords_y_pixmap=kwargs.get('scale_coords_y_pixmap'))
-
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
-        super().mousePressEvent(event)
-
-        # size_x and size_y should be constant, so only set them if they are not set yet (i.e. if they are still None)
-        if self.size_x is None:
-            self.size_x = self.boundingRect().width()
-        if self.size_y is None:
-            self.size_y = self.boundingRect().height()
-
-        # We don't want the intersection polygon to move if the user requests to resize it (by clicking in a corner of the polygon).
-        # So set the intersection polygon to be immovable if the mouse event is a resize event.
-        if self._is_resize_event(event):
-            self.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
+            observer.update(event, direction_vector_in_pixmap_coords=kwargs.get('direction_vector_in_pixmap_coords'), scale_factor_x=kwargs.get('scale_factor_x'), scale_factor_y=kwargs.get('scale_factor_y'))
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
-        if not(self.flags() & QGraphicsItem.ItemIsMovable):
-            scale_coords_x_pixmap = self.size_x / 2 - event.pos().x()
-            scale_coords_y_pixmap = self.size_y / 2 - event.pos().y()
-            self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_coords_x_pixmap=scale_coords_x_pixmap, scale_coords_y_pixmap=scale_coords_y_pixmap)
-        else:
-            super().mouseMoveEvent(event)
-            direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
-            self.previous_position_in_pixmap_coords = self.pos()
-            self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
-
-    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
-        super().mouseReleaseEvent(event)
-        self.setFlag(QGraphicsItem.ItemIsMovable, enabled=True)
-
-    def _is_resize_event(self, event: QGraphicsSceneMouseEvent) -> bool:
-        # Get the positions of the corners of this intersection polygon.
-        top_left = self.boundingRect().topLeft()
-        top_right = self.boundingRect().topRight()
-        bottom_right = self.boundingRect().bottomRight()
-        bottom_left = self.boundingRect().bottomLeft()
-
-        # Get the x and y coordinates of the mouse event.
-        mouse_pos = event.pos()
-        mouse_pos_x, mouse_pos_y = mouse_pos.x(), mouse_pos.y()
-
-        # Any mouse event for the intersection polygon is exactly one of move or resize (but never both at the same time).
-        resize_event = False
-
-        # Tolerance value for which pixels are "in the corner".
-        # This value is currently not definitive, and may be changed in the future.
-        corner_tolerance = 10.0
-
-        # Check if the mouse event position is in one of the four corners.
-        # If so, then the mouse event is a resize event; if not, then it is a move event.
-        if abs(mouse_pos_x - top_left.x()) <= corner_tolerance \
-                and abs(mouse_pos_y - top_left.y()) <= corner_tolerance:  # top left corner
-            resize_event = True
-        elif abs(mouse_pos_x - top_right.x()) <= corner_tolerance \
-                and abs(mouse_pos_y - top_right.y()) <= corner_tolerance:  # top right corner
-            resize_event = True
-        elif abs(mouse_pos_x - bottom_right.x()) <= corner_tolerance \
-                and abs(mouse_pos_y - bottom_right.y()) <= corner_tolerance:  # bottom right corner
-            resize_event = True
-        elif abs(mouse_pos_x - bottom_left.x()) <= corner_tolerance \
-                and abs(mouse_pos_y - bottom_left.y()) <= corner_tolerance:  # bottom left corner
-            resize_event = True
-
-        return resize_event
+        super().mouseMoveEvent(event)
+        direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(), self.pos().y() - self.previous_position_in_pixmap_coords.y())
+        self.previous_position_in_pixmap_coords = self.pos()
+        self.update_scale_handle_positions()
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_pixmap_coords=direction_vector_in_pixmap_coords)
 
 class AcquiredSeriesViewer2D(QGraphicsView):
     '''Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved.
@@ -734,8 +781,21 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
 
-        self.scan_volume_display = CustomPolygonItem(self.pixmap_item) # Create a custom polygon item that is a child of the pixmap item
+        self.scan_volume_display = CustomPolygonItem(self.pixmap_item, viewer=self) # Create a custom polygon item that is a child of the pixmap item
         self.scan_volume_display.add_observer(self)
+
+        self.scene.installEventFilter(self)
+
+    def eventFilter(self, source, event):
+        if event.type() == QEvent.GraphicsSceneMouseMove:
+            if self.scan_volume_display is not None and self.scan_volume_display.is_being_scaled:
+                self.scan_volume_display.scale_handle_move_event_handler(event)
+                return True
+        elif event.type() == QEvent.GraphicsSceneMouseRelease:
+            if self.scan_volume_display is not None and self.scan_volume_display.is_being_scaled:
+                self.scan_volume_display.scale_handle_release_event_handler(event)
+                return True
+        return super().eventFilter(source, event)
 
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.''' 
@@ -785,12 +845,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume.add_observer(self)
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
-            scale_coords_x_pixmap = kwargs['scale_coords_x_pixmap']
-            scale_coords_y_pixmap = kwargs['scale_coords_y_pixmap']
-            scale_coords_x_image_mm, scale_coords_y_image_mm, _ = self.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords((scale_coords_x_pixmap, scale_coords_y_pixmap))
+            scale_factor_x = kwargs['scale_factor_x']
+            scale_factor_y = kwargs['scale_factor_y']
 
             self.scan_volume.remove_observer(self)
-            self.scan_volume.scale_scan_volume(scale_coords_x_pixmap, scale_coords_y_pixmap)
+            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y)
             self._update_scan_volume_display()
             self.scan_volume.add_observer(self)
 
