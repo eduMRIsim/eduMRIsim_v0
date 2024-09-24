@@ -634,6 +634,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.update_scale_handle_positions()
 
     def update_scale_handle_positions(self):
+        """
+        This function updates the scale handle positions so that they are moved to their new positions.
+        """
+
         # Get the current polygon and its number of points.
         polygon = self.polygon()
         number_of_points = len(polygon)
@@ -660,14 +664,23 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.scale_handles[i].setVisible(False)
 
     def scale_handle_press_event_handler(self, event: QGraphicsSceneMouseEvent, handle):
+        """
+        This function is an event handler that is called whenever the user left-clicks on a scale handle.
+        :param event: the mouse event that the user performed by left-clicking on a scale handle.
+        :param handle: the scale handle that the user clicked on.
+        """
+
         self.is_being_scaled = True
-        self.active_scale_handle = handle  # Keep track of which handle is active
+        self.active_scale_handle = handle  # Keep track of which handle is active.
         self.previous_scale_handle_position = event.scenePos()
         handle.setCursor(Qt.ClosedHandCursor)
 
+        # Get the current polygon (points), and the number of points in the current polygon.
         polygon = self.polygon()
         number_of_points = len(polygon)
 
+        # If the current polygon has no points, the scene center will be (0.0, 0.0) in scene coordinates;
+        # else, the scene center is the center of all points in the polygon.
         if number_of_points == 0:
             self.scene_center = QPointF(0.0, 0.0)
         else:
@@ -675,10 +688,18 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.scene_center = self.mapToScene(self.scene_center)
 
     def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
-        if not self.is_being_scaled:
-            return
+        """
+        This function is called whenever a scale handle is moved,
+        i.e. when the user holds left click on and drags a scale handle to a new position.
+        :param event: the mouse event that the user performed by holding left click on and dragging a scale handle.
+        """
 
+        # Get the new position in scene coordinates.
         new_position = event.scenePos()
+
+        # Calculate the scale factors in the x and y directions.
+        # Also, avoid division by zero, which would happen if the previous scale handle position's x or y is equal to
+        # the scene center's x or y respectively; in that case, set the respective scale factor to 1.0.
         if self.previous_scale_handle_position.x() == self.scene_center.x():
             scale_factor_x = 1.0
         else:
@@ -688,12 +709,24 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         else:
             scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(self.previous_scale_handle_position.y() - self.scene_center.y())
 
+        # Set the previous handle position equal to the new handle position.
         self.previous_scale_handle_position = new_position
+
+        # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
         self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y)
+
+        # Update the scale handle positions.
         self.update_scale_handle_positions()
 
-    def scale_handle_release_event_handler(self, event: QGraphicsSceneMouseEvent):
+    def scale_handle_release_event_handler(self):
+        """
+        This function is called whenever a scale handle is released,
+        i.e. when the user stops holding left click on the scale handle.
+        """
+
         self.is_being_scaled = False
+
+        # Reset the active scale handle if it was set previously.
         if self.active_scale_handle is not None:
             self.active_scale_handle.setCursor(Qt.OpenHandCursor)
             self.active_scale_handle = None
@@ -793,7 +826,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
                 return True
         elif event.type() == QEvent.GraphicsSceneMouseRelease:
             if self.scan_volume_display is not None and self.scan_volume_display.is_being_scaled:
-                self.scan_volume_display.scale_handle_release_event_handler(event)
+                self.scan_volume_display.scale_handle_release_event_handler()
                 return True
         return super().eventFilter(source, event)
 
