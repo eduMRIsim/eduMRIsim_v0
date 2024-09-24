@@ -2,12 +2,12 @@ import math
 from contextlib import contextmanager
 
 import numpy as np
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent, QSettings, QByteArray, QMetaType
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
     QFont, QPolygonF, QPen
-from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+from PyQt5.QtWidgets import (QComboBox, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QSizePolicy,
                              QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
                              QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
@@ -16,10 +16,8 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
-from views.UI_MainWindowState import IdleState
-from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
-    IdleState, MRIfortheBrainState
-from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
+from views.UI_MainWindowState import IdleState, BeingModifiedState, ReadyToScanState, ScanCompleteState
+from views.styled_widgets import PrimaryActionButton, SecondaryActionButton, \
     TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
@@ -61,7 +59,7 @@ class Ui_MainWindow(QMainWindow):
         self._createMainWindow()
 
         self.setCentralWidget(self.centralWidget)
-        self.setWindowTitle("eduMRIsim_V0_UI")
+        self.setWindowTitle("eduMRIsim")
 
         self._state = IdleState()
         self.update_UI()
@@ -287,6 +285,12 @@ class Ui_MainWindow(QMainWindow):
 
         if state_class:
             self.state = state_class()
+        elif state_name == "ScanCompleteState":
+            self.state = ScanCompleteState()
+        elif state_name == "BeingModifiedState":
+            self.state = BeingModifiedState()
+        elif state_name == "ReadyToScanState":
+            self.state = ReadyToScanState()
         else:
             print(f"Warning: State '{state_name}' not found. Defaulting to IdleState.")
             self.state = IdleState()
