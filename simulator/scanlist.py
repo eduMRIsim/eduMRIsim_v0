@@ -1,4 +1,7 @@
 from enum import Enum, auto
+
+from PyQt5.QtCore import QPointF
+
 from events import EventEnum
 import numpy as np
 
@@ -12,6 +15,7 @@ class ImageGeometry:
         self.resX_mm = geometry_parameters['resX_mm']
         self.resY_mm = geometry_parameters['resY_mm']
         self.origin_LPS = geometry_parameters['origin_LPS']
+        self.plane = geometry_parameters['plane']
 
     @property
     def axisZ_LPS(self):
@@ -299,13 +303,13 @@ class ScanVolume:
         self.N_slices = None
         self.slice_thickness_mm = None
         self.slice_gap_mm = None
-
+        self.scanPlane = None
         self.observers = []
 
     @property
     def extentZ_mm(self):
         return self.N_slices * self.slice_thickness_mm + (self.N_slices - 1) * self.slice_gap_mm
-     
+
     @property
     def conversion_matrix(self) -> np.ndarray:
         '''Affine transformation matrix that converts scan volume coordinates to LPS coordinates'''
@@ -318,14 +322,17 @@ class ScanVolume:
         self.extentX_mm = float(scan_parameters['FOVPE_mm'])
         self.extentY_mm = float(scan_parameters['FOVFE_mm'])
         if scan_parameters['ScanPlane'] == 'Axial':
+            self.scanPlane = 'Axial'
             self.axisX_LPS = np.array([1, 0, 0])
             self.axisY_LPS = np.array([0, 1, 0])
             self.axisZ_LPS = np.array([0, 0, 1])
         if scan_parameters['ScanPlane'] == 'Sagittal':
+            self.scanPlane = 'Sagittal'
             self.axisX_LPS = np.array([0, 1, 0])
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([-1, 0, 0])
         if scan_parameters['ScanPlane'] == 'Coronal':
+            self.scanPlane = 'Coronal'
             self.axisX_LPS = np.array([1, 0, 0])
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([0, 1, 0])
@@ -418,6 +425,7 @@ class ScanVolume:
         origin_slice_in_LPS_coords = self.scan_volume_mm_coords_to_LPS_coords(origin_slice_in_scan_volume_coords)
         geometry_parameters = self._get_geometry_parameters()
         geometry_parameters['origin_LPS'] = origin_slice_in_LPS_coords
+        geometry_parameters['plane'] = self.scanPlane
         return ImageGeometry(geometry_parameters)
 
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
@@ -425,9 +433,24 @@ class ScanVolume:
         self.origin_LPS += translation_vector_LPS
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
-    def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float):
-        self.extentX_mm *= scale_factor_x
-        self.extentY_mm *= scale_factor_y
+    def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float, origin_plane: str, handle_pos: QPointF):
+        valid_planes = ('Axial', 'Sagittal', 'Coronal')
+        if origin_plane not in valid_planes:
+            raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
+        current_plane = self.scanPlane
+        if current_plane not in valid_planes:
+            raise ValueError(f'Invalid "current" scan plane: {current_plane}')
+
+        if current_plane == origin_plane:
+            self.extentX_mm *= scale_factor_x
+            self.extentY_mm *= scale_factor_y
+        elif current_plane == 'Axial':
+            ...
+        elif current_plane == 'Sagittal':
+            ...
+        elif current_plane == 'Coronal':
+            ...
+
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def scan_volume_mm_coords_to_LPS_coords(self, scan_volume_mm_coords: tuple) -> tuple:
@@ -538,4 +561,4 @@ class ScanVolume:
         print("Observer", observer, "removed from", self)
 
     def get_parameters(self):
-        return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2]}
+        return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'ScanPlane': self.scanPlane}
