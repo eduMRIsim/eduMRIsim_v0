@@ -682,11 +682,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         polygon = self.polygon()
         number_of_points = len(polygon)
 
-        # Define axis booleans
-        self.on_x_axis = False
-        self.on_y_axis = False
-        self.on_z_axis = False
-
         # If the current polygon has no points, the scene center will be (0.0, 0.0) in scene coordinates;
         # else, the scene center is the center of all points in the polygon.
         if number_of_points == 0:
@@ -695,25 +690,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.scene_center = QPointF(sum(point.x() for point in polygon) / number_of_points, sum(point.y() for point in polygon) / number_of_points)
             self.scene_center = self.mapToScene(self.scene_center)
 
-        #self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
-        #self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
-
-        # Find which plane we are on
-        axis = self.get_plane_axis()
-
-        if axis == 'FH':
-            self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
-            self.on_z_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
-        elif axis == 'AP':
-            self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
-            self.on_z_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
-        elif axis == 'RL':
-            self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
-            self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
-
-
-        print(f"{self.on_x_axis = }, {self.on_y_axis = }, {self.on_z_axis = }" )
-        print(self.get_plane_axis())
+        self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
+        self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
 
     def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
         """
@@ -732,10 +710,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             scale_factor_x = 1.0
         else:
             scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(self.previous_scale_handle_position.x() - self.scene_center.x())
+            if scale_factor_x <= 0.96 or scale_factor_x >= 1.04:
+                scale_factor_x = 1.0
         if self.on_y_axis:
             scale_factor_y = 1.0
         else:
             scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(self.previous_scale_handle_position.y() - self.scene_center.y())
+            if scale_factor_y <= 0.96 or scale_factor_y >= 1.04:
+                scale_factor_y = 1.0
 
         # Set the previous handle position equal to the new handle position.
         self.previous_scale_handle_position = new_position
@@ -745,10 +727,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
-
-        axis = self.get_plane_axis()
-
-        print(axis)
 
     def scale_handle_release_event_handler(self):
         """

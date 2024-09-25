@@ -437,19 +437,34 @@ class ScanVolume:
         valid_planes = ('Axial', 'Sagittal', 'Coronal')
         if origin_plane not in valid_planes:
             raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
-        current_plane = self.scanPlane
-        if current_plane not in valid_planes:
-            raise ValueError(f'Invalid "current" scan plane: {current_plane}')
+        top_down_plane = self.scanPlane
+        if top_down_plane not in valid_planes:
+            raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
 
-        if current_plane == origin_plane:
+        if top_down_plane == origin_plane:
             self.extentX_mm *= scale_factor_x
             self.extentY_mm *= scale_factor_y
-        elif current_plane == 'Axial':
-            ...
-        elif current_plane == 'Sagittal':
-            ...
-        elif current_plane == 'Coronal':
-            ...
+        elif top_down_plane == 'Axial':
+            if origin_plane == 'Sagittal':
+                self.extentY_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == 'Coronal':
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y    
+        elif top_down_plane == 'Sagittal':
+            if origin_plane == 'Axial':
+                self.extentX_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+            elif origin_plane == 'Coronal':
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+        elif top_down_plane == 'Coronal':
+            if origin_plane == 'Axial':
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == 'Sagittal':
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
 
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
