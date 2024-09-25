@@ -877,6 +877,344 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
         self.dropEventSignal.emit(selected_index)
         event.accept()
  """
+# class ImageLabel(QGraphicsView):
+#     '''Old version of AcquiredSeriesViewer2D. This viewer is still used to display the anatomical model in the model viewing dialog.'''
+#     def __init__(self):
+#         super().__init__()
+
+#         # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually. 
+#         self.scene = QGraphicsScene(self)
+
+#         # Creates a pixmap graphics item that will be added to the scene
+#         self.pixmap_item = QGraphicsPixmapItem()
+
+#         # Sets the created scene as the scene for the graphics view
+#         self.setScene(self.scene)
+
+#         # Sets the render hint to enable antialiasing, which makes the image look smoother. Aliasings occur when a high-resolution image is displayed or rendered at a lower resolution, leading to the loss of information and the appearance of stair-stepped edges. Antialiasing techniques smooth out these jagged edges by introducing intermediate colors or shades along the edges of objects.
+#         self.setRenderHint(QPainter.Antialiasing, True)
+
+#         # Set the background color to black
+#         self.setBackgroundBrush(QColor(0, 0, 0))  # RGB values for black
+
+#         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+#         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+#         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+#         # Initialize array attribute to None
+#         self.array = None
+#         self._current_slice = None
+
+#         self._window_width = None
+#         self._window_level = None
+
+#         self.observers = []
+
+#         self.middle_mouse_button_pressed = False
+#         self._displaying = False
+
+#         self.scene.addItem(self.pixmap_item)
+
+#         self.text_item = QGraphicsTextItem()
+#         self.scene.addItem(self.text_item)
+#         # change text color to white
+#         self.text_item.setDefaultTextColor(Qt.white)
+#         # set font size
+#         self.text_item.setFont(QFont("Segoe UI", 6))
+
+#         self.signal_value_text_item = QGraphicsTextItem(self.pixmap_item)
+#         # change text color to white
+#         self.signal_value_text_item.setDefaultTextColor(Qt.white)
+#         # set font size
+#         self.signal_value_text_item.setFont(QFont("Segoe UI", 6))
+
+#         self.scanlist_element_name_text_item = QGraphicsTextItem(self.pixmap_item)
+#         # change text color to white
+#         self.scanlist_element_name_text_item.setDefaultTextColor(Qt.white)
+#         # set font size
+#         self.scanlist_element_name_text_item.setFont(QFont("Segoe UI", 6))
+
+
+#     @property
+#     def displaying(self):
+#         return self._displaying
+    
+#     @displaying.setter
+#     def displaying(self, bool):
+#         if bool == True:
+#             self._displaying = True
+#         else:
+#             self._displaying = False
+#             self.array = None
+#             self.current_slice = None
+#             self.window_width = None
+#             self.window_level = None
+#             self.text_item.setPlainText("")
+#             self.signal_value_text_item.setPlainText("")
+#             self.scanlist_element_name_text_item.setPlainText("")
+
+#     @property
+#     def current_slice(self):
+#         return self._current_slice
+    
+#     @current_slice.setter
+#     def current_slice(self, value):
+#         self._current_slice = value
+
+#     @property
+#     def window_width(self):
+#         return self._window_width
+
+#     @window_width.setter
+#     def window_width(self, value):
+#         self._window_width = value
+
+#     @property
+#     def window_level(self):
+#         return self._window_level
+    
+#     @window_level.setter
+#     def window_level(self, value):
+#         self._window_level = value
+
+#     def set_window_width_level(self, window_width, window_level):
+#         self._window_width = window_width
+#         self._window_level = window_level
+#         self.notify_observers(window_width, window_level)
+
+#     # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
+#     def resizeEvent(self, event: QResizeEvent):
+#         super().resizeEvent(event)
+#         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+#     # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
+#     def wheelEvent(self, event):
+#         # Check if the array is None
+#         if self.array is None:
+#             # Do nothing and return
+#             return
+
+#         delta = event.angleDelta().y() 
+#         current_slice = getattr(self, 'current_slice', 0)
+#         if delta > 0:
+#             new_slice = max(0, min(current_slice + 1, self.array.shape[2] - 1))
+#         elif delta < 0:
+#             new_slice = max(0, min(current_slice - 1, self.array.shape[2] - 1))
+#         elif delta == 0:
+#             new_slice = current_slice
+#         self.current_slice = int(new_slice)
+#         self.displayArray()
+
+#         if self.pixmap_item.isUnderMouse():
+#             pixmap_coords = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
+#             x = int(pixmap_coords.x())
+#             y = int(pixmap_coords.y())
+#             print(pixmap_coords) # print the pixmap coordinates of the mouse position
+#             # check if the pixmap coordinates are within the image array
+#             if 0 <= x < self.array.shape[1] and 0 <= y < self.array.shape[0]:
+#                 signal_value = self.array[y, x, self.current_slice]
+#                 self.update_signal_value_text_item(f"{signal_value:.1f}")
+#             else:
+#                 self.update_signal_value_text_item("")
+
+#     #ImageLabel holds a copy of the array of MRI data to be displayed. 
+#     def setArray(self, array):
+#         # Set the array and make current_slice the middle slice by default
+#         self.array = array
+#         if array is not None:
+#             self.displaying = True
+#             self.current_slice = array.shape[2] // 2    
+#             window_width, window_level = self.calculate_window_width_level(method='percentile')
+#             self.set_window_width_level(window_width, window_level) 
+#         else:
+#             self.displaying = False
+           
+#     def displayArray(self):
+#         width, height = 0, 0
+#         if self.displaying == True:
+#             windowed_array = self.apply_window_width_level()
+#             array_8bit = (windowed_array * 255).astype(np.uint8)
+
+#             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
+#             image = np.ascontiguousarray(np.array(array_8bit))
+#             height, width = image.shape
+#             qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+
+#             # Create a QPixmap - a pixmap which can be displayed in a GUI
+#             pixmap = QPixmap.fromImage(qimage)
+#             self.pixmap_item.setPixmap(pixmap)
+
+#             self.update_text_item()
+#             self.update_signal_value_text_item("")
+
+
+#         else:
+#             # Set a black image when self.array is None
+#             black_image = QImage(1, 1, QImage.Format_Grayscale8)
+#             black_image.fill(Qt.black)
+#             pixmap = QPixmap.fromImage(black_image)
+#             self.pixmap_item.setPixmap(pixmap)           
+
+#         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+#         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
+#         self.scene.setSceneRect(0, 0, width, height)
+#         # The centerOn method is used to center the view on a particular point within the scene.
+#         self.centerOn(width / 2, height / 2)
+
+#     def update_text_item(self):
+#         # set text
+#         text = f"Slice: {self.current_slice + 1}\nWW: {round(self.window_width)}\nWL: {round(self.window_level)}"
+#         self.text_item.setPlainText(text) # setPlainText() sets the text of the text item to the specified text.
+#         print("text rect", self.text_item.boundingRect())
+
+#         # set position of text
+#         view_rect = self.viewport().rect() # rect() returns the rectangle of the viewport in viewport coordinates.
+#         print("view_rect", view_rect)
+#         scene_rect = self.scene.sceneRect() # sceneRect() returns the bounding rectangle of the scene in scene coordinates.
+#         print("scene_rect", scene_rect)
+#         pixmap_rect = self.pixmap_item.boundingRect() # boundingRect() returns the bounding rectangle of the pixmap item in the pixmap's local coordinates.
+#         print("pixmap_rect", pixmap_rect)
+#         # set position of text to the bottom right corner of the pixmap
+#         text_rect = self.text_item.boundingRect() # boundingRect() returns the bounding rectangle of the text item in the text item's local coordinates.
+#         padding = 5
+#         view_port_coords = QPoint(int(view_rect.right() - text_rect.width() - padding), int(view_rect.bottom() - text_rect.height() - padding))
+#         scene_coords = self.mapToScene(view_port_coords) 
+#         self.text_item.setPos(scene_coords) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+#         # place the text in the bottom right corner of the view port 
+#         # x = view_rect.right() - text_rect.width() - 50 # Adjusted to the right by 10 pixels for padding
+#         # print("x coordinate", x)
+#         # y = view_rect.bottom() - text_rect.height() - 50 # Adjusted to the bottom by 10 pixels for padding
+#         # print("y coordinate", y)
+#         # # set the position of the text item in the view port coordinates. 
+#         # # covert x from view port coordinates to scene coordinates
+#         # scene_coords = self.mapToScene(QPoint(int(x), int(y)))
+#         # print("x_scene", scene_coords.x())
+#         # print("y_scene", scene_coords.y())
+#         # self.text_item.setPos(scene_coords.x(), scene_coords.y()) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+
+#     def update_signal_value_text_item(self, signal_value):
+#         # place in bottom left corner
+#         pixmap_rect = self.pixmap_item.boundingRect()
+#         text_rect = self.text_item.boundingRect()
+#         view_port_rect = self.viewport().rect()
+#         padding = 1
+#         view_port_coords = QPoint(int(padding), int(view_port_rect.bottom() - text_rect.height() - padding))
+#         scene_coords = self.mapToScene(view_port_coords)
+#         self.signal_value_text_item.setPos(scene_coords)
+#         text = f"Signal value: {signal_value}"
+#         self.signal_value_text_item.setPlainText(text)
+
+#     def update_scanlist_element_name_text_item(self, name):
+#         # place in top left corner
+#         pixmap_rect = self.pixmap_item.boundingRect()
+#         padding = 1
+#         view_port_coords = QPoint(int(padding), int(padding))
+#         scene_coords = self.mapToScene(view_port_coords)
+#         self.scanlist_element_name_text_item.setPos(scene_coords)
+#         text = f"{name}"
+#         self.scanlist_element_name_text_item.setPlainText(text)
+
+#     def calculate_window_width_level(self, method='std', **kwargs):
+#         """
+#         Calculate window width and level based on signal intensity distribution of middle slice of signal array.
+
+#         Parameters:
+#         method (str): Method to calculate WW and WL ('std' or 'percentile').
+#         std_multiplier (float): Multiplier for the standard deviation (only used if method is 'std').
+
+#         Returns:
+#         tuple: (window_width, window_level)
+#         """        
+
+#         array = self.array[:,:,self.array.shape[2] // 2] # window width and level will be calculate based on middle slice of array 
+
+#         if method == 'std':
+#             std_multiplier = kwargs.get('std_multiplier', 2)
+#             window_level = np.mean(array)
+#             window_width = std_multiplier * np.std(array)
+#         elif method == 'percentile':
+#             lower_percentile = kwargs.get('lower_percentile', 5)
+#             upper_percentile = kwargs.get('upper_percentile', 95)
+#             lower_percentile_value = np.percentile(array, lower_percentile) # value blow which lower_percentile of the data lies
+#             upper_percentile_value = np.percentile(array, upper_percentile) # value below which upper_percentile of the data lies
+#             window_width = upper_percentile_value - lower_percentile_value
+#             window_level = lower_percentile_value + window_width / 2
+#         elif method == 'none':
+#             window_width = np.max(array) - np.min(array)
+#             window_level = (np.max(array) + np.min(array)) / 2
+#         else:
+#             raise ValueError(f"Invalid method: {method}")
+
+#         return window_width, window_level
+
+#     def apply_window_width_level(self):
+#         """
+#         Apply window width and level to the displayed slice of the signal array.
+
+#         Returns:
+#         numpy.ndarray: The windowed array of the displayed slice (normalized).
+#         """
+#         windowed_array = np.clip(self.array[:,:,self.current_slice], self.window_level - self.window_width / 2, self.window_level + self.window_width / 2)
+#         windowed_array = (windowed_array - (self.window_level - self.window_width / 2)) / self.window_width
+#         return windowed_array
+
+#     def add_observer(self, observer):
+#         self.observers.append(observer)
+
+#     def notify_observers(self, window_width, window_level):
+#         for observer in self.observers:
+#             observer.update(window_width, window_level)
+
+#     def mousePressEvent(self, event):
+#         if event.button() == Qt.MiddleButton:
+#             self.middle_mouse_button_pressed = True
+#             self.start_pos = event.pos()
+
+#     def mouseReleaseEvent(self, event):
+#         if event.button() == Qt.MiddleButton:
+#             self.middle_mouse_button_pressed = False
+
+#     def mouseMoveEvent(self, event):
+#         if self.displaying == False:
+#             return
+
+#         if self.middle_mouse_button_pressed:
+#             dx = event.x() - self.start_pos.x()
+#             dy = self.start_pos.y() - event.y()
+
+#             window_level = max(0, self.window_level + dy)
+#             window_width = max(0,self.window_width + dx)
+
+#             self.start_pos = event.pos()    
+
+#             self.set_window_width_level(window_width, window_level)
+#             self.displayArray()
+#         else: 
+#             pixmap_coords = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
+#             x = int(pixmap_coords.x())
+#             y = int(pixmap_coords.y())
+#             # check if the pixmap coordinates are within the image array
+
+#             # print the scene coordinates of the mouse position
+#             print("scene coords", self.mapToScene(event.pos()))
+#             # print the view port coordinates of the mouse position
+#             print("view port coords", event.pos())
+#             if 0 <= x < self.array.shape[1] and 0 <= y < self.array.shape[0]:
+#                 signal_value = self.array[y, x, self.current_slice]
+#                 self.update_signal_value_text_item(f"{signal_value:.1f}")
+#             else:
+#                 self.update_signal_value_text_item("")
+
+#     def update(self, window_width, window_level):
+#         if self.displaying == False:
+#             return
+#         if self.window_width != window_width or self.window_level != window_level:
+#             self.set_window_width_level(window_width, window_level)
+#             self.displayArray()
+#         else:
+#             pass
+
 class ImageLabel(QGraphicsView):
     '''Old version of AcquiredSeriesViewer2D. This viewer is still used to display the anatomical model in the model viewing dialog.'''
     def __init__(self):
@@ -922,17 +1260,20 @@ class ImageLabel(QGraphicsView):
         # set font size
         self.text_item.setFont(QFont("Segoe UI", 6))
 
-        self.signal_value_text_item = QGraphicsTextItem(self.pixmap_item)
+        self.signal_value_text_item = QGraphicsTextItem()
+        self.scene.addItem(self.signal_value_text_item)
         # change text color to white
         self.signal_value_text_item.setDefaultTextColor(Qt.white)
         # set font size
         self.signal_value_text_item.setFont(QFont("Segoe UI", 6))
 
-        self.scanlist_element_name_text_item = QGraphicsTextItem(self.pixmap_item)
+        self.scanlist_element_name_text_item = QGraphicsTextItem()
+        self.scene.addItem(self.scanlist_element_name_text_item)
         # change text color to white
         self.scanlist_element_name_text_item.setDefaultTextColor(Qt.white)
         # set font size
         self.scanlist_element_name_text_item.setFont(QFont("Segoe UI", 6))
+
 
 
     @property
@@ -986,6 +1327,7 @@ class ImageLabel(QGraphicsView):
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.reposition_items()
 
     # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
     def wheelEvent(self, event):
@@ -1009,13 +1351,34 @@ class ImageLabel(QGraphicsView):
             pixmap_coords = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
             x = int(pixmap_coords.x())
             y = int(pixmap_coords.y())
-            print(pixmap_coords) # print the pixmap coordinates of the mouse position
             # check if the pixmap coordinates are within the image array
             if 0 <= x < self.array.shape[1] and 0 <= y < self.array.shape[0]:
                 signal_value = self.array[y, x, self.current_slice]
                 self.update_signal_value_text_item(f"{signal_value:.1f}")
             else:
                 self.update_signal_value_text_item("")
+
+        self.reposition_items()
+
+    def reposition_items(self):
+
+        padding = 2
+
+        # position top left corner text 
+        scan_item_name_view_coords = QPoint(int(padding), int(padding))
+        scan_item_name_scene_coords = self.mapToScene(scan_item_name_view_coords)
+        self.scanlist_element_name_text_item.setPos(scan_item_name_scene_coords)
+
+        # position bottom left corner text
+        signal_value_view_coords = QPoint(int(0), int(self.viewport().height()))
+        signal_value_scene_coords = self.mapToScene(signal_value_view_coords)
+        self.signal_value_text_item.setPos(signal_value_scene_coords.x() + padding, signal_value_scene_coords.y() - self.signal_value_text_item.boundingRect().height() - padding)
+
+        # position bottom right corner text
+        text_view_coords = QPoint(int(self.viewport().width()), int(self.viewport().height()))
+        text_scene_coords = self.mapToScene(text_view_coords)
+        self.text_item.setPos(text_scene_coords.x() - self.text_item.boundingRect().width() - padding, text_scene_coords.y() - self.text_item.boundingRect().height() - padding)
+
 
     #ImageLabel holds a copy of the array of MRI data to be displayed. 
     def setArray(self, array):
@@ -1061,51 +1424,23 @@ class ImageLabel(QGraphicsView):
         self.scene.setSceneRect(0, 0, width, height)
         # The centerOn method is used to center the view on a particular point within the scene.
         self.centerOn(width / 2, height / 2)
+        self.reposition_items()
 
     def update_text_item(self):
         # set text
         text = f"Slice: {self.current_slice + 1}\nWW: {round(self.window_width)}\nWL: {round(self.window_level)}"
         self.text_item.setPlainText(text) # setPlainText() sets the text of the text item to the specified text.
-        print("text rect", self.text_item.boundingRect())
-
-        # set position of text
-        view_rect = self.viewport().rect() # rect() returns the rectangle of the viewport in viewport coordinates.
-        print("view_rect", view_rect)
-        scene_rect = self.scene.sceneRect() # sceneRect() returns the bounding rectangle of the scene in scene coordinates.
-        print("scene_rect", scene_rect)
-        pixmap_rect = self.pixmap_item.boundingRect() # boundingRect() returns the bounding rectangle of the pixmap item in the pixmap's local coordinates.
-        print("pixmap_rect", pixmap_rect)
-        # set position of text to the bottom right corner of the pixmap
-        text_rect = self.text_item.boundingRect() # boundingRect() returns the bounding rectangle of the text item in the text item's local coordinates.
-        x = scene_rect.right() - 40# Adjusted to the right by 10 pixels for padding
-        y = scene_rect.bottom() - 40# Adjusted to the bottom by 10 pixels for padding
-        self.text_item.setPos(x, y) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
-        # place the text in the bottom right corner of the view port 
-        # x = view_rect.right() - text_rect.width() - 50 # Adjusted to the right by 10 pixels for padding
-        # print("x coordinate", x)
-        # y = view_rect.bottom() - text_rect.height() - 50 # Adjusted to the bottom by 10 pixels for padding
-        # print("y coordinate", y)
-        # # set the position of the text item in the view port coordinates. 
-        # # covert x from view port coordinates to scene coordinates
-        # scene_coords = self.mapToScene(QPoint(int(x), int(y)))
-        # print("x_scene", scene_coords.x())
-        # print("y_scene", scene_coords.y())
-        # self.text_item.setPos(scene_coords.x(), scene_coords.y()) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+        self.reposition_items()
 
     def update_signal_value_text_item(self, signal_value):
-        # place in bottom left corner
-        pixmap_rect = self.pixmap_item.boundingRect()
-        text_rect = self.text_item.boundingRect()
-        self.signal_value_text_item.setPos(0, pixmap_rect.bottom() - 20)
         text = f"Signal value: {signal_value}"
         self.signal_value_text_item.setPlainText(text)
+        self.reposition_items()
 
     def update_scanlist_element_name_text_item(self, name):
-        # place in top left corner
-        pixmap_rect = self.pixmap_item.boundingRect()
-        self.scanlist_element_name_text_item.setPos(5, 5)
         text = f"{name}"
         self.scanlist_element_name_text_item.setPlainText(text)
+        self.reposition_items()
 
     def calculate_window_width_level(self, method='std', **kwargs):
         """
@@ -1186,7 +1521,6 @@ class ImageLabel(QGraphicsView):
             pixmap_coords = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
             x = int(pixmap_coords.x())
             y = int(pixmap_coords.y())
-            print(pixmap_coords) # print the pixmap coordinates of the mouse position
             # check if the pixmap coordinates are within the image array
             if 0 <= x < self.array.shape[1] and 0 <= y < self.array.shape[0]:
                 signal_value = self.array[y, x, self.current_slice]
@@ -1202,6 +1536,7 @@ class ImageLabel(QGraphicsView):
             self.displayArray()
         else:
             pass
+
 
 class DropImageLabel(ImageLabel):
     dropEventSignal = pyqtSignal(int)

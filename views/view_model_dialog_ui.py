@@ -50,6 +50,9 @@ class ModelViewLabel(ImageLabel):
         else:
             self.mouse_moved_signal.emit(-1, -1, -1) # signal that mouse is not over the pixmap
 
+    def reposition_items(self):
+        pass
+
 class ViewModelDialog(QDialog):
     def __init__(self, model):
         super().__init__()
