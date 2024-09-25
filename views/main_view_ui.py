@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPoint, QPointF
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QListWidgetItem, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QGraphicsTextItem, QMenu, QAction, QScrollArea)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QIcon
+from PyQt5.QtGui import QContextMenuEvent, QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QIcon
 
 import numpy as np
 
@@ -1216,6 +1216,10 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
 #             pass
 
 class ImageLabel(QGraphicsView):
+
+    # create a signal that will be emitted when the "sync" button is clicked
+    syncWindowingSignal = pyqtSignal(float, float)
+
     '''Old version of AcquiredSeriesViewer2D. This viewer is still used to display the anatomical model in the model viewing dialog.'''
     def __init__(self):
         super().__init__()
@@ -1273,8 +1277,6 @@ class ImageLabel(QGraphicsView):
         self.scanlist_element_name_text_item.setDefaultTextColor(Qt.white)
         # set font size
         self.scanlist_element_name_text_item.setFont(QFont("Segoe UI", 6))
-
-
 
     @property
     def displaying(self):
@@ -1537,6 +1539,40 @@ class ImageLabel(QGraphicsView):
         else:
             pass
 
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        if self.displaying == False:
+            return
+        # Create a custom context menu
+        context_menu = QMenu(self)
+
+        # Add actions to the menu
+        reset_WW_WL_action = QAction('Reset windowing', self)
+        sync_WW_WL_action = QAction('Sync windowing', self)
+
+        # Create icons 
+        reset_icon = QIcon("resources/icons/refresh-outline.png")
+        sync_icon = QIcon("resources/icons/swap-outline.png")
+
+        # Set icons for the actions
+        reset_WW_WL_action.setIcon(reset_icon)
+        sync_WW_WL_action.setIcon(sync_icon)
+
+        # Add actions to the context menu
+        context_menu.addAction(reset_WW_WL_action)
+        context_menu.addAction(sync_WW_WL_action)
+
+        # Conntect actions to slots
+        reset_WW_WL_action.triggered.connect(lambda: self.reset_windowing())
+        # emit signal when sync action is triggered
+        sync_WW_WL_action.triggered.connect(lambda: self.syncWindowingSignal.emit(self.window_width, self.window_level))
+
+        # Show the context menu
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+
+    def reset_windowing(self):
+        window_width, window_level = self.calculate_window_width_level(method='percentile')
+        self.set_window_width_level(window_width, window_level)
+        self.displayArray()
 
 class DropImageLabel(ImageLabel):
     dropEventSignal = pyqtSignal(int)

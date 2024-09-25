@@ -53,6 +53,9 @@ class ModelViewLabel(ImageLabel):
     def reposition_items(self):
         pass
 
+    def contextMenuEvent(self, pos):
+        pass
+
 class ViewModelDialog(QDialog):
     def __init__(self, model):
         super().__init__()

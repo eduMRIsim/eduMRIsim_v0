@@ -48,6 +48,9 @@ class MainController:
         self.ui.scanPlanningWindow1.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
         self.ui.scanPlanningWindow2.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
         self.ui.scanPlanningWindow3.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
+        self.ui.scanPlanningWindow1.syncWindowingSignal.connect(self.sync_windowing)
+        self.ui.scanPlanningWindow2.syncWindowingSignal.connect(self.sync_windowing)
+        self.ui.scanPlanningWindow3.syncWindowingSignal.connect(self.sync_windowing)
 
         self._new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self._new_examination_dialog_ui.accept())
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
@@ -259,6 +262,14 @@ class MainController:
     #     self.ui.examinationNameLabel.setText(exam_name)
     #     self.ui.modelNameLabel.setText(model_name)         
 
+    def sync_windowing(self, WW, WL):
+        print("syncing windowing with values:", WW, WL)
+        self.ui.scanPlanningWindow1.set_window_width_level(WW, WL)
+        self.ui.scanPlanningWindow2.set_window_width_level(WW, WL)
+        self.ui.scanPlanningWindow3.set_window_width_level(WW, WL)
+        self.ui.scanPlanningWindow1.displayArray()
+        self.ui.scanPlanningWindow2.displayArray()
+        self.ui.scanPlanningWindow3.displayArray()
 
     def update(self, event):
         '''
