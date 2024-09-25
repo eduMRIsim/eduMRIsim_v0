@@ -70,7 +70,26 @@ class ScanCompleteState(ExamState):
     def update_UI(self, context) -> None:
         super().update_UI(context)
 
+class ViewState(UI_MainWindowState):
+    name = "ViewState"
 
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.scanningModeButton.setEnabled(False)
+        context.viewingModeButton.setEnabled(False)
+        context.scanlistListWidget.setVisible(True)
+        context.scanlistListWidget.setEnabled(True)
+        context.addScanItemButton.setVisible(True)
+        context.addScanItemButton.setEnabled(True)
+        context.startScanButton.setEnabled(False)
+        context.stopScanButton.setEnabled(False)
+        context.parameterFormLayout.setEnabled(False)
+        #context.parameterFormLayout.setReadOnly(False)
+        #context.scanParametersCancelChangesButton.setEnabled(False)
+        #context.scanParametersSaveChangesButton.setEnabled(False)
+        #context.scanParametersResetButton.setEnabled(False)
+
+    
 class IdleState(UI_MainWindowState):
     name = "IdleState"
 

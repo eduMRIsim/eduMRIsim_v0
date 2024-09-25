@@ -4,7 +4,7 @@ from controllers.settings_mgr import SettingsManager
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
 #from views.view_model_dialog_ui import ViewModelDialog
-from views.view_model_dialog_ui import ViewWindow
+from views.view_model_dialog_ui import gridViewingWindowLayout
 from views.qmodels import DictionaryModel
 import views.UI_MainWindowState as UI_state 
 
@@ -45,18 +45,18 @@ class MainController:
         self.ui.viewModelButton.clicked.connect(self.handle_viewModelButton_clicked)
 
         # Signals related to scan parameters
-        #self.ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
-        #self.ui.scanParametersCancelChangesButton.clicked.connect(self.handle_scanParametersCancelChangesButton_clicked)
-        #self.ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
-        #self.ui.scanParametersResetButton.clicked.connect(self.handle_scanParametersResetButton_clicked)
+        self.ui.parameterFormLayout.formActivatedSignal.connect(self.handle_parameterFormLayout_activated)
+        self.ui.scanParametersCancelChangesButton.clicked.connect(self.handle_scanParametersCancelChangesButton_clicked)
+        self.ui.scanParametersSaveChangesButton.clicked.connect(self.handle_scanParametersSaveChangesButton_clicked)
+        self.ui.scanParametersResetButton.clicked.connect(self.handle_scanParametersResetButton_clicked)
 
         # Signals related to scanning
         self.ui.startScanButton.clicked.connect(self.scanner.scan)  
 
         # Signals related to scan planning windows
-        #self.ui.scanPlanningWindow1.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
-        #self.ui.scanPlanningWindow2.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
-        #self.ui.scanPlanningWindow3.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
+        self.ui.scanPlanningWindow1.dropEventSignal.connect(self.handle_scanPlanningWindow1_dropped)
+        self.ui.scanPlanningWindow2.dropEventSignal.connect(self.handle_scanPlanningWindow2_dropped)
+        self.ui.scanPlanningWindow3.dropEventSignal.connect(self.handle_scanPlanningWindow3_dropped)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
@@ -132,9 +132,15 @@ class MainController:
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
-    def handle_viewModelButton_clicked(self):   
-        view_model_window = ViewWindow()
-        view_model_window.exec_()
+    def handle_viewModelButton_clicked(self): 
+        # TODO: change these   
+        #view_model_window = ViewWindow()
+        #view_model_window.exec_()
+        rightlayout = self.ui.layout
+        self.ui.clearLayout(rightlayout)
+        self.ui._createViewWindow()
+        self.ui.state = UI_state.ViewState()
+        self.ui.update_UI()
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED

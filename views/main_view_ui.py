@@ -17,7 +17,7 @@ from keys import Keys
 from contextlib import contextmanager
 
 from controllers.settings_mgr import SettingsManager
-from views.UI_MainWindowState import IdleState
+from views.UI_MainWindowState import IdleState, ViewState
 from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
     TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
@@ -25,7 +25,7 @@ from simulator.scanlist import AcquiredSeries, ScanVolume
 
 from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
     IdleState, MRIfortheBrainState
-
+from views.view_model_dialog_ui import gridViewingWindowLayout
 from events import EventEnum
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
@@ -59,18 +59,24 @@ class Ui_MainWindow(QMainWindow):
         super().__init__()
 
         self.centralWidget = QWidget(self)
-
+  
         self.layout = QHBoxLayout()
         self.centralWidget.setLayout(self.layout)
-
-        self.scanner = scanner
-        self._createMainWindow()
 
         self.setCentralWidget(self.centralWidget)
         self.setWindowTitle("eduMRIsim_V0_UI")
 
+        # Planning View
+        self.scanner = scanner
+        self._createMainWindow()
         self._state = IdleState()
         self.update_UI()
+        
+        # delete Planning view and add the grid
+        #self.clearLayout(self.layout)
+        #self._createViewWindow()
+        #self._state = ViewState()
+        #self.update_UI()
 
     def update_UI(self):
         self.state.update_UI(self)
@@ -180,6 +186,10 @@ class Ui_MainWindow(QMainWindow):
     @property
     def scanPlanningWindow3(self):
         return self.scanPlanningWindow.ImageLabelTuple[2]
+    
+    @property
+    def gridViewingWindowLayout(self):
+        return self.gridViewingWindowLayout
 
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
@@ -187,30 +197,27 @@ class Ui_MainWindow(QMainWindow):
 
         rightLayout = self._createRightLayout()
         self.layout.addLayout(rightLayout, stretch=3)
-        #self.clearLayout(rightLayout)
 
+    def clearLayout(self, layout):
+            while layout.count():
+                item = layout.takeAt(0)
+
+                if item.widget():
+                    widget = item.widget()
+                    widget.deleteLater()
+
+                if item.layout():
+                    sub_layout = item.layout()
+                    self.clearLayout(sub_layout)
+
+            layout.removeItem(item)
+    
     def _createViewWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch=1)
 
         rightLayout = self._createRightViewLayout()
         self.layout.addLayout(rightLayout, stretch=3)
-
-    def _createRightViewLayout(self) -> QGridLayout:
-        rightlayout = QGridLayout()
-
-        emptyCellStyle = """
-        background-color: black;
-        border: 1px solid white;
-        """
-        for i in range(2):
-            for j in range(2):
-                empty_widget = QWidget()
-                #empty_widget = DropWidget()
-                empty_widget.setStyleSheet(emptyCellStyle)
-                rightlayout.addWidget(empty_widget, i, j)
-
-        return rightlayout
 
     def _createLeftLayout(self) -> QHBoxLayout:
         leftLayout = QVBoxLayout()
@@ -253,21 +260,15 @@ class Ui_MainWindow(QMainWindow):
 
         return rightLayout
     
-    # Function that clears the content of a layout
-    def clearLayout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
+    def _createRightViewLayout(self) -> QVBoxLayout:
+        
+        rightlayout = QVBoxLayout()
+        
+        self.gridViewingWindow = gridViewingWindowLayout()
+        rightlayout.addWidget(self.gridViewingWindow)
 
-            if item.widget():
-                widget = item.widget()
-                widget.deleteLater()
-
-            if item.layout():
-                sub_layout = item.layout()
-                self.clearLayout(sub_layout)
-
-        layout.removeItem(item)
-
+        return rightlayout
+    
     def save_widget_state(self):
         settings = SettingsManager.get_instance().settings
         settings.beginGroup("WidgetState")

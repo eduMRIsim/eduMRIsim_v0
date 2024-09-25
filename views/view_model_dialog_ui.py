@@ -3,47 +3,38 @@ from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider,
 
 from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
 import numpy as np
-from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D, ExamCardTab
+#from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D, ExamCardTab
 #from views.main_view_ui import ImageLabel
 #from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
-class ViewWindow(QDialog):
+class ClearLayout():
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Viewing Mode")
 
-        self.setGeometry(800, 300, 800, 600)
-        #self.showMaximized()
+        #function to clear the layout
+        def clearLayout(self, layout):
+            while layout.count():
+                item = layout.takeAt(0)
 
-        # initialize horizontal layout 
-        main_layout = QHBoxLayout()
+                if item.widget():
+                    widget = item.widget()
+                    widget.deleteLater()
 
-        # vertical layout for the left side
-        left_layout = QVBoxLayout()
+                if item.layout():
+                    sub_layout = item.layout()
+                    self.clearLayout(sub_layout)
 
-        #planning view button
-        self.Button = QPushButton("Planning View",self)
-        left_layout.addWidget(self.Button, stretch=2)
-        self.Button.clicked.connect(self.exitViewingMode)
+            layout.removeItem(item)
+ 
+#creates a grid layout in a QFrame
+class gridViewingWindowLayout(QFrame):
+    def __init__(self):
+        super().__init__()
 
-        #example data for the list
-        test_data = ["Item 1", "Item 2", "Item 3"]
-        self.model = QStringListModel(test_data)
-
-        #list of acquired images
-        left_layout.addWidget(QLabel("Acquired Images"))
-        self._acquiredlistView = AcquiredList()
-        left_layout.addWidget(self._acquiredlistView, stretch=2)
-
-        #populate list with the data
-        self.acquiredlistView.acquiredlistView.setModel(self.model)
-      
-        # widget for the left side 
-        left_widget = QWidget()
-        left_widget.setLayout(left_layout)
-
-        #
+        rightLayout = QVBoxLayout()
+           
         emptyCellStyle = """
         background-color: black;
         border: 1px solid white;
@@ -58,59 +49,10 @@ class ViewWindow(QDialog):
                 empty_widget.setStyleSheet(emptyCellStyle)
                 right_layout.addWidget(empty_widget, i, j)
 
-        # widget for the right side
-        right_widget = QWidget()
-        right_widget.setLayout(right_layout)
-        #self.clearLayout(left_layout)
+        rightLayout.addLayout(right_layout)
+        self.setLayout(rightLayout)
 
-        # combine left and right into the horizontal layout
-        main_layout.addWidget(left_widget, stretch=1)
-        main_layout.addWidget(right_widget, stretch=3)
 
-        self.setLayout(main_layout)
-
-    def exitViewingMode(self):
-        QDialog.close(self)
-
-    """"
-    def clearLayout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
-
-            if item.widget():
-                widget = item.widget()
-                widget.deleteLater()
-
-            if item.layout():
-                sub_layout = item.layout()
-                self.clearLayout(sub_layout)
-
-        layout.removeItem(item)
-    """
-    
-    @property
-    def acquiredlistView(self):
-        return self._acquiredlistView
-
-class AcquiredList(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self._acquiredlistView = QListView()
-        self._acquiredlistView.setDragDropMode(QListView.DragOnly)
-        self._acquiredlistView.setSelectionMode(QListView.SingleSelection)
-
-        def dragMoveEvent(self, e: QDragMoveEvent) -> None:
-            e.accept()
-
-        #self._acquiredlistView.setEditTriggers(QListView.NoEditTriggers) #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
-        self.layout.addWidget(self._acquiredlistView)
-    
-    @property
-    def acquiredlistView(self):
-        return self._acquiredlistView
-        
 """
 class ModelViewLabel(ImageLabel):
 
