@@ -1,5 +1,5 @@
 {
-    "T1-weighted spin echo": {
+    "Exercise 1": {
         "description": "T1-weighted spin echo sequence",
         "ScanTechnique": "SE",
         "TE_ms": 14,

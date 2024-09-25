@@ -18,7 +18,7 @@ class Scanner:
         :rtype: np.array
         """
         acquired_data = self._MRI_data_synthesiser.synthesise_MRI_data(self.active_scan_item.scan_parameters, self.model)     
-        self.scanlist.active_scanlist_element.acquired_data = acquired_data
+        self.scanlist.active_scanlist_element.acquired_data = 1000*acquired_data
         return acquired_data
 
     def start_examination(self, exam_name, model):

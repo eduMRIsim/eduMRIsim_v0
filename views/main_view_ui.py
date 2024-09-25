@@ -963,8 +963,8 @@ class ImageLabel(QGraphicsView):
         self._window_level = value
 
     def set_window_width_level(self, window_width, window_level):
-        self._window_width = window_width
-        self._window_level = window_level
+        self._window_width = round(window_width)
+        self._window_level = round(window_level)
         self.notify_observers(window_width, window_level)
 
     # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
@@ -1037,7 +1037,7 @@ class ImageLabel(QGraphicsView):
 
     def update_text_item(self):
         # set text
-        text = f"Slice: {self.current_slice + 1}/{self.array.shape[2]}\nWW: {self.window_width:.2f}\nWL: {self.window_level:.2f}"
+        text = f"Slice: {self.current_slice + 1}/{self.array.shape[2]}\nWW: {self.window_width}\nWL: {self.window_level}"
         self.text_item.setPlainText(text) # setPlainText() sets the text of the text item to the specified text.
 
         # set position of text
@@ -1116,8 +1116,8 @@ class ImageLabel(QGraphicsView):
             dx = event.x() - self.start_pos.x()
             dy = self.start_pos.y() - event.y()
 
-            window_level = max(0, self.window_level + dy*0.001)
-            window_width = max(0,self.window_width + dx*0.001)
+            window_level = max(0, self.window_level + dy)
+            window_width = max(0,self.window_width + dx)
 
             self.start_pos = event.pos()    
 
