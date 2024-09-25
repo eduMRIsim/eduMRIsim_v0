@@ -1,5 +1,5 @@
 {
-    "Exercise 1": {
+    "T1-weighted spin echo": {
         "description": "T1-weighted spin echo sequence",
         "ScanTechnique": "SE",
         "TE_ms": 14,
@@ -8,21 +8,30 @@
         "FA_deg": 90,
         "slice": 15
     },
-    "Exercise 2&3": {
-        "description": "Proton density-weighted spin echo sequence",
+    "T2-weighted spin echo": {
+        "description": "T2-weighted spin echo sequence",
         "ScanTechnique": "SE",
-        "TE_ms": 5,
-        "TR_ms": 2800,
+        "TE_ms": 80,
+        "TR_ms": 3254,
         "TI_ms": 0,
         "FA_deg": 90,
         "slice": 15        
     },
-    "Exercise 4": {
+    "Proton density-weighted spin echo": {
+        "description": "Proton density-weighted spin echo sequence",
+        "ScanTechnique": "SE",
+        "TE_ms": 20,
+        "TR_ms": 2800,
+        "TI_ms": 0,
+        "FA_deg": 90,
+        "slice": 15
+    },
+    "FLAIR": {
         "description": "Fluid-attenuated inversion recovery sequence",
         "ScanTechnique": "SE",
         "TE_ms": 120,
-        "TR_ms": 20000,
-        "TI_ms": 0,
+        "TR_ms": 10000,
+        "TI_ms": 2800,
         "FA_deg": 90,
         "slice": 15
     }, 
