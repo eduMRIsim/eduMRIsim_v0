@@ -169,6 +169,7 @@ class MainController:
 
     def handle_startScanButton_clicked(self):
         array = self.scanner.scan()
+        self.ui.scannedImageFrame.update_scanlist_element_name_text_item(self.scanner.active_scanlist_element.name)
         self.ui.scannedImageFrame.setArray(array)
         self.ui.scannedImageFrame.displayArray()
         self.scanner.scanlist.active_scan_item.status = ScanItemStatusEnum.COMPLETE
@@ -221,6 +222,7 @@ class MainController:
         # Executed when the user drags and drops a scan item from the scanlistListWidget to the scanPlanningWindow1. If the scan item's acquired series is not None, the acquired series is displayed in the scanPlanningWindow1.
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         array = scanlist_element.acquired_data
+        self.ui.scanPlanningWindow1.update_scanlist_element_name_text_item(scanlist_element.name)
         self.ui.scanPlanningWindow1.setArray(array)
         self.ui.scanPlanningWindow1.displayArray()
         self.update_scanlistListWidget(self.scanner.scanlist)
@@ -230,6 +232,7 @@ class MainController:
         # Executed when the user drags and drops a scan item from the scanlistListWidget to the scanPlanningWindow2. If the scan item's acquired series is not None, the acquired series is displayed in the scanPlanningWindow2.
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         array = scanlist_element.acquired_data
+        self.ui.scanPlanningWindow2.update_scanlist_element_name_text_item(scanlist_element.name)
         self.ui.scanPlanningWindow2.setArray(array)
         self.ui.scanPlanningWindow2.displayArray()
         self.update_scanlistListWidget(self.scanner.scanlist)
@@ -239,6 +242,7 @@ class MainController:
         # Executed when the user drags and drops a scan item from the scanlistListWidget to the scanPlanningWindow3. If the scan item's acquired series is not None, the acquired series is displayed in the scanPlanningWindow3.
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         array= scanlist_element.acquired_data
+        self.ui.scanPlanningWindow3.update_scanlist_element_name_text_item(scanlist_element.name)
         self.ui.scanPlanningWindow3.setArray(array)
         self.ui.scanPlanningWindow3.displayArray()
         self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
@@ -268,6 +272,7 @@ class MainController:
             else:
                 self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
                 self.ui.editingStackedLayout.setCurrentIndex(0) # Switch to scan parameter editor view
+                self.ui.scannedImageFrame.update_scanlist_element_name_text_item(self.scanner.active_scanlist_element.name)
                 self.ui.scannedImageFrame.setArray(self.scanner.active_scanlist_element.acquired_data) # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
                 self.ui.scannedImageFrame.displayArray()
                 current_list_item = self.ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)

@@ -11,6 +11,7 @@ class ModelViewLabel(ImageLabel):
 
     def __init__(self):
         super().__init__()
+        self.signal_value_text_item = None
 
     # override mouseMoveEvent
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -33,6 +34,9 @@ class ModelViewLabel(ImageLabel):
         x = pixmap_rect.right() - text_rect.width() - 15 # Adjusted to the right by 10 pixels for padding
         y = pixmap_rect.bottom() - text_rect.height() - 5 # Adjusted to the bottom by 10 pixels for padding
         self.text_item.setPos(x, y) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+
+    def update_signal_value_text_item(self, signal_value):
+        pass
 
     def wheelEvent(self, event):
         super().wheelEvent(event)

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPoint
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPoint, QPointF
 from PyQt5.QtWidgets import   (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QListWidget, QListWidgetItem, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QGraphicsTextItem, QMenu, QAction, QScrollArea)
@@ -324,7 +324,6 @@ class ScanlistListWidget(QListWidget):
             self.showContextMenu(event.pos())
         else:
             super().mousePressEvent(event)    
-
 
     def mouseDoubleClickEvent(self, event):
         item = self.itemAt(event.pos())
@@ -916,11 +915,25 @@ class ImageLabel(QGraphicsView):
 
         self.scene.addItem(self.pixmap_item)
 
-        self.text_item = QGraphicsTextItem(self.pixmap_item)
+        self.text_item = QGraphicsTextItem()
+        self.scene.addItem(self.text_item)
         # change text color to white
         self.text_item.setDefaultTextColor(Qt.white)
         # set font size
-        self.text_item.setFont(QFont("Arial", 5))
+        self.text_item.setFont(QFont("Segoe UI", 6))
+
+        self.signal_value_text_item = QGraphicsTextItem(self.pixmap_item)
+        # change text color to white
+        self.signal_value_text_item.setDefaultTextColor(Qt.white)
+        # set font size
+        self.signal_value_text_item.setFont(QFont("Segoe UI", 6))
+
+        self.scanlist_element_name_text_item = QGraphicsTextItem(self.pixmap_item)
+        # change text color to white
+        self.scanlist_element_name_text_item.setDefaultTextColor(Qt.white)
+        # set font size
+        self.scanlist_element_name_text_item.setFont(QFont("Segoe UI", 6))
+
 
     @property
     def displaying(self):
@@ -937,6 +950,8 @@ class ImageLabel(QGraphicsView):
             self.window_width = None
             self.window_level = None
             self.text_item.setPlainText("")
+            self.signal_value_text_item.setPlainText("")
+            self.scanlist_element_name_text_item.setPlainText("")
 
     @property
     def current_slice(self):
@@ -963,8 +978,8 @@ class ImageLabel(QGraphicsView):
         self._window_level = value
 
     def set_window_width_level(self, window_width, window_level):
-        self._window_width = round(window_width)
-        self._window_level = round(window_level)
+        self._window_width = window_width
+        self._window_level = window_level
         self.notify_observers(window_width, window_level)
 
     # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
@@ -990,6 +1005,17 @@ class ImageLabel(QGraphicsView):
         self.current_slice = int(new_slice)
         self.displayArray()
 
+        if self.pixmap_item.isUnderMouse():
+            pixmap_coords = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
+            x = int(pixmap_coords.x())
+            y = int(pixmap_coords.y())
+            print(pixmap_coords) # print the pixmap coordinates of the mouse position
+            # check if the pixmap coordinates are within the image array
+            if 0 <= x < self.array.shape[1] and 0 <= y < self.array.shape[0]:
+                signal_value = self.array[y, x, self.current_slice]
+                self.update_signal_value_text_item(f"{signal_value:.1f}")
+            else:
+                self.update_signal_value_text_item("")
 
     #ImageLabel holds a copy of the array of MRI data to be displayed. 
     def setArray(self, array):
@@ -1019,6 +1045,7 @@ class ImageLabel(QGraphicsView):
             self.pixmap_item.setPixmap(pixmap)
 
             self.update_text_item()
+            self.update_signal_value_text_item("")
 
 
         else:
@@ -1037,16 +1064,48 @@ class ImageLabel(QGraphicsView):
 
     def update_text_item(self):
         # set text
-        text = f"Slice: {self.current_slice + 1}/{self.array.shape[2]}\nWW: {self.window_width}\nWL: {self.window_level}"
+        text = f"Slice: {self.current_slice + 1}\nWW: {round(self.window_width)}\nWL: {round(self.window_level)}"
         self.text_item.setPlainText(text) # setPlainText() sets the text of the text item to the specified text.
+        print("text rect", self.text_item.boundingRect())
 
         # set position of text
+        view_rect = self.viewport().rect() # rect() returns the rectangle of the viewport in viewport coordinates.
+        print("view_rect", view_rect)
+        scene_rect = self.scene.sceneRect() # sceneRect() returns the bounding rectangle of the scene in scene coordinates.
+        print("scene_rect", scene_rect)
         pixmap_rect = self.pixmap_item.boundingRect() # boundingRect() returns the bounding rectangle of the pixmap item in the pixmap's local coordinates.
+        print("pixmap_rect", pixmap_rect)
         # set position of text to the bottom right corner of the pixmap
         text_rect = self.text_item.boundingRect() # boundingRect() returns the bounding rectangle of the text item in the text item's local coordinates.
-        x = pixmap_rect.right() - text_rect.width() - 5 # Adjusted to the right by 10 pixels for padding
-        y = pixmap_rect.bottom() - text_rect.height() - 5 # Adjusted to the bottom by 10 pixels for padding
+        x = scene_rect.right() - 40# Adjusted to the right by 10 pixels for padding
+        y = scene_rect.bottom() - 40# Adjusted to the bottom by 10 pixels for padding
         self.text_item.setPos(x, y) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+        # place the text in the bottom right corner of the view port 
+        # x = view_rect.right() - text_rect.width() - 50 # Adjusted to the right by 10 pixels for padding
+        # print("x coordinate", x)
+        # y = view_rect.bottom() - text_rect.height() - 50 # Adjusted to the bottom by 10 pixels for padding
+        # print("y coordinate", y)
+        # # set the position of the text item in the view port coordinates. 
+        # # covert x from view port coordinates to scene coordinates
+        # scene_coords = self.mapToScene(QPoint(int(x), int(y)))
+        # print("x_scene", scene_coords.x())
+        # print("y_scene", scene_coords.y())
+        # self.text_item.setPos(scene_coords.x(), scene_coords.y()) # setPos() sets the position of the text item in the parent item's (i.e., the pixmap's) coordinates.
+
+    def update_signal_value_text_item(self, signal_value):
+        # place in bottom left corner
+        pixmap_rect = self.pixmap_item.boundingRect()
+        text_rect = self.text_item.boundingRect()
+        self.signal_value_text_item.setPos(0, pixmap_rect.bottom() - 20)
+        text = f"Signal value: {signal_value}"
+        self.signal_value_text_item.setPlainText(text)
+
+    def update_scanlist_element_name_text_item(self, name):
+        # place in top left corner
+        pixmap_rect = self.pixmap_item.boundingRect()
+        self.scanlist_element_name_text_item.setPos(5, 5)
+        text = f"{name}"
+        self.scanlist_element_name_text_item.setPlainText(text)
 
     def calculate_window_width_level(self, method='std', **kwargs):
         """
@@ -1123,6 +1182,17 @@ class ImageLabel(QGraphicsView):
 
             self.set_window_width_level(window_width, window_level)
             self.displayArray()
+        else: 
+            pixmap_coords = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
+            x = int(pixmap_coords.x())
+            y = int(pixmap_coords.y())
+            print(pixmap_coords) # print the pixmap coordinates of the mouse position
+            # check if the pixmap coordinates are within the image array
+            if 0 <= x < self.array.shape[1] and 0 <= y < self.array.shape[0]:
+                signal_value = self.array[y, x, self.current_slice]
+                self.update_signal_value_text_item(f"{signal_value:.1f}")
+            else:
+                self.update_signal_value_text_item("")
 
     def update(self, window_width, window_level):
         if self.displaying == False:
