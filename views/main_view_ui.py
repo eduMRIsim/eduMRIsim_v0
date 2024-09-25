@@ -682,6 +682,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         polygon = self.polygon()
         number_of_points = len(polygon)
 
+        # Define axis booleans
+        self.on_x_axis = False
+        self.on_y_axis = False
+        self.on_z_axis = False
+
         # If the current polygon has no points, the scene center will be (0.0, 0.0) in scene coordinates;
         # else, the scene center is the center of all points in the polygon.
         if number_of_points == 0:
@@ -690,10 +695,25 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.scene_center = QPointF(sum(point.x() for point in polygon) / number_of_points, sum(point.y() for point in polygon) / number_of_points)
             self.scene_center = self.mapToScene(self.scene_center)
 
-        self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
-        self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
+        #self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
+        #self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
 
-        print(f"{self.on_x_axis = }, {self.on_y_axis = }")
+        # Find which plane we are on
+        axis = self.get_plane_axis()
+
+        if axis == 'FH':
+            self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
+            self.on_z_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
+        elif axis == 'AP':
+            self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
+            self.on_z_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
+        elif axis == 'RL':
+            self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
+            self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
+
+
+        print(f"{self.on_x_axis = }, {self.on_y_axis = }, {self.on_z_axis = }" )
+        print(self.get_plane_axis())
 
     def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
         """
@@ -726,6 +746,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Update the scale handle positions.
         self.update_scale_handle_positions()
 
+        axis = self.get_plane_axis()
+
+        print(axis)
+
     def scale_handle_release_event_handler(self):
         """
         This function is called whenever a scale handle is released,
@@ -740,6 +764,24 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         if self.active_scale_handle is not None:
             self.active_scale_handle.setCursor(Qt.PointingHandCursor)
             self.active_scale_handle = None
+
+    def get_plane_axis(self):
+        '''Determine the rotation axis based on the displayed image plane'''
+        plane = self.viewer.displayed_image.image_geometry.plane
+
+        if plane is None:
+            raise ValueError("Image plane is not set in ImageGeometry.")
+
+        plane = plane.lower()
+
+        if plane == 'axial':
+            return 'FH'
+        elif plane == 'sagittal':
+            return 'RL'
+        elif plane == 'coronal':
+            return 'AP'
+        else:
+            raise ValueError(f"Unknown plane: {plane}")
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         number_of_points = len(polygon_in_polygon_coords)
@@ -771,16 +813,16 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event, direction_vector_in_pixmap_coords=kwargs.get('direction_vector_in_pixmap_coords'), scale_factor_x=kwargs.get('scale_factor_x'), scale_factor_y=kwargs.get('scale_factor_y'), origin_plane=kwargs.get('origin_plane'), handle_pos=kwargs.get('handle_pos'))
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        print(self.viewer.displayed_image.image_geometry.plane)
+        #print(self.viewer.displayed_image.image_geometry.plane)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
@@ -1195,7 +1237,7 @@ class ImageLabel(QGraphicsView):
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, window_width, window_level):
         for observer in self.observers:

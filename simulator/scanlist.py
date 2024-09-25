@@ -126,16 +126,16 @@ class Scanlist:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
+        #print("Observer", observer, "removed from", self)
 
 class ScanItemStatusEnum(Enum):
     READY_TO_SCAN = auto() # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
@@ -276,16 +276,16 @@ class ScanItem:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
+        #print("Observer", observer, "removed from", self)
            
 class ScanVolume:
     ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
@@ -549,16 +549,16 @@ class ScanVolume:
  
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
     
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
+        #print("Observer", observer, "removed from", self)
 
     def get_parameters(self):
         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'ScanPlane': self.scanPlane}
