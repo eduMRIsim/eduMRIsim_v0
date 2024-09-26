@@ -8,23 +8,25 @@ from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
 from simulator.scanlist import ScanItemStatusEnum
+from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 # from views.view_model_dialog_ui import ViewModelDialog
 from views.view_model_dialog_ui import ViewWindow
+from views.main_view_ui import Ui_MainWindow
 
 
 class MainController:
     '''
     The MainController class defines what happens when the user interacts with the UI. It also defines in its update() method what happens when the scanner notifies the controller of changes, e.g., when a scan item is added to the scanlist, when the active scan item is changed, when the status of a scan item is changed, when the parameters of a scan item are changed, etc.'''
 
-    def __init__(self, scanner, ui) -> None:
+    def __init__(self, scanner: Scanner, ui: Ui_MainWindow) -> None:
         self.scanner = scanner
         self.ui = ui
 
         self.load_examination_dialog_ui = LoadExaminationDialog()
-        self.new_examination_dialog_ui = NewExaminationDialog() 
+        self.new_examination_dialog_ui = NewExaminationDialog()
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting signals from UI to functions that handle the signals.
 

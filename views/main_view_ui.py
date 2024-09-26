@@ -216,8 +216,12 @@ class Ui_MainWindow(QMainWindow):
         self._editingStackedLayout = EditingStackedLayout(self._scanParametersWidget, self._examCardTabWidget)
         self._editingStackedLayout.setCurrentIndex(0)
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
+
+
         self._scannedImageFrame = AcquiredSeriesViewer2D()
-        bottomLayout.addWidget(self._scannedImageFrame, stretch=1)
+        self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
+        bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
+
 
         rightLayout.addLayout(bottomLayout, stretch=1)
 
@@ -724,6 +728,23 @@ class ParameterFormLayout(QVBoxLayout):
                     editor.clear()
                 elif isinstance(editor, QComboBox):
                     editor.setCurrentIndex(0)
+
+
+class ScannedImageWidget(QWidget):
+    def __init__(self, scannedImageFrame: QGraphicsView):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.layout.addWidget(scannedImageFrame)
+        self._createButtons()
+
+    def _createButtons(self):
+        buttonsLayout = QHBoxLayout()
+        self._scannedImageExportStandardImageButton = PrimaryActionButton("Export image to\nJPEG/PNG file")
+        self._scannedImageExportMedicalImageButton = PrimaryActionButton("Export image to\nDICOM/NIfTI file")
+        buttonsLayout.addWidget(self._scannedImageExportStandardImageButton, stretch=1)
+        buttonsLayout.addWidget(self._scannedImageExportMedicalImageButton, stretch=1)
+        self.layout.addLayout(buttonsLayout)
 
 
 class CustomPolygonItem(QGraphicsPolygonItem):
@@ -1279,7 +1300,7 @@ class ImageLabel(QGraphicsView):
     def __init__(self):
         super().__init__()
 
-        # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually. 
+        # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually.
         self.scene = QGraphicsScene(self)
 
         # Creates a pixmap graphics item that will be added to the scene
@@ -1368,7 +1389,7 @@ class ImageLabel(QGraphicsView):
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
-    # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
+    # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget.
     def wheelEvent(self, event):
         # Check if the array is None
         if self.array is None:
