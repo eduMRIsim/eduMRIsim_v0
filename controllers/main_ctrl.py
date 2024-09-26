@@ -3,7 +3,6 @@ from PyQt5.QtCore import QSettings
 from controllers.settings_mgr import SettingsManager
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
-#from views.view_model_dialog_ui import ViewModelDialog
 from views.view_model_dialog_ui import gridViewingWindowLayout
 from views.qmodels import DictionaryModel
 import views.UI_MainWindowState as UI_state 
@@ -123,7 +122,40 @@ class MainController:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
         progress = scanlist.get_progress()
-        self.ui.scanProgressBar.setValue(int(progress * 100))    
+        self.ui.scanProgressBar.setValue(int(progress * 100))   
+
+    def save_complete_scanlist_items(self, scanlist):
+        # saves scanlist elements that were scanned 
+        complete_items = []
+        for item in scanlist.scanlist_elements:
+            if item.scan_item.status == ScanItemStatusEnum.COMPLETE:
+                complete_items.append({
+                    'name': item.name,
+                    'status': 'COMPLETE'
+                })
+
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+        settings.setValue("completeItems", complete_items)
+        print("Complete scanlist items saved:", complete_items)
+        settings.endGroup()
+
+        return complete_items
+    
+    def restore_complete_scanlist_items(self):
+        # restores complete scanlist elements
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+
+        complete_items = settings.value("completeItems", [])
+        self.ui.scanlistListWidget.clear()
+
+        for item_data in complete_items:
+            list_item = QListWidgetItem(item_data['name'])
+            list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))  # COMPLETE icon
+            self.ui.scanlistListWidget.addItem(list_item)
+
+        settings.endGroup()
 
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
@@ -133,15 +165,14 @@ class MainController:
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
     def handle_viewModelButton_clicked(self): 
-        # TODO: change these   
-        #view_model_window = ViewWindow()
-        #view_model_window.exec_()
         rightlayout = self.ui.layout
         self.ui.clearLayout(rightlayout)
+        self.save_complete_scanlist_items(self.scanner.scanlist)
         self.ui._createViewWindow()
+        self.restore_complete_scanlist_items()
         self.ui.state = UI_state.ViewState()
         self.ui.update_UI()
-
+  
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 

@@ -3,32 +3,7 @@ from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider,
 
 from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
 import numpy as np
-#from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D, ExamCardTab
-#from views.main_view_ui import ImageLabel
-#from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
-class ClearLayout():
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("Viewing Mode")
-
-        #function to clear the layout
-        def clearLayout(self, layout):
-            while layout.count():
-                item = layout.takeAt(0)
-
-                if item.widget():
-                    widget = item.widget()
-                    widget.deleteLater()
-
-                if item.layout():
-                    sub_layout = item.layout()
-                    self.clearLayout(sub_layout)
-
-            layout.removeItem(item)
- 
-#creates a grid layout in a QFrame
 class gridViewingWindowLayout(QFrame):
     def __init__(self):
         super().__init__()
@@ -51,6 +26,8 @@ class gridViewingWindowLayout(QFrame):
 
         rightLayout.addLayout(right_layout)
         self.setLayout(rightLayout)
+
+
 
 
 """

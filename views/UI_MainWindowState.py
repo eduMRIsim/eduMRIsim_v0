@@ -26,6 +26,7 @@ class ExamState(UI_MainWindowState):
         context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
+        
 
 class ReadyToScanState(ExamState):
     name = "ReadyToScanState"
@@ -75,21 +76,18 @@ class ViewState(UI_MainWindowState):
 
     def update_UI(self, context) -> None:
         super().update_UI(context)
+        context.examinationInfoStackedLayout.setCurrentIndex(0)
+        context.scanningModeButton.setVisible(False)
+        context.viewingModeButton.setVisible(False)
         context.scanningModeButton.setEnabled(False)
         context.viewingModeButton.setEnabled(False)
         context.scanlistListWidget.setVisible(True)
         context.scanlistListWidget.setEnabled(True)
-        context.addScanItemButton.setVisible(True)
-        context.addScanItemButton.setEnabled(True)
+        context.addScanItemButton.setVisible(False)
+        context.addScanItemButton.setEnabled(False)
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
-        context.parameterFormLayout.setEnabled(False)
-        #context.parameterFormLayout.setReadOnly(False)
-        #context.scanParametersCancelChangesButton.setEnabled(False)
-        #context.scanParametersSaveChangesButton.setEnabled(False)
-        #context.scanParametersResetButton.setEnabled(False)
 
-    
 class IdleState(UI_MainWindowState):
     name = "IdleState"
 
