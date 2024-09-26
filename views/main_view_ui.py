@@ -164,6 +164,10 @@ class Ui_MainWindow(QMainWindow):
         return self._scannedImageFrame
 
     @property
+    def scannedImageWidget(self):
+        return self._scannedImageWidget
+
+    @property
     def scanPlanningWindow1(self):
         return self.scanPlanningWindow.ImageLabelTuple[0]
 
@@ -731,7 +735,7 @@ class ParameterFormLayout(QVBoxLayout):
 
 
 class ScannedImageWidget(QWidget):
-    def __init__(self, scannedImageFrame: QGraphicsView):
+    def __init__(self, scannedImageFrame: QGraphicsView) -> None:
         super().__init__()
         self._layout: QVBoxLayout = QVBoxLayout()
         self.setLayout(self._layout)
@@ -739,20 +743,21 @@ class ScannedImageWidget(QWidget):
         self._createButtons()
 
     @property
-    def scannedImageExportToPNGButton(self) -> QPushButton:
-        return self._scannedImageExportToPNGButton
+    def scannedImageExportStandardButton(self) -> QPushButton:
+        return self._scannedImageExportStandardButton
 
     @property
-    def scannedImageExportToDICOMButton(self) -> QPushButton:
-        return self._scannedImageExportToDICOMButton
+    def scannedImageExportMedicalButton(self) -> QPushButton:
+        return self._scannedImageExportMecicalButton
 
     def _createButtons(self) -> None:
         buttonsLayout = QHBoxLayout()
-        self._scannedImageExportToPNGButton: QPushButton = PrimaryActionButton("Export image to PNG")
-        self._scannedImageExportToDICOMButton: QPushButton = PrimaryActionButton("Export image to DICOM")
-        buttonsLayout.addWidget(self._scannedImageExportToPNGButton, stretch=1)
-        buttonsLayout.addWidget(self._scannedImageExportToDICOMButton, stretch=1)
+        self._scannedImageExportStandardButton: QPushButton = PrimaryActionButton("Export to standard image\nformat (e.g. JPEG, PNG)")
+        self._scannedImageExportMecicalButton: QPushButton = PrimaryActionButton("Export to medical image\nformat (DICOM, NIfTI)")
+        buttonsLayout.addWidget(self._scannedImageExportStandardButton, stretch=1)
+        buttonsLayout.addWidget(self._scannedImageExportMecicalButton, stretch=1)
         self._layout.addLayout(buttonsLayout)
+
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''

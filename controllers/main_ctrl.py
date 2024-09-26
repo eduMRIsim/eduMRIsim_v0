@@ -16,6 +16,8 @@ from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import ViewWindow
 from views.main_view_ui import Ui_MainWindow
 
+from views.export_scanned_image_standard_dialog_ui import ExportScannedImageStandardDialog
+
 
 class MainController:
     '''
@@ -27,6 +29,8 @@ class MainController:
 
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
+
+        self.export_scanned_image_standard_dialog_ui = ExportScannedImageStandardDialog()
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting signals from UI to functions that handle the signals.
 
@@ -59,7 +63,10 @@ class MainController:
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
-        self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))      
+        self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))
+
+        self.ui.scannedImageWidget.scannedImageExportStandardButton.clicked.connect(lambda: self.export_scanned_image_standard_dialog_ui.export_file_dialog())
+        self.ui.scannedImageWidget.scannedImageExportMedicalButton.clicked.connect(lambda: None)
 
     def prepare_model_data(self):
         jsonFilePath = 'repository/models/models.json'
