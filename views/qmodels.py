@@ -1,5 +1,6 @@
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
+
 class DictionaryModel(QStandardItemModel):
     def __init__(self, data):
         super().__init__()
@@ -15,7 +16,7 @@ class DictionaryModel(QStandardItemModel):
     def get_data(self, index):
         key = self.itemFromIndex(index).text()
         return self.data[key]
-    
+
     def add_item(self, key, value):
         self.data[key] = value
         item = QStandardItem(key)

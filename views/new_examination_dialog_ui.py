@@ -1,4 +1,12 @@
-from PyQt5.QtWidgets import  QComboBox, QDialog, QFormLayout, QHBoxLayout, QPushButton, QLineEdit, QVBoxLayout
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLineEdit,
+    QVBoxLayout,
+)
 
 
 class NewExaminationDialog(QDialog):
@@ -23,31 +31,28 @@ class NewExaminationDialog(QDialog):
         self.setLayout(self.layout)
 
         # remove help button hint from dialog
-        self.setWindowFlag(0x00040000) # Qt::WindowContextHelpButtonHint = 0x00040000 
-
-
+        self.setWindowFlag(0x00040000)  # Qt::WindowContextHelpButtonHint = 0x00040000
 
     @property
     def newExaminationOkButton(self):
         return self._newExaminationOkButton
-    
+
     @property
     def newExaminationCancelButton(self):
         return self._newExaminationCancelButton
-    
+
     @property
     def modelComboBox(self):
         return self._modelComboBox
-    
+
     @property
     def uploadModelButton(self):
         return self._uploadModelButton
-    
+
     @property
     def examNameLineEdit(self):
         return self._examNameLineEdit
 
-    
     def _createModelComboBox(self):
         self._modelComboBox = QComboBox()
 
@@ -56,8 +61,7 @@ class NewExaminationDialog(QDialog):
         horizontal_layout = QHBoxLayout()
         self._uploadModelButton = QPushButton("Upload")
         horizontal_layout.addWidget(self._modelComboBox)
-        #horizontal_layout.addWidget(self._uploadModelButton)
+        # horizontal_layout.addWidget(self._uploadModelButton)
         self.examInfoForm.addRow("Select model:", horizontal_layout)
         self._examNameLineEdit = QLineEdit()
         self.examInfoForm.addRow("Exam name:", self._examNameLineEdit)
-

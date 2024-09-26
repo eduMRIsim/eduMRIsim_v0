@@ -1,17 +1,18 @@
-from views.new_examination_dialog_ui import NewExaminationDialog
-from views.load_examination_dialog_ui import LoadExaminationDialog
-from views.view_model_dialog_ui import ViewModelDialog
-from views.qmodels import DictionaryModel
-import views.UI_MainWindowState as UI_state 
-
-from PyQt5.QtWidgets import QListWidgetItem
+from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QListWidgetItem, QApplication
 
-from simulator.load import load_json, load_model_data
-from simulator.model import Model 
-from simulator.scanlist import ScanItemStatusEnum
-
+import views.UI_MainWindowState as UI_state
+from controllers.settings_mgr import SettingsManager
 from events import EventEnum
+from simulator.load import load_json, load_model_data
+from simulator.model import Model
+from simulator.scanlist import ScanItemStatusEnum
+from views.load_examination_dialog_ui import LoadExaminationDialog
+from views.new_examination_dialog_ui import NewExaminationDialog
+from views.qmodels import DictionaryModel
+# from views.view_model_dialog_ui import ViewModelDialog
+from views.view_model_dialog_ui import ViewWindow
 
 
 class MainController:
@@ -22,13 +23,13 @@ class MainController:
         self.scanner = scanner
         self.ui = ui
 
-        self.load_examination_dialog_ui = LoadExaminationDialog() # Not yet implemented since it is not yet possible to save/load examinations.
+        self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog() 
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting signals from UI to functions that handle the signals.
 
         # Signals related to examinations 
-        self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.exec())
+        self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.open_file_dialog())
         self.ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
 
@@ -58,12 +59,18 @@ class MainController:
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
         self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))      
 
+    def prepare_model_data(self):
+        jsonFilePath = 'repository/models/models.json'
+        self.model_data = load_json(jsonFilePath)
+        model_names = list(self.model_data.keys())
+        self.populate_modelComboBox(model_names)
+
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
         self.model_data = load_json(jsonFilePath)
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
-        self.new_examination_dialog_ui.exec()    
+        self.new_examination_dialog_ui.exec()
 
     def populate_modelComboBox(self, list):
         self.new_examination_dialog_ui.modelComboBox.clear()
@@ -82,6 +89,10 @@ class MainController:
     def populate_examCardListView(self, exam_card_data):
         self.exam_card_qmodel = DictionaryModel(exam_card_data)
         self.ui.examCardListView.setModel(self.exam_card_qmodel)
+
+    def handle_add_to_scanlist_name(self, name):
+        # load scan parameters json file
+        scan_parameters = load_json("scan_parameters/scan_parameters.json")
 
     def handle_add_to_scanlist(self, selected_indexes):
         # Executed when the user drags and drops items from the examCardListView to the scanlistListWidget.
@@ -119,8 +130,10 @@ class MainController:
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
     def handle_viewModelButton_clicked(self):
-        view_model_dialog = ViewModelDialog(self.scanner.model)
-        view_model_dialog.exec()    
+        #view_model_dialog = ViewModelDialog(self.scanner.model)
+        #view_model_dialog.exec()    
+        view_model_window = ViewWindow()
+        view_model_window.exec_()
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
@@ -169,6 +182,11 @@ class MainController:
         self.update_scanlistListWidget(self.scanner.scanlist) # necessary to update scanlist current item so that correct item remains highlighted (i.e., active scan item remains highlighted).
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
+        settings = SettingsManager.get_instance().settings
+
+        settings.setValue("exam_name", exam_name)
+        settings.setValue("model_name", model_name)
+
         selected_model_data = self.model_data.get(model_name)
         file_path = selected_model_data.get("file_path", None)
         model_data = load_model_data(file_path)
