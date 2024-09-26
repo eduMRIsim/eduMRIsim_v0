@@ -868,9 +868,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.previous_position_in_pixmap_coords = self.pos()
         direction_vec_in_lps = self.viewer.handle_calculate_direction_vector_from_move_event(direction_vector_in_pixmap_coords)
         # apply volume updates also for current scan planning window polygon
-        self.viewer.scan_volume.translate_scan_volume(direction_vec_in_lps)
         self.viewer._update_scan_volume_display()
-        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_lps_coords = direction_vec_in_lps)
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_lps_coords = direction_vec_in_lps) # this line causes the movement being unsynchronized 
 
     # Detecting mouse for rotation. Uses scene events since other method did not work
     def handle_rotation_handle_press(self, event: QGraphicsSceneMouseEvent, handle):
