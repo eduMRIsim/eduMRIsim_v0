@@ -44,7 +44,7 @@ class App(QApplication):
     # Set up the menu bar
     def setup_menu_bar(self):
         self.menu_bar.add_section('Session')
-        self.menu_bar.add_action('Session', 'Save session', self.main_controller.handle_exportExaminationButton_clicked)
+        self.menu_bar.add_action('Session', 'Save session', self.main_controller.export_examination)
         self.menu_bar.add_action('Session', 'Load session', self.load_session)
 
         self.menu_bar.add_section('View')

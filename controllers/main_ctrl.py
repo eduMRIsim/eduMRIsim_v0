@@ -35,7 +35,6 @@ class MainController:
         self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.open_file_dialog())
         self.ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
-        self.ui.exportExaminationButton.clicked.connect(self.handle_exportExaminationButton_clicked)
 
         # Signals related to scanlist
         self.ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
@@ -72,7 +71,7 @@ class MainController:
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
 
-    def handle_exportExaminationButton_clicked(self):
+    def export_examination(self):
         default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
         options = QFileDialog.Options()  # Use native dialog for a more modern look
         file_path, _ = QFileDialog.getSaveFileName(self.ui, "Save Session", default_filename, options=options)
