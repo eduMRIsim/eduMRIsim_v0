@@ -733,19 +733,26 @@ class ParameterFormLayout(QVBoxLayout):
 class ScannedImageWidget(QWidget):
     def __init__(self, scannedImageFrame: QGraphicsView):
         super().__init__()
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self.layout.addWidget(scannedImageFrame)
+        self._layout: QVBoxLayout = QVBoxLayout()
+        self.setLayout(self._layout)
+        self._layout.addWidget(scannedImageFrame)
         self._createButtons()
 
-    def _createButtons(self):
-        buttonsLayout = QHBoxLayout()
-        self._scannedImageExportStandardImageButton = PrimaryActionButton("Export image to\nJPEG/PNG file")
-        self._scannedImageExportMedicalImageButton = PrimaryActionButton("Export image to\nDICOM/NIfTI file")
-        buttonsLayout.addWidget(self._scannedImageExportStandardImageButton, stretch=1)
-        buttonsLayout.addWidget(self._scannedImageExportMedicalImageButton, stretch=1)
-        self.layout.addLayout(buttonsLayout)
+    @property
+    def scannedImageExportToPNGButton(self) -> QPushButton:
+        return self._scannedImageExportToPNGButton
 
+    @property
+    def scannedImageExportToDICOMButton(self) -> QPushButton:
+        return self._scannedImageExportToDICOMButton
+
+    def _createButtons(self) -> None:
+        buttonsLayout = QHBoxLayout()
+        self._scannedImageExportToPNGButton: QPushButton = PrimaryActionButton("Export image to PNG")
+        self._scannedImageExportToDICOMButton: QPushButton = PrimaryActionButton("Export image to DICOM")
+        buttonsLayout.addWidget(self._scannedImageExportToPNGButton, stretch=1)
+        buttonsLayout.addWidget(self._scannedImageExportToDICOMButton, stretch=1)
+        self._layout.addLayout(buttonsLayout)
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
@@ -1033,7 +1040,6 @@ class MiddleLineItem(QGraphicsPolygonItem):
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
-
 
 
 class AcquiredSeriesViewer2D(QGraphicsView):
