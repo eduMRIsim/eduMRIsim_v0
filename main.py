@@ -45,16 +45,19 @@ class App(QApplication):
     def setup_menu_bar(self):
         self.menu_bar.add_section('Session')
         self.menu_bar.add_action('Session', 'Save session', self.main_controller.export_examination)
-        self.menu_bar.add_action('Session', 'Load session', self.load_session)
+        self.menu_bar.add_action('Session', 'Load session', self.test_action)
 
-        self.menu_bar.add_section('View')
-        self.menu_bar.add_action('View', 'Select Viewing Mode', self.select_view_mode)
+        self.menu_bar.add_section('Mode')
+        self.menu_bar.add_action('Mode', 'Scanning Mode', self.test_action)
+        self.menu_bar.add_action('Mode', 'Viewing Mode', self.test_action)
         
-    def load_session(self):
-        print("Loading session...")
+        self.menu_bar.add_section('Tools')
+        self.menu_bar.add_action('Tools', 'Measure Distance', self.test_action)
+        self.menu_bar.add_action('Tools', 'Measure Area', self.test_action)
         
-    def select_view_mode(self): 
-        print("Selecting viewing mode...")
+        
+    def test_action(self):
+        print("Action test")
 
     def setup_scan_parameter_form(self):
         # Load the scan parameters from the .json file. This file defines for each scan parameter which QWidget editor should be used to edit it. It also defines the default values for each parameter, the parameter's name, description and units.         

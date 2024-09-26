@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QAction, QFileDialog
+from PyQt5.QtWidgets import QAction
 
 class MenuBar:
     def __init__(self, main_view):
@@ -20,12 +20,3 @@ class MenuBar:
             self.menus[section_name].addAction(action)
         else:
             raise ValueError(f"Menu '{section_name}' does not exist.")
-        
-    def save_file_dialog(self):
-        """Opens the save menu"""
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getSaveFileName(self.main_view, "Save File", "", "All Files (*);;Text Files (*.txt);;INI Files (*.ini)", options=options)
-        if file_path:
-            print(f"File will be saved to: {file_path}")
-            return file_path
-        return None
