@@ -10,6 +10,8 @@ from events import EventEnum
 from simulator.load import load_json
 from simulator.scanner import Scanner
 from views.main_view_ui import Ui_MainWindow
+from PyQt5.QtCore import QSettings
+from views.menu_bar import MenuBar
 
 
 class App(QApplication):
@@ -34,7 +36,25 @@ class App(QApplication):
         # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
         self.settings_manager = SettingsManager(self.scanner, self.main_controller, self.main_view, "settings.ini")
         self.settings_manager.setup_settings(None)
+        
+        # Create menu bar
+        self.menu_bar = MenuBar(self.main_view)
+        self.setup_menu_bar()
+        
+    # Set up the menu bar
+    def setup_menu_bar(self):
+        self.menu_bar.add_section('Session')
+        self.menu_bar.add_action('Session', 'Save session', self.main_controller.handle_exportExaminationButton_clicked)
+        self.menu_bar.add_action('Session', 'Load session', self.load_session)
 
+        self.menu_bar.add_section('View')
+        self.menu_bar.add_action('View', 'Select Viewing Mode', self.select_view_mode)
+        
+    def load_session(self):
+        print("Loading session...")
+        
+    def select_view_mode(self): 
+        print("Selecting viewing mode...")
 
     def setup_scan_parameter_form(self):
         # Load the scan parameters from the .json file. This file defines for each scan parameter which QWidget editor should be used to edit it. It also defines the default values for each parameter, the parameter's name, description and units.         
