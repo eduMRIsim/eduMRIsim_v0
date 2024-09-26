@@ -855,7 +855,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
-        self.update_slice_lines()
+        # self.update_slice_lines()
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
@@ -958,11 +958,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def set_scan_volume(self, scan_volume):
         self.scan_volume = scan_volume
-        self.update_slice_lines()
+        # self.update_slice_lines()
 
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
-        self.update_slice_lines()
+        # self.update_slice_lines()
 
     def update_slice_lines(self):
         # Remove existing slice lines
@@ -1006,7 +1006,7 @@ class MiddleLineItem(QGraphicsPolygonItem):
     '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
     def __init__(self, parent: QGraphicsPixmapItem):
         super().__init__(parent)
-        self.setPen(Qt.yellow)
+        self.setPen(Qt.red)
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         super().setPolygon(polygon_in_polygon_coords)
@@ -1019,6 +1019,23 @@ class MiddleLineItem(QGraphicsPolygonItem):
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
 
+
+class StacksItem(QGraphicsPolygonItem):
+    '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
+    def __init__(self, parent: QGraphicsPixmapItem):
+        super().__init__(parent)
+        self.setPen(Qt.yellow)
+
+    def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
+        super().setPolygon(polygon_in_polygon_coords)
+        self.previous_position_in_pixmap_coords = self.pos()
+
+    def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
+        polygon_in_polygon_coords = QPolygonF()
+        for pt in polygon_in_pixmap_coords:
+            pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
+            polygon_in_polygon_coords.append(pt_in_polygon_coords)
+        self.setPolygon(polygon_in_polygon_coords)
 
 
 class AcquiredSeriesViewer2D(QGraphicsView):
@@ -1065,6 +1082,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
                                                      self)  # Create a custom polygon item that is a child of the pixmap item
 
         self.middle_lines_display = MiddleLineItem(self.pixmap_item)  # adds middle lines of current scan volume
+        # self.stacks_display = StacksItem(self.pixmap_item)
+        self.stacks_displays = []
 
         self.scan_volume_display.add_observer(self)
 
@@ -1244,13 +1263,25 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def _update_scan_volume_display(self):
         '''Updates the intersection polygon between the scan volume and the displayed image.'''
         if self.displayed_image is not None and self.scan_volume is not None:
-            (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords) = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
+            (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords) = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_volume_edges_in_pixmap_coords)
             self.middle_lines_display.setPolygonFromPixmapCoords(intersection_middle_edges_in_pixamp_coords)
+            for stack in self.stacks_displays:
+                stack.setPolygon(QPolygonF())
+            self.stacks_displays = []
+            for slice_edges in intersection_slice_edges_in_pixamp_coords:
+                stack_item = StacksItem(self.pixmap_item)
+                stack_item.setPolygonFromPixmapCoords(slice_edges)
+                self.stacks_displays.append(stack_item)
+                # self.stacks_display.setPolygonFromPixmapCoords(intersection_slice_edges_in_pixamp_coords)
         else: 
             self.scan_volume_display.setPolygon(QPolygonF())
             self.middle_lines_display.setPolygon(QPolygonF())
-        self.scan_volume_display.update_slice_lines()
+            # self.stacks_display.setPolygon(QPolygonF())
+            for stack in self.stacks_displays:
+                stack.setPolygon(QPolygonF())
+            self.stacks_displays = []
+        # self.scan_volume_display.update_slice_lines()
 
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
