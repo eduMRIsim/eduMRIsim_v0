@@ -65,6 +65,7 @@ class Scanlist:
 
     def rename_scanlist_element(self, index, name):
         self.scanlist_elements[index].scan_item.name = name
+        self.scanlist_elements[index].name = name
 
     def add_observer(self, observer):
         self.observers.append(observer)
@@ -94,10 +95,16 @@ class ScanlistElement:
     def __init__(self, name, scan_parameters):
         self.scan_item = ScanItem(name, scan_parameters)
         self.acquired_data = None
+        self._name = name
 
     @property
     def name(self):
-        return self.scan_item.name
+        return self._name
+    
+    @name.setter
+    def name(self, name):
+        self._name = name
+        self.scan_item.name = name
 
 class ScanItem: 
     def __init__(self, name, scan_parameters):

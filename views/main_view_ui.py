@@ -312,18 +312,18 @@ class ScanlistListWidget(QListWidget):
         #self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu) # Enable the custom context menu
         #self.customContextMenuRequested.connect(self.showContextMenu) # Connect the customContextMenuRequested signal to the showContextMenu method
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.RightButton:
-            item = self.itemAt(event.pos())
-            if item is not None:
-                print("item is not None")
-                brush = item.background()
-                color = brush.color()
-                print(color.name())
-                item.setBackground(QColor(self.hover_color))
-            self.showContextMenu(event.pos())
-        else:
-            super().mousePressEvent(event)    
+    # def mousePressEvent(self, event):
+    #     if event.button() == Qt.MouseButton.RightButton:
+    #         item = self.itemAt(event.pos())
+    #         if item is not None:
+    #             print("item is not None")
+    #             brush = item.background()
+    #             color = brush.color()
+    #             print(color.name())
+    #             item.setBackground(QColor(self.hover_color))
+    #         self.showContextMenu(event.pos())
+    #     else:
+    #         super().mousePressEvent(event)    
 
     def mouseDoubleClickEvent(self, event):
         item = self.itemAt(event.pos())
@@ -352,10 +352,12 @@ class ScanlistListWidget(QListWidget):
             self.dropEventSignal.emit(selected_indexes)
             e.accept()        
 
-    def showContextMenu(self, pos: QPoint):
+    def contextMenuEvent(self, event : QContextMenuEvent):
+        pos = event.pos()
         item = self.itemAt(pos) 
         if item is not None:
-            self.menu = QMenu()
+
+            menu = QMenu()
 
             # Create actions for the context menu
             rename_action = QAction("Rename", self)
@@ -373,33 +375,38 @@ class ScanlistListWidget(QListWidget):
             delete_action.setIcon(delete_icon)
 
             # Add the actions to the context menu
-            self.menu.addAction(rename_action)
-            self.menu.addAction(duplicate_action)
-            self.menu.addAction(delete_action)
+            menu.addAction(rename_action)
+            menu.addAction(duplicate_action)
+            menu.addAction(delete_action)
 
            # Connect the actions to their respective slots
             rename_action.triggered.connect(lambda: self.renameItem(item))
-            duplicate_action.triggered.connect(lambda: self.duplicateItem(item))
+            duplicate_action.triggered.connect(lambda: self.itemDuplicatedSignal.emit(item))
             delete_action.triggered.connect(lambda: self.deleteItem(item))
 
             # Show the context menu at the specified position
-            self.menu.exec_(self.viewport().mapToGlobal(pos))
+            menu.exec_(self.viewport().mapToGlobal(pos))
 
-            item.setBackground(Qt.white)
+            # set background color to white
+            item.setBackground(QColor("white"))
+
+
 
     def renameItem(self, item):
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         self.editItem(item)
 
+
     def deleteItem(self, item):
-        self.menu.close()
+        # remove the item from the list widget
+        self.takeItem(self.row(item))
         self.itemDeletedSignal.emit(item)
 
-    def duplicateItem(self, item):
-        print("duplicate action clicked on menu")
-        # exit the menu
-        self.menu.close()
-        self.itemDuplicatedSignal.emit(item)
+    # def duplicateItem(self, item, menu):
+    #     print("duplicate action clicked on menu")
+    #     # exit the menu
+    #     menu.close()
+    #     self.itemDuplicatedSignal.emit(item)
 
 
 

@@ -12,7 +12,7 @@
         "description": "Proton density-weighted spin echo sequence",
         "ScanTechnique": "SE",
         "TE_ms": 5,
-        "TR_ms": 2800,
+        "TR_ms": 3500,
         "TI_ms": 0,
         "FA_deg": 90,
         "slice": 15        

@@ -56,13 +56,17 @@ class MainController:
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
 
     def handle_scanlistListWidget_itemChanged(self, item):
+        print("item changed signal received", "item:", item)
         self.scanner.scanlist.rename_scanlist_element(self.ui.scanlistListWidget.row(item), item.text())
+        print("new name:", self.scanner.scanlist.scanlist_elements[self.ui.scanlistListWidget.row(item)].name)
+        print("new name scan item:", self.scanner.scanlist.scanlist_elements[self.ui.scanlistListWidget.row(item)].scan_item.name)
 
     def handle_scanlistListWidget_itemDeleted(self, item):
         self.scanner.scanlist.remove_scanlist_element(self.ui.scanlistListWidget.row(item))
 
     def handle_scanlistListWidget_itemDuplicated(self, item):
         print("duplicate signal received", "item:", item)
+
         self.scanner.scanlist.duplicate_scanlist_element(self.ui.scanlistListWidget.row(item))
 
     def handle_newExaminationButton_clicked(self):
@@ -172,13 +176,14 @@ class MainController:
 
     def handle_startScanButton_clicked(self):
         array = self.scanner.scan()
+        self.scanner.scanlist.active_scan_item.status = ScanItemStatusEnum.COMPLETE
+        self.ui.state = UI_state.ScanCompleteState()
+        self.ui.update_UI()        
         self.ui.scannedImageFrame.update_scanlist_element_name_text_item(self.scanner.active_scanlist_element.name)
         self.ui.scannedImageFrame.setArray(array)
         self.ui.scannedImageFrame.displayArray()
-        self.scanner.scanlist.active_scan_item.status = ScanItemStatusEnum.COMPLETE
-        self.ui.state = UI_state.ScanCompleteState()
-        self.ui.update_UI()
-        self.update_scanlistListWidget(self.scanner.scanlist)
+
+        #self.update_scanlistListWidget(self.scanner.scanlist)
 
     def handle_newExaminationOkButton_clicked(self, exam_name, model_name):
         selected_model_data = self.model_data.get(model_name)
@@ -275,7 +280,19 @@ class MainController:
         '''
         The update() method defines what happens when events are emitted by parts of the scanner that the MainController is observing. The MainController is observing the scanlist, the active scan item, and the scanner. The update() method is called when the scanner notifies the MainController of changes, e.g., when a scan item is added to the scanlist, when the active scan item is changed, when the status of a scan item is changed, when the parameters of a scan item are changed, etc.'''
         if event == EventEnum.SCANLIST_ITEM_ADDED:
-            self.update_scanlistListWidget(self.scanner.scanlist)
+            #self.update_scanlistListWidget(self.scanner.scanlist)
+            new_scan_item = self.scanner.scanlist.scanlist_elements[-1].scan_item
+            list_item = QListWidgetItem(new_scan_item.name)
+            if new_scan_item.status == ScanItemStatusEnum.READY_TO_SCAN:
+                list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))  
+            elif new_scan_item.status == ScanItemStatusEnum.BEING_MODIFIED:
+                list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
+            elif new_scan_item.status == ScanItemStatusEnum.INVALID:
+                list_item.setIcon(QIcon("resources/icons/alert-circle-outline.png"))
+            elif new_scan_item.status == ScanItemStatusEnum.COMPLETE:
+                list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))
+            list_item.setFlags(list_item.flags() | Qt.ItemIsEditable)
+            self.ui.scanlistListWidget.addItem(list_item)  
 
         if event == EventEnum.SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED: 
             if self.scanner.scanlist.active_idx == None:
@@ -294,12 +311,22 @@ class MainController:
                 # self.ui.scanPlanningWindow2.setScanVolume(self.scanner.active_scan_item.scan_volume)
                 # self.ui.scanPlanningWindow3.setScanVolume(self.scanner.active_scan_item.scan_volume)
 
-        if event == EventEnum.SCANLIST_ITEM_REMOVED:
-            self.update_scanlistListWidget(self.scanner.scanlist)
+        # if event == EventEnum.SCANLIST_ITEM_REMOVED:
+        #     self.update_scanlistListWidget(self.scanner.scanlist)
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.update_scanlistListWidget(self.scanner.scanlist)
+            # change icon of active scan item in scanlistListWidget
+            list_item = self.ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)
+            if self.scanner.active_scan_item.status == ScanItemStatusEnum.READY_TO_SCAN:
+                list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))  
+            elif self.scanner.active_scan_item.status == ScanItemStatusEnum.BEING_MODIFIED:
+                list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
+            elif self.scanner.active_scan_item.status == ScanItemStatusEnum.INVALID:
+                list_item.setIcon(QIcon("resources/icons/alert-circle-outline.png"))
+            elif self.scanner.active_scan_item.status == ScanItemStatusEnum.COMPLETE:
+                list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))
+            #self.update_scanlistListWidget(self.scanner.scanlist)
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
