@@ -325,6 +325,15 @@ class ScanlistListWidget(QListWidget):
     #     else:
     #         super().mousePressEvent(event)    
 
+    def keyPressEvent(self, event):
+        # Check if the pressed key is Up or Down
+        if event.key() == Qt.Key_Up or event.key() == Qt.Key_Down:
+            # Ignore the event to prevent changing the selected item
+            event.ignore()
+        else:
+            # Pass other keys to the base class to handle them normally
+            super().keyPressEvent(event)
+
     def mouseDoubleClickEvent(self, event):
         item = self.itemAt(event.pos())
         if item is not None:
@@ -356,6 +365,8 @@ class ScanlistListWidget(QListWidget):
         pos = event.pos()
         item = self.itemAt(pos) 
         if item is not None:
+
+            self.itemClicked.emit(item) # Manually emit the itemClicked signal. This is so that the right clicked item will become the active scan item. 
 
             menu = QMenu()
 
@@ -399,8 +410,9 @@ class ScanlistListWidget(QListWidget):
 
     def deleteItem(self, item):
         # remove the item from the list widget
-        self.takeItem(self.row(item))
         self.itemDeletedSignal.emit(item)
+        self.takeItem(self.row(item))
+
 
     # def duplicateItem(self, item, menu):
     #     print("duplicate action clicked on menu")

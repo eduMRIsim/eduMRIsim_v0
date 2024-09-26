@@ -103,6 +103,8 @@ class MainController:
         jsonFilePath = 'repository/exam_cards/exam_cards.json'
         self.exam_card_data = load_json(jsonFilePath)
         self.ui.editingStackedLayout.setCurrentIndex(1)
+        if self.scanner.model.T2smap_ms is None:
+            self.exam_card_data.pop("Exercise 5")
         self.populate_examCardListView(self.exam_card_data)       
 
     def populate_examCardListView(self, exam_card_data):
@@ -296,6 +298,7 @@ class MainController:
 
         if event == EventEnum.SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED: 
             if self.scanner.scanlist.active_idx == None:
+                self.ui.parameterFormLayout.clearForm()
                 self.ui.state = UI_state.ExamState()
             else:
                 self.handle_scan_item_status_change(self.scanner.active_scan_item.status)

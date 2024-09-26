@@ -15,6 +15,7 @@ class Scanlist:
     @active_idx.setter
     def active_idx(self, idx):
         self._active_idx = idx
+        print("Active scanlist element index set to", idx)
         self.notify_observers(EventEnum.SCANLIST_ACTIVE_SCANLIST_ELEMENT_CHANGED)
 
     def add_scanlist_element(self, name, scan_parameters):
@@ -26,16 +27,23 @@ class Scanlist:
     
     def duplicate_scanlist_element(self, index):
         self.add_scanlist_element(self.scanlist_elements[index].name, self.scanlist_elements[index].scan_item.scan_parameters)
+        # change active index to the newly added scanlist element
+        self.active_idx = len(self.scanlist_elements) - 1
 
     def remove_scanlist_element(self, index):
         del self.scanlist_elements[index]
+        print("Scanlist element removed at index", index, "active index is", self.active_idx)
         if index == self.active_idx:
+            print("index removed", index, "is equal to active index", self.active_idx)
             if len(self.scanlist_elements) == 0:
                 self.active_idx = None # if the removed scanlist element was the only one in the list, the active index should be set to None
+            #else:
+                # if index == len(self.scanlist_elements):
+                #     self.active_idx -= 1 # if the removed scanlist element was at the end of the list, the active index should be decremented by 1 
+            elif index == 0:
+                    self.active_idx = 0
             else:
-                if index == len(self.scanlist_elements):
-                    self.active_idx -= 1 # if the removed scanlist element was at the end of the list, the active index should be decremented by 1 
-
+                    self.active_idx -= 1
         else:
             if index < self.active_idx:
                 self.active_idx -= 1 # if the removed scanlist element was before the active index, the active index should be decremented by 1
