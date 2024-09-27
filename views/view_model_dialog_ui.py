@@ -1,9 +1,13 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
-from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget, QListView
-
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
 import numpy as np
-from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D, ExamCardTab
+from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
+from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
+from PyQt5.QtWidgets import QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, \
+    QFrame, QWidget, QListView
+
+from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, \
+    DropAcquiredSeriesViewer2D, ExamCardTab
+
+
 #from views.main_view_ui import ImageLabel
 #from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 

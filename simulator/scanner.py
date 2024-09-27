@@ -1,9 +1,10 @@
-from simulator.examination import Examination
-from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanItemStatusEnum
-from simulator.model import Model
-from simulator.MRI_data_synthesiser import MRIDataSynthesiser
 import numpy as np
 from scipy import interpolate
+
+from simulator.MRI_data_synthesiser import MRIDataSynthesiser
+from simulator.examination import Examination
+from simulator.model import Model
+from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanItemStatusEnum
 
 
 class Scanner:

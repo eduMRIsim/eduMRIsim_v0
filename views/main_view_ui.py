@@ -1,32 +1,24 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent, QSettings, QByteArray, QMetaType
-from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+import math
+from contextlib import contextmanager
+
+import numpy as np
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
+    QFont, QPolygonF, QPen
+from PyQt5.QtWidgets import (QComboBox, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QSizePolicy,
                              QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
                              QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
-    QFont, QPolygonF, QPen
-
-import numpy as np
-
-import math
-
-from keys import Keys
-
-from contextlib import contextmanager
 
 from controllers.settings_mgr import SettingsManager
-from views.UI_MainWindowState import IdleState
-from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
-    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
-
-from simulator.scanlist import AcquiredSeries, ScanVolume
-
-from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
-    IdleState, MRIfortheBrainState
-
 from events import EventEnum
+from keys import Keys
+from simulator.scanlist import AcquiredSeries, ScanVolume
+from views.UI_MainWindowState import IdleState, BeingModifiedState, ReadyToScanState, ScanCompleteState
+from views.styled_widgets import PrimaryActionButton, SecondaryActionButton, \
+    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
 naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. 
@@ -67,7 +59,7 @@ class Ui_MainWindow(QMainWindow):
         self._createMainWindow()
 
         self.setCentralWidget(self.centralWidget)
-        self.setWindowTitle("eduMRIsim_V0_UI")
+        self.setWindowTitle("eduMRIsim")
 
         self._state = IdleState()
         self.update_UI()
@@ -285,6 +277,12 @@ class Ui_MainWindow(QMainWindow):
 
         if state_class:
             self.state = state_class()
+        elif state_name == "ScanCompleteState":
+            self.state = ScanCompleteState()
+        elif state_name == "BeingModifiedState":
+            self.state = BeingModifiedState()
+        elif state_name == "ReadyToScanState":
+            self.state = ReadyToScanState()
         else:
             print(f"Warning: State '{state_name}' not found. Defaulting to IdleState.")
             self.state = IdleState()
@@ -734,11 +732,9 @@ class ParameterFormLayout(QVBoxLayout):
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
-
-
     def __init__(self, parent: QGraphicsPixmapItem, viewer: 'AcquiredSeriesViewer2D'):
         super().__init__(parent)
-        self.setPen(Qt.red)
+        self.setPen(Qt.yellow)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.observers = []
@@ -762,7 +758,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.rotation_handles = []
         for i in range(8):
             handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
-            handle.setBrush(Qt.red)
+            handle.setBrush(Qt.yellow)
             handle.setFlag(QGraphicsItem.ItemIsMovable, False)
             handle.setAcceptedMouseButtons(Qt.LeftButton)
             handle.setAcceptHoverEvents(True)

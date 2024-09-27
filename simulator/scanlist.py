@@ -1,6 +1,9 @@
 from enum import Enum, auto
-from events import EventEnum
+
 import numpy as np
+
+from events import EventEnum
+
 
 class ImageGeometry:
     '''This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates.'''
@@ -90,7 +93,6 @@ class Scanlist:
         self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
-        print("Added newww")
         new_scanlist_element = ScanlistElement(name, scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
