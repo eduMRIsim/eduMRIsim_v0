@@ -748,14 +748,14 @@ class ScannedImageWidget(QWidget):
 
     @property
     def scannedImageExportMedicalButton(self) -> QPushButton:
-        return self._scannedImageExportMecicalButton
+        return self._scannedImageExportMedicalButton
 
     def _createButtons(self) -> None:
         buttonsLayout = QHBoxLayout()
         self._scannedImageExportStandardButton: QPushButton = PrimaryActionButton("Export to standard image\nformat (e.g. JPEG, PNG)")
-        self._scannedImageExportMecicalButton: QPushButton = PrimaryActionButton("Export to medical image\nformat (DICOM, NIfTI)")
+        self._scannedImageExportMedicalButton: QPushButton = PrimaryActionButton("Export to medical image\nformat (DICOM, NIfTI)")
         buttonsLayout.addWidget(self._scannedImageExportStandardButton, stretch=1)
-        buttonsLayout.addWidget(self._scannedImageExportMecicalButton, stretch=1)
+        buttonsLayout.addWidget(self._scannedImageExportMedicalButton, stretch=1)
         self._layout.addLayout(buttonsLayout)
 
 

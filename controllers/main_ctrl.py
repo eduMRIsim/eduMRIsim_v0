@@ -1,3 +1,4 @@
+import numpy as np
 from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QListWidgetItem, QApplication
@@ -7,7 +8,7 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
-from simulator.scanlist import ScanItemStatusEnum
+from simulator.scanlist import ScanItemStatusEnum, AcquiredImage
 from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
@@ -24,8 +25,8 @@ class MainController:
     The MainController class defines what happens when the user interacts with the UI. It also defines in its update() method what happens when the scanner notifies the controller of changes, e.g., when a scan item is added to the scanlist, when the active scan item is changed, when the status of a scan item is changed, when the parameters of a scan item are changed, etc.'''
 
     def __init__(self, scanner: Scanner, ui: Ui_MainWindow) -> None:
-        self.scanner = scanner
-        self.ui = ui
+        self.scanner: Scanner = scanner
+        self.ui: Ui_MainWindow = ui
 
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
@@ -65,7 +66,7 @@ class MainController:
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
         self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))
 
-        self.ui.scannedImageWidget.scannedImageExportStandardButton.clicked.connect(lambda: self.export_scanned_image_standard_dialog_ui.export_file_dialog())
+        self.ui.scannedImageWidget.scannedImageExportStandardButton.clicked.connect(lambda: self.handle_scannedImageExportStandardButton_clicked())
         self.ui.scannedImageWidget.scannedImageExportMedicalButton.clicked.connect(lambda: None)
 
     def prepare_model_data(self):
@@ -205,7 +206,12 @@ class MainController:
         self.new_examination_dialog_ui.accept()
         self.ui.state = UI_state.ExamState()
         self.ui.examinationNameLabel.setText(exam_name)
-        self.ui.modelNameLabel.setText(model_name)        
+        self.ui.modelNameLabel.setText(model_name)
+
+    def handle_scannedImageExportStandardButton_clicked(self):
+        image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
+        image_data: np.ndarray = image.image_data
+        self.export_scanned_image_standard_dialog_ui.export_file_dialog(image_data)
 
     def update(self, event):
         '''
@@ -213,7 +219,7 @@ class MainController:
         if event == EventEnum.SCANLIST_ITEM_ADDED:
             self.update_scanlistListWidget(self.scanner.scanlist)
 
-        if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED: 
+        if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
             self.ui.editingStackedLayout.setCurrentIndex(0) # Switch to scan parameter editor view
             self.ui.scannedImageFrame.setAcquiredSeries(self.scanner.active_scanlist_element.acquired_data) # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
@@ -221,7 +227,7 @@ class MainController:
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
             self.scanner.active_scan_item.add_observer(self)
-            self.ui.scanPlanningWindow1.setScanVolume(self.scanner.active_scan_item.scan_volume) 
+            self.ui.scanPlanningWindow1.setScanVolume(self.scanner.active_scan_item.scan_volume)
             self.ui.scanPlanningWindow2.setScanVolume(self.scanner.active_scan_item.scan_volume)
             self.ui.scanPlanningWindow3.setScanVolume(self.scanner.active_scan_item.scan_volume)
 
