@@ -301,22 +301,6 @@ class InfoFrame(QFrame):
         line2.setFrameShadow(QFrame.Sunken)
         layout.addWidget(line2)
 
-        section3_layout = QHBoxLayout()
-        section3_text_layout = QVBoxLayout()
-        section3_header = HeaderLabel("Session name")
-        # self.section3_text = QLabel("Press da button")
-        self.section3_text = QLineEdit(self)
-        section3_text_layout.addWidget(section3_header)
-        section3_text_layout.addWidget(self.section3_text)
-        section1_text_layout.setContentsMargins(0, 0, 0, 0)
-        section3_text_layout.setSpacing(0)
-        self.section3_export_button = SecondaryActionButton("Export")
-        self.section3_export_button.setFixedWidth(100)
-        section3_layout.addLayout(section3_text_layout)
-        section3_layout.addWidget(self.section3_export_button)
-        layout.addLayout(section3_layout)
-
-
 # class InfoFrame(QFrame):
 #     def __init__(self, exam_name, model_name):  
 #         super().__init__()

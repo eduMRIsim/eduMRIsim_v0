@@ -1,5 +1,7 @@
 from datetime import datetime
 
+#from views.view_model_dialog_ui import ViewModelDialog
+from PyQt5.QtWidgets import QListWidgetItem, QApplication, QFileDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QListWidgetItem
 
@@ -33,7 +35,6 @@ class MainController:
         self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.open_file_dialog())
         self.ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
-        self.ui.exportExaminationButton.clicked.connect(self.handle_exportExaminationButton_clicked)
 
         # Signals related to scanlist
         self.ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
@@ -70,24 +71,23 @@ class MainController:
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
 
-    def handle_exportExaminationButton_clicked(self):
-        tmp: str = self.ui.exportTextBox.text()
+    def export_examination(self):
+        default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
+        options = QFileDialog.Options()  # Use native dialog for a more modern look
+        file_path, _ = QFileDialog.getSaveFileName(self.ui, "Save Session", default_filename, options=options)
 
-        forbidden_chars = ['\\', '/', ':', '*', '?', '"', '<', '>', '|', '!']
+        # If canceled, return without doing anything
+        if not file_path:
+            print("File save canceled.")
+            return
 
-        if tmp.isprintable() == False or tmp == "":
-            print("Filename is not valid. Defaulting to 'session-{date}.ini'")
-            tmp = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
-
-        # Sanitize the input
-        for char in forbidden_chars:
-            if char in tmp:
-                print(f"Character {char} is not allowed in the filename. Removing it.")
-                tmp = tmp.replace(char, '')
+        # Ensure the file path has a valid .ini extension
+        if not file_path.endswith(".ini"):
+            file_path += ".ini"
 
         settings_manager = SettingsManager.get_instance()
-
-        settings_manager.export_settings(f"./{tmp}.ini")
+        settings_manager.export_settings(file_path)
+        print(f"Session saved to {file_path}")
 
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
