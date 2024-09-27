@@ -732,11 +732,9 @@ class ParameterFormLayout(QVBoxLayout):
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
-
-
     def __init__(self, parent: QGraphicsPixmapItem, viewer: 'AcquiredSeriesViewer2D'):
         super().__init__(parent)
-        self.setPen(Qt.red)
+        self.setPen(Qt.yellow)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.observers = []
@@ -760,7 +758,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.rotation_handles = []
         for i in range(8):
             handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
-            handle.setBrush(Qt.red)
+            handle.setBrush(Qt.yellow)
             handle.setFlag(QGraphicsItem.ItemIsMovable, False)
             handle.setAcceptedMouseButtons(Qt.LeftButton)
             handle.setAcceptHoverEvents(True)
