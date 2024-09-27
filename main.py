@@ -57,7 +57,8 @@ class App(QApplication):
         
         
     def test_action(self):
-        print("Action test")
+        # print("Action test")
+        pass
 
     def setup_scan_parameter_form(self):
         # Load the scan parameters from the .json file. This file defines for each scan parameter which QWidget editor should be used to edit it. It also defines the default values for each parameter, the parameter's name, description and units.         
