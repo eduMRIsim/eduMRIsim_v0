@@ -732,11 +732,13 @@ class ParameterFormLayout(QVBoxLayout):
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
+
     def __init__(self, parent: QGraphicsPixmapItem, viewer: 'AcquiredSeriesViewer2D'):
         super().__init__(parent)
         self.setPen(Qt.yellow)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setAcceptHoverEvents(True)  
         self.observers = []
         self.previous_position_in_pixmap_coords = None
         self.slice_lines = []
@@ -865,15 +867,35 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
+        self.setCursor(Qt.SizeAllCursor)
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(),
                                                     self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
         direction_vec_in_lps = self.viewer.handle_calculate_direction_vector_from_move_event(direction_vector_in_pixmap_coords)
         # apply volume updates also for current scan planning window polygon
-        self.viewer.scan_volume.translate_scan_volume(direction_vec_in_lps)
         self.viewer._update_scan_volume_display()
-        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_lps_coords = direction_vec_in_lps)
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_lps_coords=direction_vec_in_lps)
 
+    # on press show "size all" cursor
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mousePressEvent(event)
+        self.setCursor(Qt.SizeAllCursor)
+        
+    # on release show "pointing hand" cursor
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mouseReleaseEvent(event)
+        self.setCursor(Qt.PointingHandCursor)
+
+    # on hover show "pointing hand" cursor
+    def hoverEnterEvent(self, event):
+        super().hoverEnterEvent(event)
+        self.setCursor(Qt.PointingHandCursor)
+
+    # on leave change cursor to default
+    def hoverLeaveEvent(self, event):
+        super().hoverLeaveEvent(event)
+        self.unsetCursor()
+    
     # Detecting mouse for rotation. Uses scene events since other method did not work
     def handle_rotation_handle_press(self, event: QGraphicsSceneMouseEvent, handle):
         '''Initiate rotation when the rotation handle is pressed'''
