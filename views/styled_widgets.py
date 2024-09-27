@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QPushButton, QFrame, QHBoxLayout, QWidget, QLabel, QVBoxLayout, QGridLayout, QSpacerItem, \
-    QSizePolicy
+    QSizePolicy, QLineEdit
 
 
 class SegmentedButtonFrame(QFrame):
@@ -295,6 +295,26 @@ class InfoFrame(QFrame):
         section2_layout.addLayout(section2_text_layout)
         section2_layout.addWidget(self.section2_view_button)
         layout.addLayout(section2_layout)
+
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.HLine)
+        line2.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(line2)
+
+        section3_layout = QHBoxLayout()
+        section3_text_layout = QVBoxLayout()
+        section3_header = HeaderLabel("Session name")
+        # self.section3_text = QLabel("Press da button")
+        self.section3_text = QLineEdit(self)
+        section3_text_layout.addWidget(section3_header)
+        section3_text_layout.addWidget(self.section3_text)
+        section1_text_layout.setContentsMargins(0, 0, 0, 0)
+        section3_text_layout.setSpacing(0)
+        self.section3_export_button = SecondaryActionButton("Export")
+        self.section3_export_button.setFixedWidth(100)
+        section3_layout.addLayout(section3_text_layout)
+        section3_layout.addWidget(self.section3_export_button)
+        layout.addLayout(section3_layout)
 
 
 # class InfoFrame(QFrame):
