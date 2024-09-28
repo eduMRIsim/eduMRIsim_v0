@@ -1,163 +1,161 @@
 [
-
-    {
-        "name": "Scan plane",
-        "key": "ScanPlane",
-        "editor": "QComboBox",
-        "unit": "",
-        "default_value": ["Axial", "Coronal", "Sagittal"],
-        "description": "This is the plane in which the scan is performed."
-    },
-    {
-        "name": "Offcenter AP (P=+mm)",
-        "key": "OffCenterAP_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "0",
-        "data_type": "float",
-        "description": "" 
-    },
-    {
-        "name": "Offcenter RL (L=+mm)",
-        "key": "OffCenterRL_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "0",
-        "data_type": "float",
-        "description": "" 
-    },
-    {
-        "name": "Offcenter FH (H=+mm)",
-        "key": "OffCenterFH_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "0",
-        "data_type": "float",
-        "description": ""
-    },
-    { 
-        "name": "FOV in phase encoding direction",
-        "key": "FOVPE_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "150",
-        "data_type": "float",
-        "description": "The phase encoding direction is generally the left to right direction of the acquired image. Therefore, this parameter defines the width of the image. In reality, the phase encoding and frequency encoding directions can be switched but for simplicity we assume for now that the phase encoding direction is the left to right direction."
-    },
-    { 
-        "name": "FOV in frequency encoding direction",
-        "key": "FOVFE_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "160",
-        "data_type": "float",
-        "description": "The frequency encoding direction is generally the top to bottom direction of the acquired image. Therefore, this parameter defines the height of the image. In reality, the phase encoding and frequency encoding directions can be switched but for simplicity we assume for now that the frequency encoding direction is the top to bottom direction."
-    },
-    {
-        "name": "Slice thickness",
-        "key": "SliceThickness_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "1",
-        "data_type": "float",
-        "description": ""
-    },
-    {
-        "name": "Number of slices",
-        "key": "NSlices",
-        "editor": "QLineEdit",
-        "unit": "",
-        "default_value": "1",
-        "data_type": "int"
-    },
-    { 
-        "name": "Slice gap",
-        "key": "SliceGap_mm",
-        "editor": "QLineEdit",
-        "unit": "millimeters",
-        "default_value": "0",
-        "data_type": "float",
-        "description": ""
-    },
-    {
-        "name": "Rotation Lock",
-        "key": "Rotation_lock",
-        "editor": "QComboBox",
-        "unit": "",
-        "default_value": ["None", "FH", "RL", "AP"],
-        "description": "This limits the rotation axes to allow for one specific axis only. To be used to disable confusing rotations"
-    },
-    {
-        "name": "FH angle",
-        "key": "FHAngle_deg",
-        "editor": "QLineEdit",
-        "unit": "degrees",
-        "default_value": "0",
-        "data_type": "float",
-        "description": ""
-    },
-    {
-        "name": "RL angle",
-        "key": "RLAngle_deg",
-        "editor": "QLineEdit",
-        "unit": "degrees",
-        "default_value": "0",
-        "data_type": "float",
-        "description": ""
-    },
-    {
-        "name": "AP angle",
-        "key": "APAngle_deg",
-        "editor": "QLineEdit",
-        "unit": "degrees",
-        "default_value": "0",
-        "data_type": "float",
-        "description": ""
-    },
-    {
-        "name": "Scan technique",
-        "key": "ScanTechnique",
-        "editor": "QComboBox",
-        "unit": "",
-        "default_value": ["SE", "GE"],
-        "description": "This is the type of scan that is performed. SE stands for spin echo and GE stands for gradient echo."
-    },
-    {
-        "name": "Echo time (TE)",
-        "key": "TE_ms",
-        "editor": "QLineEdit",
-        "unit": "milliseconds",
-        "default_value": "14",
-        "data_type": "float",
-        "description": "This is the time between the excitation pulse and the peak of the echo signal."
-    },
-    {
-        "name": "Repitition time (TR)",
-        "key": "TR_ms",
-        "editor": "QLineEdit",
-        "unit": "milliseconds",
-        "default_value": "864",
-        "data_type": "float",
-        "description": "This is the time between subsequent excitation pulses."
-    },
-    {
-        "name": "Inversion time (TI)",
-        "key": "TI_ms",
-        "editor": "QLineEdit",
-        "unit": "milliseconds",
-        "default_value": "0",
-        "data_type": "float",
-        "description": "This is the time between the inversion pulse and the excitation pulse."	
-    },    
-    { 
-        "name": "Flip angle",
-        "key": "FA_deg",
-        "editor": "QLineEdit",
-        "unit": "degrees",
-        "default_value": "90",
-        "data_type": "float",
-        "description": "This is the angle between the excitation pulse and the longitudinal axis of the magnetization vector."
-    }
+  {
+    "name": "Scan plane",
+    "key": "ScanPlane",
+    "editor": "QComboBox",
+    "unit": "",
+    "default_value": [
+      "Axial",
+      "Coronal",
+      "Sagittal"
+    ],
+    "description": "This is the plane in which the scan is performed."
+  },
+  {
+    "name": "Offcenter AP (P=+mm)",
+    "key": "OffCenterAP_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "Offcenter RL (L=+mm)",
+    "key": "OffCenterRL_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "Offcenter FH (H=+mm)",
+    "key": "OffCenterFH_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "FOV in phase encoding direction",
+    "key": "FOVPE_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "150",
+    "data_type": "float",
+    "description": "The phase encoding direction is generally the left to right direction of the acquired image. Therefore, this parameter defines the width of the image. In reality, the phase encoding and frequency encoding directions can be switched but for simplicity we assume for now that the phase encoding direction is the left to right direction."
+  },
+  {
+    "name": "FOV in frequency encoding direction",
+    "key": "FOVFE_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "160",
+    "data_type": "float",
+    "description": "The frequency encoding direction is generally the top to bottom direction of the acquired image. Therefore, this parameter defines the height of the image. In reality, the phase encoding and frequency encoding directions can be switched but for simplicity we assume for now that the frequency encoding direction is the top to bottom direction."
+  },
+  {
+    "name": "Slice thickness",
+    "key": "SliceThickness_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "1",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "Number of slices",
+    "key": "NSlices",
+    "editor": "QLineEdit",
+    "unit": "",
+    "default_value": "1",
+    "data_type": "int"
+  },
+  {
+    "name": "Slice gap",
+    "key": "SliceGap_mm",
+    "editor": "QLineEdit",
+    "unit": "millimeters",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "FH angle",
+    "key": "FHAngle_deg",
+    "editor": "QLineEdit",
+    "unit": "degrees",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "RL angle",
+    "key": "RLAngle_deg",
+    "editor": "QLineEdit",
+    "unit": "degrees",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "AP angle",
+    "key": "APAngle_deg",
+    "editor": "QLineEdit",
+    "unit": "degrees",
+    "default_value": "0",
+    "data_type": "float",
+    "description": ""
+  },
+  {
+    "name": "Scan technique",
+    "key": "ScanTechnique",
+    "editor": "QComboBox",
+    "unit": "",
+    "default_value": [
+      "SE",
+      "GE"
+    ],
+    "description": "This is the type of scan that is performed. SE stands for spin echo and GE stands for gradient echo."
+  },
+  {
+    "name": "Echo time (TE)",
+    "key": "TE_ms",
+    "editor": "QLineEdit",
+    "unit": "milliseconds",
+    "default_value": "14",
+    "data_type": "float",
+    "description": "This is the time between the excitation pulse and the peak of the echo signal."
+  },
+  {
+    "name": "Repitition time (TR)",
+    "key": "TR_ms",
+    "editor": "QLineEdit",
+    "unit": "milliseconds",
+    "default_value": "864",
+    "data_type": "float",
+    "description": "This is the time between subsequent excitation pulses."
+  },
+  {
+    "name": "Inversion time (TI)",
+    "key": "TI_ms",
+    "editor": "QLineEdit",
+    "unit": "milliseconds",
+    "default_value": "0",
+    "data_type": "float",
+    "description": "This is the time between the inversion pulse and the excitation pulse."
+  },
+  {
+    "name": "Flip angle",
+    "key": "FA_deg",
+    "editor": "QLineEdit",
+    "unit": "degrees",
+    "default_value": "90",
+    "data_type": "float",
+    "description": "This is the angle between the excitation pulse and the longitudinal axis of the magnetization vector."
+  }
 ]
 
 

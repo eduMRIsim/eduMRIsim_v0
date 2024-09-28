@@ -1,6 +1,8 @@
 import json
-from scipy.io import loadmat
+
 import numpy as np
+from scipy.io import loadmat
+
 
 def load_json(jsonFilePath):
         with open(jsonFilePath, 'r') as json_file:

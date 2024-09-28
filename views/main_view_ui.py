@@ -1,32 +1,24 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QRectF, QEvent, QSettings, QByteArray, QMetaType
-from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+import math
+from contextlib import contextmanager
+
+import numpy as np
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
+    QFont, QPolygonF, QPen
+from PyQt5.QtWidgets import (QComboBox, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QSizePolicy,
                              QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
                              QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
-    QFont, QPolygonF, QPen
-
-import numpy as np
-
-import math
-
-from keys import Keys
-
-from contextlib import contextmanager
 
 from controllers.settings_mgr import SettingsManager
-from views.UI_MainWindowState import IdleState
-from views.styled_widgets import SegmentedButtonFrame, SegmentedButton, PrimaryActionButton, SecondaryActionButton, \
-    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
-
-from simulator.scanlist import AcquiredSeries, ScanVolume
-
-from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
-    IdleState, MRIfortheBrainState
-
 from events import EventEnum
+from keys import Keys
+from simulator.scanlist import AcquiredSeries, ScanVolume
+from views.UI_MainWindowState import IdleState, BeingModifiedState, ReadyToScanState, ScanCompleteState
+from views.styled_widgets import PrimaryActionButton, SecondaryActionButton, \
+    TertiaryActionButton, DestructiveActionButton, InfoFrame, HeaderLabel
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
 naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. 
@@ -67,7 +59,7 @@ class Ui_MainWindow(QMainWindow):
         self._createMainWindow()
 
         self.setCentralWidget(self.centralWidget)
-        self.setWindowTitle("eduMRIsim_V0_UI")
+        self.setWindowTitle("eduMRIsim")
 
         self._state = IdleState()
         self.update_UI()
@@ -285,6 +277,12 @@ class Ui_MainWindow(QMainWindow):
 
         if state_class:
             self.state = state_class()
+        elif state_name == "ScanCompleteState":
+            self.state = ScanCompleteState()
+        elif state_name == "BeingModifiedState":
+            self.state = BeingModifiedState()
+        elif state_name == "ReadyToScanState":
+            self.state = ReadyToScanState()
         else:
             print(f"Warning: State '{state_name}' not found. Defaulting to IdleState.")
             self.state = IdleState()
@@ -735,12 +733,12 @@ class ParameterFormLayout(QVBoxLayout):
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
 
-
     def __init__(self, parent: QGraphicsPixmapItem, viewer: 'AcquiredSeriesViewer2D'):
         super().__init__(parent)
-        self.setPen(Qt.red)
+        self.setPen(Qt.yellow)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setAcceptHoverEvents(True)  
         self.observers = []
         self.previous_position_in_pixmap_coords = None
         self.slice_lines = []
@@ -762,7 +760,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.rotation_handles = []
         for i in range(8):
             handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
-            handle.setBrush(Qt.red)
+            handle.setBrush(Qt.yellow)
             handle.setFlag(QGraphicsItem.ItemIsMovable, False)
             handle.setAcceptedMouseButtons(Qt.LeftButton)
             handle.setAcceptHoverEvents(True)
@@ -855,7 +853,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
-        self.update_slice_lines()
+        # self.update_slice_lines()
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
@@ -869,15 +867,35 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
+        self.setCursor(Qt.SizeAllCursor)
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(),
                                                     self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
         direction_vec_in_lps = self.viewer.handle_calculate_direction_vector_from_move_event(direction_vector_in_pixmap_coords)
         # apply volume updates also for current scan planning window polygon
-        self.viewer.scan_volume.translate_scan_volume(direction_vec_in_lps)
         self.viewer._update_scan_volume_display()
-        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_lps_coords = direction_vec_in_lps)
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED, direction_vector_in_lps_coords=direction_vec_in_lps)
 
+    # on press show "size all" cursor
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mousePressEvent(event)
+        self.setCursor(Qt.SizeAllCursor)
+        
+    # on release show "pointing hand" cursor
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
+        super().mouseReleaseEvent(event)
+        self.setCursor(Qt.PointingHandCursor)
+
+    # on hover show "pointing hand" cursor
+    def hoverEnterEvent(self, event):
+        super().hoverEnterEvent(event)
+        self.setCursor(Qt.PointingHandCursor)
+
+    # on leave change cursor to default
+    def hoverLeaveEvent(self, event):
+        super().hoverLeaveEvent(event)
+        self.unsetCursor()
+    
     # Detecting mouse for rotation. Uses scene events since other method did not work
     def handle_rotation_handle_press(self, event: QGraphicsSceneMouseEvent, handle):
         '''Initiate rotation when the rotation handle is pressed'''
@@ -958,11 +976,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def set_scan_volume(self, scan_volume):
         self.scan_volume = scan_volume
-        self.update_slice_lines()
+        # self.update_slice_lines()
 
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
-        self.update_slice_lines()
+        # self.update_slice_lines()
 
     def update_slice_lines(self):
         # Remove existing slice lines
@@ -1006,7 +1024,7 @@ class MiddleLineItem(QGraphicsPolygonItem):
     '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
     def __init__(self, parent: QGraphicsPixmapItem):
         super().__init__(parent)
-        self.setPen(Qt.yellow)
+        self.setPen(Qt.red)
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         super().setPolygon(polygon_in_polygon_coords)
@@ -1019,6 +1037,23 @@ class MiddleLineItem(QGraphicsPolygonItem):
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
 
+
+class StacksItem(QGraphicsPolygonItem):
+    '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
+    def __init__(self, parent: QGraphicsPixmapItem):
+        super().__init__(parent)
+        self.setPen(Qt.yellow)
+
+    def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
+        super().setPolygon(polygon_in_polygon_coords)
+        self.previous_position_in_pixmap_coords = self.pos()
+
+    def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
+        polygon_in_polygon_coords = QPolygonF()
+        for pt in polygon_in_pixmap_coords:
+            pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
+            polygon_in_polygon_coords.append(pt_in_polygon_coords)
+        self.setPolygon(polygon_in_polygon_coords)
 
 
 class AcquiredSeriesViewer2D(QGraphicsView):
@@ -1065,6 +1100,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
                                                      self)  # Create a custom polygon item that is a child of the pixmap item
 
         self.middle_lines_display = MiddleLineItem(self.pixmap_item)  # adds middle lines of current scan volume
+        # self.stacks_display = StacksItem(self.pixmap_item)
+        self.stacks_displays = []
 
         self.scan_volume_display.add_observer(self)
 
@@ -1244,13 +1281,25 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def _update_scan_volume_display(self):
         '''Updates the intersection polygon between the scan volume and the displayed image.'''
         if self.displayed_image is not None and self.scan_volume is not None:
-            (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords) = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
+            (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords) = self.scan_volume.compute_intersection_with_acquired_image(self.displayed_image)
             self.scan_volume_display.setPolygonFromPixmapCoords(intersection_volume_edges_in_pixmap_coords)
             self.middle_lines_display.setPolygonFromPixmapCoords(intersection_middle_edges_in_pixamp_coords)
+            for stack in self.stacks_displays:
+                stack.setPolygon(QPolygonF())
+            self.stacks_displays = []
+            for slice_edges in intersection_slice_edges_in_pixamp_coords:
+                stack_item = StacksItem(self.pixmap_item)
+                stack_item.setPolygonFromPixmapCoords(slice_edges)
+                self.stacks_displays.append(stack_item)
+                # self.stacks_display.setPolygonFromPixmapCoords(intersection_slice_edges_in_pixamp_coords)
         else: 
             self.scan_volume_display.setPolygon(QPolygonF())
             self.middle_lines_display.setPolygon(QPolygonF())
-        self.scan_volume_display.update_slice_lines()
+            # self.stacks_display.setPolygon(QPolygonF())
+            for stack in self.stacks_displays:
+                stack.setPolygon(QPolygonF())
+            self.stacks_displays = []
+        # self.scan_volume_display.update_slice_lines()
 
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
