@@ -1,3 +1,4 @@
+import numpy as np
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
 from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
                              QGridLayout, QHBoxLayout, QLabel,

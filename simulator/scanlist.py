@@ -1,6 +1,9 @@
 from enum import Enum, auto
-from events import EventEnum
+
 import numpy as np
+
+from events import EventEnum
+
 
 class ImageGeometry:
     '''This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates.'''
@@ -90,7 +93,6 @@ class Scanlist:
         self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
-        print("Added newww")
         new_scanlist_element = ScanlistElement(name, scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
@@ -312,6 +314,7 @@ class ScanVolume:
         self.RLAngle_rad = 0.0
         self.APAngle_rad = 0.0
         self.FHAngle_rad = 0.0
+        self.Rotation_lock = 'None'
         self.scanPlane = 'None'
         self.observers = []
 
@@ -330,6 +333,7 @@ class ScanVolume:
         self.slice_thickness_mm = float(scan_parameters['SliceThickness_mm'])
         self.extentX_mm = float(scan_parameters['FOVPE_mm'])
         self.extentY_mm = float(scan_parameters['FOVFE_mm'])
+        self.Rotation_lock = scan_parameters.get('Rotation_lock', self.Rotation_lock)
         if scan_parameters['ScanPlane'] == 'Axial':
             self.scanPlane = 'Axial'
             self.axisX_LPS = np.array([1, 0, 0])
@@ -422,9 +426,13 @@ class ScanVolume:
     def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
         # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
         # list the edges of the scan volume in scan volume coordinates. For each edge, find the intersection points (if any) with the 2D acquired image. Also find middle line of scan and intersection with the acquired image.
-        edges, middle_lines = self._list_edges_of_scan_volume()
+        edges, middle_lines, slice_collection = self._list_edges_of_scan_volume()
 
-        return (self.calculate_from_edges_intersection_points_pixamp(edges, acquired_image), self.calculate_from_edges_intersection_points_pixamp(middle_lines, acquired_image))
+        intersections_points_slices = []
+        for slice_edges in slice_collection:
+            intersections_points_slices.append(self.calculate_from_edges_intersection_points_pixamp(slice_edges, acquired_image))
+
+        return (self.calculate_from_edges_intersection_points_pixamp(edges, acquired_image), self.calculate_from_edges_intersection_points_pixamp(middle_lines, acquired_image), intersections_points_slices)
 
     def _get_geometry_parameters(self) -> dict:
         geometry_parameters = {}
@@ -457,17 +465,21 @@ class ScanVolume:
             return (angle_rad + np.pi) % (2 * np.pi) - np.pi
         # Update the rotation angle for the specified axis
         print(self.scanPlane)
-        if rotation_axis == 'RL':
+        print(self.Rotation_lock)   
+        if rotation_axis == 'RL' and self.Rotation_lock in ('None', 'RL'):
             self.RLAngle_rad += rotation_angle_rad
             self.RLAngle_rad = normalize_angle_rad(self.RLAngle_rad)
-        elif rotation_axis == 'AP':
+        elif rotation_axis == 'AP' and self.Rotation_lock in ('None', 'AP'):
             self.APAngle_rad += rotation_angle_rad
             self.APAngle_rad = normalize_angle_rad(self.APAngle_rad)
-        elif rotation_axis == 'FH':
+        elif rotation_axis == 'FH' and self.Rotation_lock in ('None', 'FH'):
             self.FHAngle_rad += rotation_angle_rad
             self.FHAngle_rad = normalize_angle_rad(self.FHAngle_rad)
         else:
-            raise ValueError(f"Unknown rotation axis: {rotation_axis}")
+            if rotation_axis in ('RL', 'AP', 'FH'):
+                print("Attempted rotation locked by Rotation Lock")
+            else:
+                raise ValueError(f"Unknown rotation axis: {rotation_axis}")
 
         # Update the axis vectors based on the new rotation angles
         self.update_axis_vectors()
@@ -577,19 +589,57 @@ class ScanVolume:
             (front_bottom_left, back_bottom_left)
         ]
 
-        front_left = (front_top_left - front_bottom_left) / 2 + front_bottom_left
-        front_right = (front_top_right - front_bottom_right) / 2 + front_bottom_right
-        back_left = (back_top_left - back_bottom_left) / 2 + back_bottom_left
-        back_right = (back_top_right - back_bottom_right) / 2 + back_bottom_right
+        top_left = (back_top_left - front_top_left) / 2 + front_top_left
+        top_right = (back_top_right - front_top_right) / 2 + front_top_right
+        bottom_left = (back_bottom_left - front_bottom_left) / 2 + front_bottom_left
+        bottom_right = (back_bottom_right - front_bottom_right) / 2 + front_bottom_right
+
+        # dx = front_top_left - front_bottom_left
+        # dy = P2.y - P1.y
+        # dz = P2.z - P1.z
+        # Len = sqrt(dx*dx+dy*dy+dz*dz)
+        # dx /= Len 
+        # dy /= Len 
+        # dz /= Len
+        v1 = back_top_left - front_top_left
+        v2 = back_top_right - front_top_right
+        v3 = back_bottom_left - front_bottom_left
+        v4 = back_bottom_right - front_bottom_right
+        v_hat1 = v1 / (v1**2).sum()**0.5
+        v_hat2 = v2 / (v2**2).sum()**0.5
+        v_hat3 = v3 / (v3**2).sum()**0.5
+        v_hat4 = v4 / (v4**2).sum()**0.5
 
         middle_lines = [
-            (front_left, front_right),
-            (front_right, back_right),
-            (back_right, back_left),
-            (back_left, front_left)
+            (top_left, top_right),
+            (top_right, bottom_right),
+            (bottom_right, bottom_left),
+            (bottom_left, top_left)
         ]
 
-        return edges, middle_lines 
+        test_distance = 10
+        point_1 = front_bottom_left + test_distance*v_hat1
+        point_2 = front_bottom_right + test_distance*v_hat2
+        point_3 = back_bottom_right + test_distance*v_hat3
+        point_4 = back_bottom_left + test_distance*v_hat4
+
+        slice_center_distances = []
+        for i in range(self.N_slices):
+            center = (self.slice_thickness_mm / 2) + i * (self.slice_thickness_mm + self.slice_gap_mm)
+            slice_center_distances.append(center)
+
+        slices_collection = []
+
+        for i in range(len(slice_center_distances)):
+            disatance_from_0 = slice_center_distances[i]
+            point_1 = front_top_left + disatance_from_0*v_hat1
+            point_2 = front_top_right + disatance_from_0*v_hat2
+            point_3 = front_bottom_left + disatance_from_0*v_hat3
+            point_4 = front_bottom_right + disatance_from_0*v_hat4
+
+            slices_collection.append(((point_1, point_2), (point_2, point_4), (point_4, point_3), (point_3, point_1)))
+
+        return edges, middle_lines, slices_collection
 
     def _line_plane_intersection(self, origin_plane, axisX_plane, axisY_plane, start_pt_line, end_pt_line) -> list[np.array]:
         
@@ -653,7 +703,7 @@ class ScanVolume:
 
     # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):
-         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane}
+         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane,  'Rotation_lock': self.Rotation_lock}
 
     def calculate_slice_positions(self):
         slice_positions = []

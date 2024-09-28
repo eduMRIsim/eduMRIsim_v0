@@ -4,7 +4,8 @@ from abc import ABC
 class UI_MainWindowState(ABC):
     def update_UI(self, context) -> None:
         MRIfortheBrainState().update_UI(
-            context)  # all states will call this method first to implement the UI configuration for the MRI for the brain course. 
+            context
+        )  # all states will call this method first to implement the UI configuration for the MRI for the brain course. 
                       # This hides buttons whose functionalities have not been implemented yet.
 
 
