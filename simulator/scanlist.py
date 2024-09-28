@@ -312,6 +312,7 @@ class ScanVolume:
         self.RLAngle_rad = 0.0
         self.APAngle_rad = 0.0
         self.FHAngle_rad = 0.0
+        self.Rotation_lock = 'None'
         self.scanPlane = 'None'
         self.observers = []
 
@@ -330,6 +331,7 @@ class ScanVolume:
         self.slice_thickness_mm = float(scan_parameters['SliceThickness_mm'])
         self.extentX_mm = float(scan_parameters['FOVPE_mm'])
         self.extentY_mm = float(scan_parameters['FOVFE_mm'])
+        self.Rotation_lock = scan_parameters.get('Rotation_lock', self.Rotation_lock)
         if scan_parameters['ScanPlane'] == 'Axial':
             self.scanPlane = 'Axial'
             self.axisX_LPS = np.array([1, 0, 0])
@@ -457,17 +459,21 @@ class ScanVolume:
             return (angle_rad + np.pi) % (2 * np.pi) - np.pi
         # Update the rotation angle for the specified axis
         print(self.scanPlane)
-        if rotation_axis == 'RL':
+        print(self.Rotation_lock)   
+        if rotation_axis == 'RL' and self.Rotation_lock in ('None', 'RL'):
             self.RLAngle_rad += rotation_angle_rad
             self.RLAngle_rad = normalize_angle_rad(self.RLAngle_rad)
-        elif rotation_axis == 'AP':
+        elif rotation_axis == 'AP' and self.Rotation_lock in ('None', 'AP'):
             self.APAngle_rad += rotation_angle_rad
             self.APAngle_rad = normalize_angle_rad(self.APAngle_rad)
-        elif rotation_axis == 'FH':
+        elif rotation_axis == 'FH' and self.Rotation_lock in ('None', 'FH'):
             self.FHAngle_rad += rotation_angle_rad
             self.FHAngle_rad = normalize_angle_rad(self.FHAngle_rad)
         else:
-            raise ValueError(f"Unknown rotation axis: {rotation_axis}")
+            if rotation_axis in ('RL', 'AP', 'FH'):
+                print("Attempted rotation locked by Rotation Lock")
+            else:
+                raise ValueError(f"Unknown rotation axis: {rotation_axis}")
 
         # Update the axis vectors based on the new rotation angles
         self.update_axis_vectors()
@@ -653,7 +659,7 @@ class ScanVolume:
 
     # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):
-         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane}
+         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane,  'Rotation_lock': self.Rotation_lock}
 
     def calculate_slice_positions(self):
         slice_positions = []

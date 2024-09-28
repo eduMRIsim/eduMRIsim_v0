@@ -80,6 +80,14 @@
         "description": ""
     },
     {
+        "name": "Rotation Lock",
+        "key": "Rotation_lock",
+        "editor": "QComboBox",
+        "unit": "",
+        "default_value": ["None", "FH", "RL", "AP"],
+        "description": "This limits the rotation axes to allow for one specific axis only. To be used to disable confusing rotations"
+    },
+    {
         "name": "FH angle",
         "key": "FHAngle_deg",
         "editor": "QLineEdit",
