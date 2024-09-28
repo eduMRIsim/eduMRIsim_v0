@@ -3,7 +3,6 @@ from PyQt5.QtCore import QSettings
 from controllers.settings_mgr import SettingsManager
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.load_examination_dialog_ui import LoadExaminationDialog
-from views.view_model_dialog_ui import gridViewingWindowLayout
 from views.qmodels import DictionaryModel
 import views.UI_MainWindowState as UI_state 
 
@@ -172,6 +171,15 @@ class MainController:
         self.restore_complete_scanlist_items()
         self.ui.state = UI_state.ViewState()
         self.ui.update_UI()
+        # handle drops
+        self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+
+    def handle_dropped_cells(self, row: int, col: int, selected_index: int):
+        grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col) 
+        scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
+        acquired_series = scanlist_element.acquired_data
+        grid_cell.setAcquiredSeries(acquired_series)  
+        self.update_scanlistListWidget(self.scanner.scanlist)
   
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED

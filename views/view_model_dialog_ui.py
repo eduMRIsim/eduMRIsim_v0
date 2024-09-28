@@ -1,33 +1,13 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
-from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget, QListView
-
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
+from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+                             QGridLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent, QPainter, QColor, QDragEnterEvent
 import numpy as np
-
-class gridViewingWindowLayout(QFrame):
-    def __init__(self):
-        super().__init__()
-
-        rightLayout = QVBoxLayout()
-           
-        emptyCellStyle = """
-        background-color: black;
-        border: 1px solid white;
-        """
-   
-        # creates default 2x2 grid
-        right_layout = QGridLayout()
-        for i in range(2):
-            for j in range(2):
-                empty_widget = QWidget()
-                #empty_widget = DropWidget()
-                empty_widget.setStyleSheet(emptyCellStyle)
-                right_layout.addWidget(empty_widget, i, j)
-
-        rightLayout.addLayout(right_layout)
-        self.setLayout(rightLayout)
-
-
+from simulator.scanlist import AcquiredSeries
 
 
 """

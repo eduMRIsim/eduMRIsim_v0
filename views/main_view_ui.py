@@ -25,7 +25,6 @@ from simulator.scanlist import AcquiredSeries, ScanVolume
 
 from views.UI_MainWindowState import ReadyToScanState, BeingModifiedState, InvalidParametersState, ScanCompleteState, \
     IdleState, MRIfortheBrainState
-from views.view_model_dialog_ui import gridViewingWindowLayout
 from events import EventEnum
 
 '''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
@@ -190,7 +189,11 @@ class Ui_MainWindow(QMainWindow):
     @property
     def gridViewingWindowLayout(self):
         return self.gridViewingWindowLayout
-
+    
+    @property 
+    def GridCell(self):
+        return self.GridCell
+    
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch=1)
@@ -1315,6 +1318,137 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
         source_widget = event.source()
         selected_index = source_widget.selectedIndexes()[0].row()
         self.dropEventSignal.emit(selected_index)
+        event.accept()
+
+
+class gridViewingWindowLayout(QFrame):
+    def __init__(self):
+        super().__init__()
+
+        rightLayout = QVBoxLayout()
+
+        # store all GridCell cells 
+        # useful for handling the drops
+        self.grid_cells = []
+
+        # creates default 2x2 grid
+        right_layout = QGridLayout()
+        for i in range(2):
+            rows = [] # list of elements in each row
+            for j in range(2):
+                empty_widget = GridCell(i,j)
+                rows.append(empty_widget)
+                right_layout.addWidget(empty_widget, i, j)
+            self.grid_cells.append(rows)
+
+        rightLayout.addLayout(right_layout)
+        self.setLayout(rightLayout)
+
+    def connect_drop_signals(self, drop_handler):
+        for i in range(2):
+            for j in range(2):
+                grid_cell = self.grid_cells[i][j]
+                grid_cell.dropEventSignal.connect(drop_handler)
+
+    def get_grid_cell(self, i: int, j: int) -> "GridCell":
+        return self.grid_cells[i][j]
+
+
+class GridCell(QGraphicsView):
+    dropEventSignal = pyqtSignal(int, int, int)
+    def __init__(self, row: int, col: int):
+        super().__init__()
+
+        self.row = row  # row index 
+        self.col = col  # col index
+
+        # pixmap graphics
+        self.scene = QGraphicsScene(self)
+        self.pixmap_item = QGraphicsPixmapItem()
+        self.scene.addItem(self.pixmap_item)
+        self.setScene(self.scene)
+        self.setRenderHint(QPainter.Antialiasing, True)
+
+        # Set the background color to black
+        self.setBackgroundBrush(QColor(0, 0, 0))
+
+        self.displayed_image = None
+        self.acquired_series = None
+        self.array = None
+
+        self.setAcceptDrops(True)
+
+
+    def _displayArray(self):
+        width, height = 0, 0
+        if self.array is not None:
+
+            # Normalize the slice values for display
+            array_norm = (self.array[:, :] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
+            array_8bit = (array_norm * 255).astype(np.uint8)
+
+            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
+            image = np.ascontiguousarray(np.array(array_8bit))
+            height, width = image.shape
+            qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+
+            # Create a QPixmap - a pixmap which can be displayed in a GUI
+            pixmap = QPixmap.fromImage(qimage)
+            self.pixmap_item.setPixmap(pixmap)
+
+        else:
+            # Set a black image when self.array is None
+            black_image = QImage(1, 1, QImage.Format_Grayscale8)
+            black_image.fill(Qt.black)
+            pixmap = QPixmap.fromImage(black_image)
+            self.pixmap_item.setPixmap(pixmap)
+
+        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
+        self.scene.setSceneRect(0, 0, width, height)
+        # The centerOn method is used to center the view on a particular point within the scene.
+        self.centerOn(width / 2, height / 2)
+
+    def setAcquiredSeries(self, acquired_series: AcquiredSeries):
+        if acquired_series is not None:
+            self.acquired_series = acquired_series
+            self.displayed_image_index = 0
+
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+        else:
+            self.acquired_series = None
+            self.setDisplayedImage(None)
+
+    def set_displayed_image(self, displayed_image):
+        self.displayed_image = displayed_image
+
+    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
+        self.displayed_image = image
+        if image is not None:
+            self.array = image.image_data
+            self.set_displayed_image(image)
+        else:
+            self.array = None
+
+        self._displayArray()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        source_widget = event.source()
+        selected_index = source_widget.selectedIndexes()[0].row()
+        self.dropEventSignal.emit(self.row, self.col, selected_index)
+        event.accept()
+
+    def dragEnterEvent(self, event):
+        source_widget = event.source()
+        if isinstance(source_widget, ScanlistListWidget) and len(source_widget.selectedIndexes()) == 1:
+            event.accept()
+        else:
+            event.ignore()
+        event.accept()
+
+    def dragMoveEvent(self, event):
         event.accept()
 
 
