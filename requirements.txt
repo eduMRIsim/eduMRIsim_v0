@@ -1,4 +1,7 @@
-﻿
-numpy
-PyQt5
-
+numpy==2.1.1
+Pillow==10.4.0
+PyQt5==5.15.11
+PyQt5_sip==12.15.0
+scipy==1.14.1
+pydicom==3.0.1
+nibabel==5.2.1
