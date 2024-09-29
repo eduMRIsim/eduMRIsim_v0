@@ -1,6 +1,5 @@
 from datetime import datetime
 
-#from views.view_model_dialog_ui import ViewModelDialog
 import numpy as np
 from PyQt5.QtWidgets import QListWidgetItem, QApplication, QFileDialog
 from PyQt5.QtGui import QIcon
@@ -16,7 +15,7 @@ from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
-from views.view_model_dialog_ui import ViewWindow
+from views.view_model_dialog_ui import NoItemsToViewDialog
 from views.main_view_ui import Ui_MainWindow
 from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
 
@@ -25,10 +24,13 @@ class MainController:
     '''
     The MainController class defines what happens when the user interacts with the UI. It also defines in its update() method what happens when the scanner notifies the controller of changes, e.g., when a scan item is added to the scanlist, when the active scan item is changed, when the status of a scan item is changed, when the parameters of a scan item are changed, etc.'''
 
+
     def __init__(self, scanner: Scanner, ui: Ui_MainWindow) -> None:
         self.scanner: Scanner = scanner
         self.ui: Ui_MainWindow = ui
+        self.ui_signals()
 
+    def ui_signals(self):
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
 
@@ -149,7 +151,39 @@ class MainController:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
         progress = scanlist.get_progress()
-        self.ui.scanProgressBar.setValue(int(progress * 100))
+        self.ui.scanProgressBar.setValue(int(progress * 100))   
+
+    def save_complete_scanlist_items(self, scanlist):
+        # saves scanlist elements that were scanned 
+        complete_items = []
+        for item in scanlist.scanlist_elements:
+            if item.scan_item.status == ScanItemStatusEnum.COMPLETE:
+                complete_items.append({
+                    'name': item.name,
+                    'status': 'COMPLETE'
+                })
+
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+        settings.setValue("completeItems", complete_items)
+        settings.endGroup()
+
+        return complete_items
+    
+    def restore_complete_scanlist_items(self):
+        # restores complete scanlist elements
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+
+        complete_items = settings.value("completeItems", [])
+        self.ui.scanlistListWidget.clear()
+
+        for item_data in complete_items:
+            list_item = QListWidgetItem(item_data['name'])
+            list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))  # COMPLETE icon
+            self.ui.scanlistListWidget.addItem(list_item)
+
+        settings.endGroup()
 
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
@@ -157,13 +191,40 @@ class MainController:
 
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+             
+    def handle_viewModelButton_clicked(self): 
+        rightlayout = self.ui.layout
+        self.ui.clearLayout(rightlayout)
+        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
+        if not scanlist:
+            dialog = NoItemsToViewDialog()
+            dialog.show_dialog()
+            self.ui._createMainWindow()
+            self.ui.state = UI_state.ReadyToScanAgainState()
+            self.ui_signals()
+        else:
+            self.ui._createViewWindow()
+            self.restore_complete_scanlist_items()
+            self.ui.state = UI_state.ViewState()
+            self.ui.update_UI()
+            # handle drops
+            self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+    
+    def handle_scanningButton_clicked(self): 
+        rightlayout = self.ui.layout
+        self.ui.clearLayout(rightlayout)
+        self.ui._createMainWindow()
+        self.ui.state = UI_state.ReadyToScanAgainState()
+        self.ui_signals()
 
-    def handle_viewModelButton_clicked(self):
-        #view_model_dialog = ViewModelDialog(self.scanner.model)
-        #view_model_dialog.exec()
-        view_model_window = ViewWindow()
-        view_model_window.exec_()
 
+    def handle_dropped_cells(self, row: int, col: int, selected_index: int):
+        grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col) 
+        scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
+        acquired_series = scanlist_element.acquired_data
+        grid_cell.setAcquiredSeries(acquired_series)  
+        self.update_scanlistListWidget(self.scanner.scanlist)
+  
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 
@@ -242,7 +303,7 @@ class MainController:
 
         if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.ui.editingStackedLayout.setCurrentIndex(0)  # Switch to scan parameter editor view
+            #self.ui.editingStackedLayout.setCurrentIndex(0)  # Switch to scan parameter editor view
             self.ui.scannedImageFrame.setAcquiredSeries(
                 self.scanner.active_scanlist_element.acquired_data)  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
             current_list_item = self.ui.scanlistListWidget.item(self.scanner.scanlist.active_idx)

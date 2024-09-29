@@ -5,7 +5,8 @@ class UI_MainWindowState(ABC):
     def update_UI(self, context) -> None:
         MRIfortheBrainState().update_UI(
             context
-        )  # all states will call this method first to implement the UI configuration for the MRI for the brain course. This hides buttons whose functionalities have not been implemented yet.
+        )  # all states will call this method first to implement the UI configuration for the MRI for the brain course. 
+                      # This hides buttons whose functionalities have not been implemented yet.
 
 
 class ExamState(UI_MainWindowState):
@@ -26,6 +27,26 @@ class ExamState(UI_MainWindowState):
         context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
+        
+class ReadyToScanAgainState(ExamState):
+    name = "ReadyToScanState"
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.examinationInfoStackedLayout.setCurrentIndex(1)
+        context.scanlistListWidget.setVisible(True)
+        context.scanlistListWidget.setEnabled(True)
+        context.addScanItemButton.setVisible(True)
+        context.addScanItemButton.setEnabled(True)
+        context.startScanButton.setEnabled(True)
+        context.stopScanButton.setEnabled(True)
+        context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersResetButton.setEnabled(True)
+        context.scanProgressBar.setValue(0)
+        context.scannedImageFrame.setAcquiredSeries(None)
+        context.scanPlanningWindow1.setAcquiredSeries(None)
+        context.scanPlanningWindow2.setAcquiredSeries(None)
+        context.scanPlanningWindow3.setAcquiredSeries(None)
 
 
 class ReadyToScanState(ExamState):
@@ -72,6 +93,22 @@ class ScanCompleteState(ExamState):
         super().update_UI(context)
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(True)
 
+class ViewState(UI_MainWindowState):
+    name = "ViewState"
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.examinationInfoStackedLayout.setCurrentIndex(0)
+        context.scanningModeButton.setVisible(False)
+        context.viewingModeButton.setVisible(False)
+        context.scanningModeButton.setEnabled(False)
+        context.viewingModeButton.setEnabled(False)
+        context.scanlistListWidget.setVisible(True)
+        context.scanlistListWidget.setEnabled(True)
+        context.addScanItemButton.setVisible(False)
+        context.addScanItemButton.setEnabled(False)
+        context.startScanButton.setEnabled(False)
+        context.stopScanButton.setEnabled(False)
 
 class IdleState(UI_MainWindowState):
     name = "IdleState"

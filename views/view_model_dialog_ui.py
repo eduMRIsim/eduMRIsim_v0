@@ -1,102 +1,21 @@
-import numpy as np
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent
-from PyQt5.QtWidgets import QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, \
-    QFrame, QWidget, QListView
-
-from views.main_view_ui import ScanlistInfoFrame, PrimaryActionButton, ScanlistListWidget, AcquiredSeriesViewer2D, \
-    DropAcquiredSeriesViewer2D, ExamCardTab
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent, QPainter, QColor, QDragEnterEvent
+import numpy as np
+from simulator.scanlist import AcquiredSeries
 
 
-#from views.main_view_ui import ImageLabel
-#from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
-
-class ViewWindow(QDialog):
+class NoItemsToViewDialog(QMessageBox):
     def __init__(self):
         super().__init__()
-
+        self.setIcon(QMessageBox.Information)
         self.setWindowTitle("Viewing Mode")
+        self.setText("No items to view.")
+        self.setStandardButtons(QMessageBox.Ok)
 
-        self.setGeometry(800, 300, 800, 600)
-        #self.showMaximized()
+    def show_dialog(self):
+        self.exec_()
 
-        # initialize horizontal layout
-        main_layout = QHBoxLayout()
-
-        # vertical layout for the left side
-        left_layout = QVBoxLayout()
-
-        #planning view button
-        self.Button = QPushButton("Planning View",self)
-        left_layout.addWidget(self.Button, stretch=2)
-        self.Button.clicked.connect(self.exitViewingMode)
-
-        #example data for the list
-        test_data = ["Item 1", "Item 2", "Item 3"]
-        self.model = QStringListModel(test_data)
-
-        #list of acquired images
-        left_layout.addWidget(QLabel("Acquired Images"))
-        self._acquiredlistView = AcquiredList()
-        left_layout.addWidget(self._acquiredlistView, stretch=2)
-
-        #populate list with the data
-        self.acquiredlistView.acquiredlistView.setModel(self.model)
-
-        # widget for the left side
-        left_widget = QWidget()
-        left_widget.setLayout(left_layout)
-
-        #
-        emptyCellStyle = """
-        background-color: black;
-        border: 1px solid white;
-        """
-
-        # creates default 2x2 grid
-        right_layout = QGridLayout()
-        for i in range(2):
-            for j in range(2):
-                empty_widget = QWidget()
-                #empty_widget = DropWidget()
-                empty_widget.setStyleSheet(emptyCellStyle)
-                right_layout.addWidget(empty_widget, i, j)
-
-        # widget for the right side
-        right_widget = QWidget()
-        right_widget.setLayout(right_layout)
-
-        # combine left and right into the horizontal layout
-        main_layout.addWidget(left_widget, stretch=1)
-        main_layout.addWidget(right_widget, stretch=3)
-
-        self.setLayout(main_layout)
-
-    def exitViewingMode(self):
-        QDialog.close(self)
-
-    @property
-    def acquiredlistView(self):
-        return self._acquiredlistView
-
-class AcquiredList(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self._acquiredlistView = QListView()
-        self._acquiredlistView.setDragDropMode(QListView.DragOnly)
-        self._acquiredlistView.setSelectionMode(QListView.SingleSelection)
-
-        def dragMoveEvent(self, e: QDragMoveEvent) -> None:
-            e.accept()
-
-        #self._acquiredlistView.setEditTriggers(QListView.NoEditTriggers) #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
-        self.layout.addWidget(self._acquiredlistView)
-
-    @property
-    def acquiredlistView(self):
-        return self._acquiredlistView
 
 """
 class ModelViewLabel(ImageLabel):
