@@ -1,3 +1,12 @@
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QEvent
+from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+                             QGridLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
+                             QGraphicsEllipseItem, QApplication)
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
+
 import math
 from contextlib import contextmanager
 
@@ -29,7 +38,6 @@ confusing. I might change the names in the future. For the SEP project feel free
 most convenient when adding new PyQt related code.'''
 
 
-'''Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. However, I've noticed that I haven't been fully consistent with this so I realise some of the naming might be confusing. I might change the names in the future. For the SEP project feel free to use whichever convention you find most convenient when adding new PyQt related code.'''
 
 @contextmanager
 def block_signals(widgets):
@@ -729,8 +737,6 @@ class ParameterFormLayout(QVBoxLayout):
 
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
-
-
     def __init__(self, parent: QGraphicsPixmapItem, viewer: 'AcquiredSeriesViewer2D'):
         super().__init__(parent)
         self.setPen(Qt.red)
@@ -977,7 +983,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                 handle.setVisible(False)
             self.scale_handle_offsets = []
             return
-
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
 
@@ -1015,7 +1020,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
@@ -1255,7 +1260,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         elif event.type() == QEvent.GraphicsSceneMouseRelease:
             if self.scan_volume_display and self.scan_volume_display.is_rotating:
                 self.scan_volume_display.handle_scene_mouse_release(event)
-                return True
             if self.scan_volume_display is not None and self.scan_volume_display.is_being_scaled:
                 self.scan_volume_display.scale_handle_release_event_handler()
                 return True
@@ -1673,7 +1677,7 @@ class ImageLabel(QGraphicsView):
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, window_width, window_level):
         for observer in self.observers:

@@ -70,7 +70,7 @@ class MainController:
         self.model_data = load_json(jsonFilePath)
         model_names = list(self.model_data.keys())
         self.populate_modelComboBox(model_names)
-        self.new_examination_dialog_ui.exec()    
+        self.new_examination_dialog_ui.exec()
 
     def populate_modelComboBox(self, list):
         self.new_examination_dialog_ui.modelComboBox.clear()

@@ -14,6 +14,7 @@ from views.main_view_ui import Ui_MainWindow
 
 class App(QApplication):
     '''Main application class.'''
+
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
 
@@ -22,12 +23,17 @@ class App(QApplication):
 
         # Setup UI
         self.main_view = Ui_MainWindow(self.scanner)
+
         self.setup_scan_parameter_form()
         self.main_view.update_UI()
         self.main_view.show()
 
         # Create a MainController object. The MainController object is responsible for connecting the UI with the scanner functionalities.
-        self.main_controller = MainController(self.scanner, self.main_view) 
+        self.main_controller = MainController(self.scanner, self.main_view)
+
+        # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
+        self.settings_manager = SettingsManager(self.scanner, self.main_controller, self.main_view, "settings.ini")
+        self.settings_manager.setup_settings(None)
 
         # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
         self.settings_manager = SettingsManager(self.scanner, self.main_controller, self.main_view, "settings.ini")
@@ -46,11 +52,12 @@ def main():
     app = App(sys.argv)
 
     # Set the default font for the application
-    default_font =  QFont("Segoe UI", 11)
+    default_font = QFont("Segoe UI", 11)
     default_font.setWeight(55)
     app.setFont(default_font)
 
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()

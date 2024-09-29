@@ -1,5 +1,6 @@
 from abc import ABC
 
+
 class UI_MainWindowState(ABC):
     def update_UI(self, context) -> None:
         MRIfortheBrainState().update_UI(
@@ -9,6 +10,7 @@ class UI_MainWindowState(ABC):
 
 class ExamState(UI_MainWindowState):
     name = "ExamState"
+
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.scanningModeButton.setEnabled(True)
@@ -21,12 +23,14 @@ class ExamState(UI_MainWindowState):
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(True)
-        context.scanParametersCancelChangesButton.setEnabled(False) 
+        context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
 
+
 class ReadyToScanState(ExamState):
     name = "ReadyToScanState"
+
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.startScanButton.setEnabled(True)
@@ -34,8 +38,10 @@ class ReadyToScanState(ExamState):
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersResetButton.setEnabled(True)
 
+
 class BeingModifiedState(ExamState):
     name = "BeingModifiedState"
+
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.scanningModeButton.setEnabled(False)
@@ -46,23 +52,29 @@ class BeingModifiedState(ExamState):
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersCancelChangesButton.setEnabled(True)
-        context.scanParametersResetButton.setEnabled(True) 
+        context.scanParametersResetButton.setEnabled(True)
         context.scanParametersSaveChangesButton.setEnabled(True)
+
 
 class InvalidParametersState(ExamState):
     name = "InvalidParametersState"
+
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersResetButton.setEnabled(True)
 
+
 class ScanCompleteState(ExamState):
     name = "ScanCompleteState"
-    def update_UI(self, context) -> None: 
-        super().update_UI(context)        
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+
 
 class IdleState(UI_MainWindowState):
     name = "IdleState"
+
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.scanningModeButton.setEnabled(False)
@@ -75,8 +87,8 @@ class IdleState(UI_MainWindowState):
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(True)
-        context.parameterFormLayout.clearForm() 
-        context.scanParametersCancelChangesButton.setEnabled(False) 
+        context.parameterFormLayout.clearForm()
+        context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanProgressBar.setValue(0)
@@ -84,6 +96,7 @@ class IdleState(UI_MainWindowState):
         context.scanPlanningWindow1.setAcquiredSeries(None)
         context.scanPlanningWindow2.setAcquiredSeries(None)
         context.scanPlanningWindow3.setAcquiredSeries(None)
+
 
 class MRIfortheBrainState(UI_MainWindowState):
     def update_UI(self, context) -> None:
