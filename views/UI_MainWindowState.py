@@ -28,6 +28,26 @@ class ExamState(UI_MainWindowState):
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         
+class ReadyToScanAgainState(ExamState):
+    name = "ReadyToScanState"
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.examinationInfoStackedLayout.setCurrentIndex(1)
+        context.scanlistListWidget.setVisible(True)
+        context.scanlistListWidget.setEnabled(True)
+        context.addScanItemButton.setVisible(True)
+        context.addScanItemButton.setEnabled(True)
+        context.startScanButton.setEnabled(True)
+        context.stopScanButton.setEnabled(True)
+        context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersResetButton.setEnabled(True)
+        context.scanProgressBar.setValue(0)
+        context.scannedImageFrame.setAcquiredSeries(None)
+        context.scanPlanningWindow1.setAcquiredSeries(None)
+        context.scanPlanningWindow2.setAcquiredSeries(None)
+        context.scanPlanningWindow3.setAcquiredSeries(None)
+
 
 class ReadyToScanState(ExamState):
     name = "ReadyToScanState"

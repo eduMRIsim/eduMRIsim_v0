@@ -14,7 +14,6 @@ from simulator.scanlist import ScanItemStatusEnum
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
-from views.view_model_dialog_ui import ViewWindow
 
 
 class MainController:
@@ -24,7 +23,9 @@ class MainController:
     def __init__(self, scanner, ui) -> None:
         self.scanner = scanner
         self.ui = ui
+        self.ui_signals()
 
+    def ui_signals(self):
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
 
@@ -155,7 +156,6 @@ class MainController:
         settings = SettingsManager.get_instance().settings
         settings.beginGroup("CompleteScanlistState")
         settings.setValue("completeItems", complete_items)
-        print("Complete scanlist items saved:", complete_items)
         settings.endGroup()
 
         return complete_items
@@ -192,6 +192,14 @@ class MainController:
         self.ui.update_UI()
         # handle drops
         self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+    
+    def handle_scanningButton_clicked(self): 
+        rightlayout = self.ui.layout
+        self.ui.clearLayout(rightlayout)
+        self.ui._createMainWindow()
+        self.ui.state = UI_state.ReadyToScanAgainState()
+        self.ui_signals()
+
 
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
         grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col) 

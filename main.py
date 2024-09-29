@@ -48,8 +48,8 @@ class App(QApplication):
         self.menu_bar.add_action('Session', 'Load session', self.test_action)
 
         self.menu_bar.add_section('Mode')
-        self.menu_bar.add_action('Mode', 'Scanning Mode', self.test_action)
-        self.menu_bar.add_action('Mode', 'Viewing Mode', self.test_action)
+        self.menu_bar.add_action('Mode', 'Scanning Mode', self.main_controller.handle_scanningButton_clicked)
+        self.menu_bar.add_action('Mode', 'Viewing Mode', self.main_controller.handle_viewModelButton_clicked)
         
         self.menu_bar.add_section('Tools')
         self.menu_bar.add_action('Tools', 'Measure Distance', self.test_action)
