@@ -1,6 +1,7 @@
 from datetime import datetime
 
 #from views.view_model_dialog_ui import ViewModelDialog
+import numpy as np
 from PyQt5.QtWidgets import QListWidgetItem, QApplication, QFileDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QListWidgetItem
@@ -10,23 +11,28 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
-from simulator.scanlist import ScanItemStatusEnum
+from simulator.scanlist import ScanItemStatusEnum, AcquiredImage
+from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import ViewWindow
+from views.main_view_ui import Ui_MainWindow
+from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
 
 
 class MainController:
     '''
     The MainController class defines what happens when the user interacts with the UI. It also defines in its update() method what happens when the scanner notifies the controller of changes, e.g., when a scan item is added to the scanlist, when the active scan item is changed, when the status of a scan item is changed, when the parameters of a scan item are changed, etc.'''
 
-    def __init__(self, scanner, ui) -> None:
-        self.scanner = scanner
-        self.ui = ui
+    def __init__(self, scanner: Scanner, ui: Ui_MainWindow) -> None:
+        self.scanner: Scanner = scanner
+        self.ui: Ui_MainWindow = ui
 
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
+
+        self.export_acquired_image_dialog_ui = ExportAcquiredImageDialog()
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
@@ -64,6 +70,9 @@ class MainController:
         self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(
             lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(),
                                                                self.new_examination_dialog_ui.modelComboBox.currentText()))
+
+        # Signals related to exporting acquired images
+        self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(self.handle_acquiredImageExportButton_clicked)
 
     def prepare_model_data(self):
         jsonFilePath = 'repository/models/models.json'
@@ -220,6 +229,10 @@ class MainController:
         self.ui.state = UI_state.ExamState()
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
+
+    def handle_acquiredImageExportButton_clicked(self):
+        image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
+        self.export_acquired_image_dialog_ui.export_file_dialog(image)
 
     def update(self, event):
         '''

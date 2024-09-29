@@ -171,6 +171,10 @@ class Ui_MainWindow(QMainWindow):
         return self._scannedImageFrame
 
     @property
+    def scannedImageWidget(self):
+        return self._scannedImageWidget
+
+    @property
     def scanPlanningWindow1(self):
         return self.scanPlanningWindow.ImageLabelTuple[0]
 
@@ -223,8 +227,12 @@ class Ui_MainWindow(QMainWindow):
         self._editingStackedLayout = EditingStackedLayout(self._scanParametersWidget, self._examCardTabWidget)
         self._editingStackedLayout.setCurrentIndex(0)
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
+
+
         self._scannedImageFrame = AcquiredSeriesViewer2D()
-        bottomLayout.addWidget(self._scannedImageFrame, stretch=1)
+        self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
+        bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
+
 
         rightLayout.addLayout(bottomLayout, stretch=1)
 
@@ -739,6 +747,20 @@ class ParameterFormLayout(QVBoxLayout):
                     editor.setCurrentIndex(0)
 
 
+class ScannedImageWidget(QWidget):
+    def __init__(self, scannedImageFrame: QGraphicsView) -> None:
+        super().__init__()
+        self._layout: QVBoxLayout = QVBoxLayout()
+        self.setLayout(self._layout)
+        self._layout.addWidget(scannedImageFrame)
+        self._acquiredImageExportButton: QPushButton = PrimaryActionButton("Export acquired image to file")
+        self._layout.addWidget(self.acquiredImageExportButton)
+
+    @property
+    def acquiredImageExportButton(self) -> QPushButton:
+        return self._acquiredImageExportButton
+
+
 class CustomPolygonItem(QGraphicsPolygonItem):
     '''Represents the intersection of the scan volume with the image in the viewer as a polygon. The polygon is movable and sends an update to the observers when it has been moved. '''
 
@@ -1207,7 +1229,6 @@ class MiddleLineItem(QGraphicsPolygonItem):
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
 
-
 class StacksItem(QGraphicsPolygonItem):
     '''Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon.'''
     def __init__(self, parent: QGraphicsPixmapItem):
@@ -1593,7 +1614,7 @@ class ImageLabel(QGraphicsView):
     def __init__(self):
         super().__init__()
 
-        # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually. 
+        # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually.
         self.scene = QGraphicsScene(self)
 
         # Creates a pixmap graphics item that will be added to the scene
@@ -1682,7 +1703,7 @@ class ImageLabel(QGraphicsView):
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
-    # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget. 
+    # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget.
     def wheelEvent(self, event):
         # Check if the array is None
         if self.array is None:

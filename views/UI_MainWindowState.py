@@ -70,6 +70,7 @@ class ScanCompleteState(ExamState):
 
     def update_UI(self, context) -> None:
         super().update_UI(context)
+        context.scannedImageWidget.acquiredImageExportButton.setEnabled(True)
 
 
 class IdleState(UI_MainWindowState):
@@ -104,3 +105,4 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.stopScanButton.setVisible(False)
         context.scanningModeButton.setVisible(False)
         context.viewingModeButton.setVisible(False)
+        context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)
