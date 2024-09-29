@@ -1,9 +1,11 @@
-from simulator.examination import Examination
-from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanItemStatusEnum
-from simulator.model import Model
-from simulator.MRI_data_synthesiser import MRIDataSynthesiser
 import numpy as np
 from scipy import interpolate
+
+from simulator.MRI_data_synthesiser import MRIDataSynthesiser
+from simulator.examination import Examination
+from simulator.model import Model
+from simulator.scanlist import AcquiredSeries, AcquiredImage, ImageGeometry, ScanItemStatusEnum
+
 
 class Scanner:
 
@@ -15,6 +17,8 @@ class Scanner:
     def scan(self) -> AcquiredSeries:
         '''Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume.'''
         scan_item = self.active_scan_item
+        series_name = scan_item.name
+        scan_plane = scan_item.scan_parameters['ScanPlane']
         signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(scan_item.scan_parameters, self.model)
         list_acquired_images = [] 
         n_slices = int(scan_item.scan_parameters['NSlices'])
@@ -28,7 +32,7 @@ class Scanner:
             acquired_image = AcquiredImage(image_data, image_geometry)
             list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
-        acquired_series = AcquiredSeries(list_acquired_images)
+        acquired_series = AcquiredSeries(series_name, scan_plane, list_acquired_images)
         self.active_scanlist_element.acquired_data = acquired_series
         self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
         return acquired_series
@@ -101,3 +105,23 @@ class Scanner:
             return self.examination.scanlist.active_scanlist_element
         except AttributeError:
             return None
+
+    def save_state(self):
+        if self.examination is not None:
+
+            scanlist_names = [ele.name for ele in self.examination.scanlist.scanlist_elements]
+            scnalist_params = [ele.scan_item._scan_parameters for ele in self.examination.scanlist.scanlist_elements]
+            scanlist_data = [ele.acquired_data for ele in self.examination.scanlist.scanlist_elements]
+            scanlist_status = [ele.scan_item._status for ele in self.examination.scanlist.scanlist_elements]
+
+            # Serialize the state of the scanner
+            state = {
+                'scanlist': scanlist_names,
+                'params': scnalist_params,
+                'data': scanlist_data,
+                'status': scanlist_status,
+                # 'model': self.model,
+            }
+            return state
+        else:
+            print("No examination to save state for")

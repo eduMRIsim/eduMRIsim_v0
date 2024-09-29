@@ -1,10 +1,15 @@
 import sys
-from PyQt5.QtWidgets import QApplication
+
+from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QFont
-from simulator.scanner import Scanner
+from PyQt5.QtWidgets import QApplication
+
 from controllers.main_ctrl import MainController
-from views.main_view_ui import Ui_MainWindow
+from controllers.settings_mgr import SettingsManager
+from events import EventEnum
 from simulator.load import load_json
+from simulator.scanner import Scanner
+from views.main_view_ui import Ui_MainWindow
 
 
 class App(QApplication):
@@ -23,6 +28,10 @@ class App(QApplication):
 
         # Create a MainController object. The MainController object is responsible for connecting the UI with the scanner functionalities.
         self.main_controller = MainController(self.scanner, self.main_view) 
+
+        # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
+        self.settings_manager = SettingsManager(self.scanner, self.main_controller, self.main_view, "settings.ini")
+        self.settings_manager.setup_settings(None)
 
 
     def setup_scan_parameter_form(self):

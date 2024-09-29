@@ -1,9 +1,10 @@
 from enum import Enum, auto
 
+import numpy as np
 from PyQt5.QtCore import QPointF
 
 from events import EventEnum
-import numpy as np
+
 
 class ImageGeometry:
     '''This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates.'''
@@ -80,7 +81,9 @@ class AcquiredImage:
 
 class AcquiredSeries:
     '''A series of acquired images. The acquired images are 2D.'''
-    def __init__(self, list_acquired_images: list[AcquiredImage]):
+    def __init__(self, series_name, scan_plane, list_acquired_images: list[AcquiredImage]):
+        self.series_name = series_name
+        self.scan_plane = scan_plane
         self.list_acquired_images = list_acquired_images
          
 class Scanlist:
@@ -90,6 +93,7 @@ class Scanlist:
         self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
+        print("Added newww")
         new_scanlist_element = ScanlistElement(name, scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
@@ -126,16 +130,16 @@ class Scanlist:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
+            print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        #print("Observer", observer, "removed from", self)
+        print("Observer", observer, "removed from", self)
 
 class ScanItemStatusEnum(Enum):
     READY_TO_SCAN = auto() # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
@@ -167,6 +171,10 @@ class ScanItem:
     def status(self):
         return self._status
     
+    @property
+    def axisZ_LPS(self):
+        return self.axisZ_LPS
+
     @status.setter
     def status(self, status):
         self._status = status
@@ -270,22 +278,22 @@ class ScanItem:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
     def update(self, event):
-        if event == EventEnum.SCAN_VOLUME_CHANGED:
-            parameters = self.scan_volume.get_parameters()
-            self.scan_parameters = parameters
+            if event == EventEnum.SCAN_VOLUME_CHANGED:
+                parameters = self.scan_volume.get_parameters()
+                self.scan_parameters = parameters
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
+            print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        #print("Observer", observer, "removed from", self)
+        print("Observer", observer, "removed from", self)
            
 class ScanVolume:
     ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
@@ -303,7 +311,11 @@ class ScanVolume:
         self.N_slices = None
         self.slice_thickness_mm = None
         self.slice_gap_mm = None
-        self.scanPlane = None
+        #Angle radians to be used for rotation
+        self.RLAngle_rad = 0.0
+        self.APAngle_rad = 0.0
+        self.FHAngle_rad = 0.0
+        self.scanPlane = 'None'
         self.observers = []
 
     @property
@@ -338,51 +350,52 @@ class ScanVolume:
             self.axisZ_LPS = np.array([0, 1, 0])
         self.resXmm = 1
         self.resYmm = 1
+        self.RLAngle_rad = np.deg2rad(float(scan_parameters.get('RLAngle_deg', 0)))
+        self.APAngle_rad = np.deg2rad(float(scan_parameters.get('APAngle_deg', 0)))
+        self.FHAngle_rad = np.deg2rad(float(scan_parameters.get('FHAngle_deg', 0)))
+        self.update_axis_vectors()
 
         self.origin_LPS = np.array([float(scan_parameters['OffCenterRL_mm']), float(scan_parameters['OffCenterAP_mm']), float(scan_parameters['OffCenterFH_mm'])])
 
+        # Commented this out since upadte_axis_vectors() does the same job. Can be deleted if not being used by anywhere else
         # rotate the axes according to the angle parameters
 
-        # first rotate around RL axis
-        angleRL_deg = scan_parameters.get('RLAngle_deg', 0)
-        # make sure angleRL is type float
-        angleRL_deg = float(angleRL_deg)
-        # rotate the LPS axes by the angleRL
-        angleRL_rad = np.deg2rad(angleRL_deg)
-        rotation_matrix_RL = np.array([[1, 0, 0], [0, np.cos(angleRL_rad), -np.sin(angleRL_rad)], [0, np.sin(angleRL_rad), np.cos(angleRL_rad)]])
-        self.axisX_LPS = np.dot(rotation_matrix_RL, self.axisX_LPS)
-        self.axisY_LPS = np.dot(rotation_matrix_RL, self.axisY_LPS)
-        self.axisZ_LPS = np.dot(rotation_matrix_RL, self.axisZ_LPS)
+        # # first rotate around RL axis
+        # angleRL_deg = scan_parameters.get('RLAngle_deg', 0)
+        # # make sure angleRL is type float
+        # angleRL_deg = float(angleRL_deg)
+        # # rotate the LPS axes by the angleRL
+        # angleRL_rad = np.deg2rad(angleRL_deg)
+        # rotation_matrix_RL = np.array([[1, 0, 0], [0, np.cos(angleRL_rad), -np.sin(angleRL_rad)], [0, np.sin(angleRL_rad), np.cos(angleRL_rad)]])
+        # self.axisX_LPS = np.dot(rotation_matrix_RL, self.axisX_LPS)
+        # self.axisY_LPS = np.dot(rotation_matrix_RL, self.axisY_LPS)
+        # self.axisZ_LPS = np.dot(rotation_matrix_RL, self.axisZ_LPS)
 
-        # then rotate around AP axis             
-        angleAP_deg = scan_parameters.get('APAngle_deg', 0)
-        # make sure angleAP is type float
-        angleAP_deg = float(angleAP_deg)
-        # rotate the LPS axes by the angleAP
-        angleAP_rad = np.deg2rad(angleAP_deg)
-        rotation_matrix_AP = np.array([[np.cos(angleAP_rad), 0, np.sin(angleAP_rad)], [0, 1, 0], [-np.sin(angleAP_rad), 0, np.cos(angleAP_rad)]])
-        self.axisX_LPS = np.dot(rotation_matrix_AP, self.axisX_LPS)
-        self.axisY_LPS = np.dot(rotation_matrix_AP, self.axisY_LPS)
-        self.axisZ_LPS = np.dot(rotation_matrix_AP, self.axisZ_LPS)
+        # # then rotate around AP axis
+        # angleAP_deg = scan_parameters.get('APAngle_deg', 0)
+        # # make sure angleAP is type float
+        # angleAP_deg = float(angleAP_deg)
+        # # rotate the LPS axes by the angleAP
+        # angleAP_rad = np.deg2rad(angleAP_deg)
+        # rotation_matrix_AP = np.array([[np.cos(angleAP_rad), 0, np.sin(angleAP_rad)], [0, 1, 0], [-np.sin(angleAP_rad), 0, np.cos(angleAP_rad)]])
+        # self.axisX_LPS = np.dot(rotation_matrix_AP, self.axisX_LPS)
+        # self.axisY_LPS = np.dot(rotation_matrix_AP, self.axisY_LPS)
+        # self.axisZ_LPS = np.dot(rotation_matrix_AP, self.axisZ_LPS)
 
-        # finally rotate around FH axis
-        angleFH_deg = scan_parameters.get('FHAngle_deg', 0)
-        # make sure angleFH is type float
-        angleFH_deg = float(angleFH_deg)
-        # rotate the LPS axes by the angleFH
-        angleFH_rad = np.deg2rad(angleFH_deg)
-        rotation_matrix_FH = np.array([[np.cos(angleFH_rad), -np.sin(angleFH_rad), 0], [np.sin(angleFH_rad), np.cos(angleFH_rad), 0], [0, 0, 1]])
-        self.axisX_LPS = np.dot(rotation_matrix_FH, self.axisX_LPS)
-        self.axisY_LPS = np.dot(rotation_matrix_FH, self.axisY_LPS)
-        self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)        
+        # # finally rotate around FH axis
+        # angleFH_deg = scan_parameters.get('FHAngle_deg', 0)
+        # # make sure angleFH is type float
+        # angleFH_deg = float(angleFH_deg)
+        # # rotate the LPS axes by the angleFH
+        # angleFH_rad = np.deg2rad(angleFH_deg)
+        # rotation_matrix_FH = np.array([[np.cos(angleFH_rad), -np.sin(angleFH_rad), 0], [np.sin(angleFH_rad), np.cos(angleFH_rad), 0], [0, 0, 1]])
+        # self.axisX_LPS = np.dot(rotation_matrix_FH, self.axisX_LPS)
+        # self.axisY_LPS = np.dot(rotation_matrix_FH, self.axisY_LPS)
+        # self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)
 
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
-    def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
-        # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
-
-        # list the edges of the scan volume in scan volume coordinates. For each edge, find the intersection points (if any) with the 2D acquired image. 
-        edges = self._list_edges_of_scan_volume()
+    def calculate_from_edges_intersection_points_pixamp(self, edges: list[tuple], acquired_image: AcquiredImage) -> list[np.array]:
         list_intersection_pts_LPS = []
         acquired_image_geometry = acquired_image.image_geometry
         origin_acq_im = acquired_image_geometry.origin_LPS
@@ -409,6 +422,13 @@ class ScanVolume:
 
         return list_intersection_pts_pixmap
 
+    def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
+        # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
+        # list the edges of the scan volume in scan volume coordinates. For each edge, find the intersection points (if any) with the 2D acquired image. Also find middle line of scan and intersection with the acquired image.
+        edges, middle_lines = self._list_edges_of_scan_volume()
+
+        return (self.calculate_from_edges_intersection_points_pixamp(edges, acquired_image), self.calculate_from_edges_intersection_points_pixamp(middle_lines, acquired_image))
+
     def _get_geometry_parameters(self) -> dict:
         geometry_parameters = {}
         geometry_parameters['axisX_LPS'] = self.axisX_LPS
@@ -432,6 +452,90 @@ class ScanVolume:
         # translate the scan volume by the translation vector (which is in LPS coordinates)
         self.origin_LPS += translation_vector_LPS
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
+    # Event reciever for rotation using rotation handlers
+    def rotate_scan_volume(self, rotation_angle_rad, rotation_axis):
+        '''This function computes the new angle using rotation angle and axis'''
+
+        def normalize_angle_rad(angle_rad):
+            return (angle_rad + np.pi) % (2 * np.pi) - np.pi
+
+        # Update the rotation angle for the specified axis
+        print(self.scanPlane)
+        if rotation_axis == 'RL':
+            self.RLAngle_rad += rotation_angle_rad
+            self.RLAngle_rad = normalize_angle_rad(self.RLAngle_rad)
+        elif rotation_axis == 'AP':
+            self.APAngle_rad += rotation_angle_rad
+            self.APAngle_rad = normalize_angle_rad(self.APAngle_rad)
+        elif rotation_axis == 'FH':
+            self.FHAngle_rad += rotation_angle_rad
+            self.FHAngle_rad = normalize_angle_rad(self.FHAngle_rad)
+        else:
+            raise ValueError(f"Unknown rotation axis: {rotation_axis}")
+
+        # Update the axis vectors based on the new rotation angles
+        self.update_axis_vectors()
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
+    def update_axis_vectors(self):
+        '''Updates the scan area for rotation purposes'''
+        # Reset axes to initial state
+        if self.scanPlane == 'Axial':
+            self.axisX_LPS = np.array([1, 0, 0])
+            self.axisY_LPS = np.array([0, 1, 0])
+            self.axisZ_LPS = np.array([0, 0, 1])
+        elif self.scanPlane == 'Sagittal':
+            self.axisX_LPS = np.array([0, 1, 0])
+            self.axisY_LPS = np.array([0, 0, -1])
+            self.axisZ_LPS = np.array([-1, 0, 0])
+        elif self.scanPlane == 'Coronal':
+            self.axisX_LPS = np.array([1, 0, 0])
+            self.axisY_LPS = np.array([0, 0, -1])
+            self.axisZ_LPS = np.array([0, 1, 0])
+        else:
+            raise ValueError(f"Unknown scanPlane: {self.scanPlane}")
+
+        # Apply rotations in the order RL, AP, FH
+        rotation_matrix_RL = self.get_rotation_matrix('RL', self.RLAngle_rad)
+        rotation_matrix_AP = self.get_rotation_matrix('AP', self.APAngle_rad)
+        rotation_matrix_FH = self.get_rotation_matrix('FH', self.FHAngle_rad)
+
+        # Combined rotation matrix
+        combined_rotation_matrix = np.linalg.multi_dot([
+            rotation_matrix_FH,
+            rotation_matrix_AP,
+            rotation_matrix_RL
+        ])
+
+        # Rotate axes
+        self.axisX_LPS = np.dot(combined_rotation_matrix, self.axisX_LPS)
+        self.axisY_LPS = np.dot(combined_rotation_matrix, self.axisY_LPS)
+        self.axisZ_LPS = np.dot(combined_rotation_matrix, self.axisZ_LPS)
+
+    def get_rotation_matrix(self, axis, angle_rad):
+        '''Returns the rotation matrix for a given axis and angle'''
+        if axis == 'RL':
+            rotation_matrix = np.array([
+                [1, 0, 0],
+                [0, np.cos(angle_rad), -np.sin(angle_rad)],
+                [0, np.sin(angle_rad), np.cos(angle_rad)]
+            ])
+        elif axis == 'AP':
+            rotation_matrix = np.array([
+                [np.cos(angle_rad), 0, np.sin(angle_rad)],
+                [0, 1, 0],
+                [-np.sin(angle_rad), 0, np.cos(angle_rad)]
+            ])
+        elif axis == 'FH':
+            rotation_matrix = np.array([
+                [np.cos(angle_rad), -np.sin(angle_rad), 0],
+                [np.sin(angle_rad), np.cos(angle_rad), 0],
+                [0, 0, 1]
+            ])
+        else:
+            raise ValueError(f"Unknown rotation axis: {axis}")
+        return rotation_matrix
 
     def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float, origin_plane: str, handle_pos: QPointF):
         valid_planes = ('Axial', 'Sagittal', 'Coronal')
@@ -513,7 +617,19 @@ class ScanVolume:
             (front_bottom_left, back_bottom_left)
         ]
 
-        return edges 
+        front_left = (front_top_left - front_bottom_left) / 2 + front_bottom_left
+        front_right = (front_top_right - front_bottom_right) / 2 + front_bottom_right
+        back_left = (back_top_left - back_bottom_left) / 2 + back_bottom_left
+        back_right = (back_top_right - back_bottom_right) / 2 + back_bottom_right
+
+        middle_lines = [
+            (front_left, front_right),
+            (front_right, back_right),
+            (back_right, back_left),
+            (back_left, front_left)
+        ]
+
+        return edges, middle_lines
 
     def _line_plane_intersection(self, origin_plane, axisX_plane, axisY_plane, start_pt_line, end_pt_line) -> list[np.array]:
         
@@ -564,16 +680,24 @@ class ScanVolume:
  
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        print("Observer", observer, "added to", self)
     
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
+            print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        #print("Observer", observer, "removed from", self)
+        print("Observer", observer, "removed from", self)
 
+    # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):
-        return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'ScanPlane': self.scanPlane}
+         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane}
+
+    def calculate_slice_positions(self):
+        slice_positions = []
+        for i in range(self.N_slices):
+            z_position = -self.extentZ_mm / 2 + i * (self.slice_thickness_mm + self.slice_gap_mm)
+            slice_positions.append(z_position)
+        return slice_positions
