@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (QComboBox, QFrame, QGraphicsScene, QGraphicsView, Q
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QSizePolicy,
                              QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem, QPushButton, QGraphicsOpacityEffect)
 
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
@@ -1120,8 +1120,74 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.series_name_label.resize(200, 50)
         self.series_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.series_name_label.move(0, 0)
+        
+        # Up and down buttons
+        self.up_button = QPushButton('▲')
+        self.down_button = QPushButton('▼')
+        self.up_button.setFixedSize(30, 30)
+        self.down_button.setFixedSize(30, 30)
+        self.up_button.setCursor(Qt.PointingHandCursor)
+        self.down_button.setCursor(Qt.PointingHandCursor)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.up_button)
+        button_layout.addWidget(self.down_button)
+        button_layout.setSpacing(8)
+        button_layout.setAlignment(Qt.AlignTop | Qt.AlignRight)
+        self.up_button.clicked.connect(self.go_up)
+        self.down_button.clicked.connect(self.go_down)
+        self.setLayout(button_layout)
+        self.update_buttons_visibility()
 
         self.scene.installEventFilter(self)
+
+    def update_buttons_visibility(self):
+        if self.acquired_series is None:
+            self.up_button.hide()
+            self.down_button.hide()
+        else:
+            self.up_button.show()
+            self.down_button.show()
+
+            # Reduce opacity of up button when on the first image
+            if self.displayed_image_index == 0:
+                self.up_button.setEnabled(False)
+                self.set_button_opacity(self.up_button, 0.8)
+            else:
+                self.up_button.setEnabled(True)
+                self.set_button_opacity(self.up_button, 1.0)
+
+            # Reduce opacity of down button when on the last image
+            if self.displayed_image_index == len(self.acquired_series.list_acquired_images) - 1:
+                self.down_button.setEnabled(False)
+                self.set_button_opacity(self.down_button, 0.8)
+            else:
+                self.down_button.setEnabled(True)
+                self.set_button_opacity(self.down_button, 1.0)
+                
+    def set_button_opacity(self, button, opacity_value):
+        opacity_effect = QGraphicsOpacityEffect(button)
+        opacity_effect.setOpacity(opacity_value)
+        button.setGraphicsEffect(opacity_effect)
+
+    # up button functionality
+    def go_up(self):
+        if self.acquired_series is None:
+            return
+        if self.displayed_image_index > 0:
+            self.displayed_image_index -= 1
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.update_buttons_visibility()
+
+    # down button functionality
+    def go_down(self):
+        if self.acquired_series is None:
+            return
+        if self.displayed_image_index < len(self.acquired_series.list_acquired_images) - 1:
+            self.displayed_image_index += 1
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.update_buttons_visibility()
 
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     def eventFilter(self, source, event):
@@ -1229,11 +1295,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.displayed_image_index = new_displayed_image_index
         self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
                                self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.update_buttons_visibility()
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
+            self.update_buttons_visibility()
 
             self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
                                    self.acquired_series.scan_plane, self.acquired_series.series_name)
@@ -1440,6 +1508,7 @@ class ImageLabel(QGraphicsView):
             new_slice = current_slice
         self.current_slice = int(new_slice)
         self.displayArray()
+
 
     #ImageLabel holds a copy of the array of MRI data to be displayed.
     def setArray(self, array):
