@@ -234,6 +234,15 @@ class Ui_MainWindow(QMainWindow):
         settings.setValue("modelNameLabel", self.modelNameLabel.text())
         settings.setValue("scanProgressBar", self.scanProgressBar.value())
 
+        # AcquiredSeries widgets
+        settings.setValue("acquiredSeries1", self.scanPlanningWindow1.acquired_series)
+        settings.setValue("acquiredSeries2", self.scanPlanningWindow2.acquired_series)
+        settings.setValue("acquiredSeries3", self.scanPlanningWindow3.acquired_series)
+
+        settings.setValue("acquiredSeriesIDX1", self.scanPlanningWindow1.displayed_image_index)
+        settings.setValue("acquiredSeriesIDX2", self.scanPlanningWindow2.displayed_image_index)
+        settings.setValue("acquiredSeriesIDX3", self.scanPlanningWindow3.displayed_image_index)
+
         settings.endGroup()
 
     def restore_widget_states(self):
@@ -248,6 +257,16 @@ class Ui_MainWindow(QMainWindow):
         self.examinationNameLabel.setText(settings.value("examinationNameLabel", "", type=str))
         self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
         self.scanProgressBar.setValue(int(settings.value("scanProgressBar", 0, type=int)))
+
+        # AcquiredSeries widgets
+        self.scanPlanningWindow1.setAcquiredSeries(acquired_series=settings.value("acquiredSeries1"))
+        self.scanPlanningWindow2.setAcquiredSeries(acquired_series=settings.value("acquiredSeries2"))
+        self.scanPlanningWindow3.setAcquiredSeries(acquired_series=settings.value("acquiredSeries3"))
+        self.scanPlanningWindow1.displayed_image_index = settings.value("acquiredSeriesIDX1", type=int)
+        self.scanPlanningWindow2.displayed_image_index = settings.value("acquiredSeriesIDX2", type=int)
+        self.scanPlanningWindow3.displayed_image_index = settings.value("acquiredSeriesIDX3", type=int)
+
+        print("SET!")
 
         settings.endGroup()
 
