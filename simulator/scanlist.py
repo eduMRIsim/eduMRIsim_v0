@@ -504,8 +504,6 @@ class ScanVolume:
         def normalize_angle_rad(angle_rad):
             return (angle_rad + np.pi) % (2 * np.pi) - np.pi
         # Update the rotation angle for the specified axis
-        print(self.scanPlane)
-        print(self.Rotation_lock)   
         if rotation_axis == 'RL' and self.Rotation_lock in ('None', 'RL'):
             self.RLAngle_rad += rotation_angle_rad
             self.RLAngle_rad = normalize_angle_rad(self.RLAngle_rad)

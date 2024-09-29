@@ -1374,7 +1374,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self._update_scan_volume_display()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
-            print('KWARGS ', kwargs)
             self.scan_volume.remove_observer(self)
             self.scan_volume.translate_scan_volume(kwargs[Keys.SCAN_VOLUME_DIRECTION_VECTOR_IN_COORDS.value])
             self.scan_volume.add_observer(self)
