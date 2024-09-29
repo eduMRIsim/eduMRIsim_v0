@@ -10,7 +10,7 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
-from simulator.scanlist import ScanItemStatusEnum, AcquiredImage
+from simulator.scanlist import ScanItemStatusEnum, AcquiredImage, Scanlist
 from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
@@ -182,6 +182,7 @@ class MainController:
             list_item = QListWidgetItem(item_data['name'])
             list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))  # COMPLETE icon
             self.ui.scanlistListWidget.addItem(list_item)
+            self.scanner.scanlist.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
 
         settings.endGroup()
 
@@ -212,9 +213,11 @@ class MainController:
     
     def handle_scanningButton_clicked(self): 
         rightlayout = self.ui.layout
+        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
         self.ui.clearLayout(rightlayout)
         self.ui._createMainWindow()
         self.ui.state = UI_state.ReadyToScanAgainState()
+        self.restore_complete_scanlist_items()
         self.ui_signals()
 
 

@@ -1101,7 +1101,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             #observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
             observer.update(event, **kwargs)
 
