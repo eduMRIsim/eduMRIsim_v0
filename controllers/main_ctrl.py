@@ -66,7 +66,7 @@ class MainController:
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
         self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))
 
-        self.ui.scannedImageWidget.scannedImageExportStandardButton.clicked.connect(lambda: self.handle_scannedImageExportStandardButton_clicked())
+        self.ui.scannedImageWidget.scannedImageExportStandardButton.clicked.connect(self.handle_scannedImageExportStandardButton_clicked)
         self.ui.scannedImageWidget.scannedImageExportMedicalButton.clicked.connect(lambda: None)
 
     def prepare_model_data(self):
