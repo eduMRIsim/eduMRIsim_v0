@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QPushButton, QFrame, QHBoxLayout, QWidget, QLabel, QVBoxLayout, QGridLayout, QSpacerItem, \
-    QSizePolicy
+    QSizePolicy, QLineEdit
 
 
 class SegmentedButtonFrame(QFrame):
@@ -296,6 +296,10 @@ class InfoFrame(QFrame):
         section2_layout.addWidget(self.section2_view_button)
         layout.addLayout(section2_layout)
 
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.HLine)
+        line2.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(line2)
 
 # class InfoFrame(QFrame):
 #     def __init__(self, exam_name, model_name):  
