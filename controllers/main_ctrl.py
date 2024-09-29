@@ -1,6 +1,5 @@
 from datetime import datetime
 
-#from views.view_model_dialog_ui import ViewModelDialog
 import numpy as np
 from PyQt5.QtWidgets import QListWidgetItem, QApplication, QFileDialog
 from PyQt5.QtGui import QIcon
@@ -17,7 +16,6 @@ from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import NoItemsToViewDialog
-from views.view_model_dialog_ui import ViewWindow
 from views.main_view_ui import Ui_MainWindow
 from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
 
