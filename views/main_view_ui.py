@@ -1,3 +1,12 @@
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QEvent
+from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
+                             QGridLayout, QHBoxLayout, QLabel,
+                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
+                             QGraphicsEllipseItem, QApplication)
+from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
+
 import math
 from contextlib import contextmanager
 
@@ -10,7 +19,7 @@ from PyQt5.QtWidgets import (QComboBox, QFrame, QGraphicsScene, QGraphicsView, Q
                              QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QSizePolicy,
                              QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
                              QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem, QPushButton, QGraphicsOpacityEffect)
 
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
@@ -803,7 +812,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.is_rotating = False
         self.centroid = QPointF(0, 0)
         self.previous_angle = 0.0
-        self.rotation_handle_offset = None
+        self.rotation_handle_offsets = None
 
         # Create the rotation handles. Use 8 in the case of polygon not being rectangular. Might not be accurate to real MRI, not sure how real machine handles this
         self.rotation_handles = []
@@ -820,6 +829,29 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         # Initial positioning of the rotation handle
         self.update_rotation_handle_positions()
+
+        # Scale parameters, including scale handles.
+        self.is_being_scaled = False
+        self.scale_handles = []
+        for i in range(8):
+            handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
+            handle.setPen(Qt.yellow)
+            handle.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
+            handle.setAcceptedMouseButtons(Qt.LeftButton)
+            handle.setAcceptHoverEvents(True)
+            handle.setCursor(Qt.PointingHandCursor)
+            handle.mousePressEvent = lambda event, hdl=handle: self.scale_handle_press_event_handler(event, hdl)
+            self.scale_handles.append(handle)
+        self.scale_handle_offsets = []
+        self.active_scale_handle = None
+        self.scene_center = QPointF(0.0, 0.0)
+        self.previous_scale_handle_position = None
+
+        self.on_x_axis = False
+        self.on_y_axis = False
+
+        # Set the initial position of the scale handles.
+        self.update_scale_handle_positions()
 
     def setScanVolume(self, scan_volume):
         self.scan_volume = scan_volume
@@ -869,14 +901,142 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         for handle in self.rotation_handles:
             handle.setVisible(visible)
 
+    def update_scale_handle_positions(self):
+        """
+        This function updates the scale handle positions so that they are moved to their new positions.
+        """
+
+        # Get the current polygon and its number of points.
+        polygon = self.polygon()
+        number_of_points = len(polygon)
+
+        # Error case, avoids division by zero.
+        if number_of_points == 0:
+            return
+
+        # Find the local center of the polygon's points.
+        local_center = QPointF(sum(point.x() for point in polygon) / number_of_points, sum(point.y() for point in polygon) / number_of_points)
+
+        # Set the new handle positions based on the local center and the offsets.
+        # Also, show only the first few handles.
+        for i, offset in enumerate(self.scale_handle_offsets):
+            if i >= len(self.scale_handles):
+                break
+            handle = self.scale_handles[i]
+            handle_pos_local = local_center + offset
+            handle.setPos(handle_pos_local)
+            handle.setVisible(True)
+
+        # Hide the remaining handles.
+        for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
+            self.scale_handles[i].setVisible(False)
+
+    def scale_handle_press_event_handler(self, event: QGraphicsSceneMouseEvent, handle):
+        """
+        This function is an event handler that is called whenever the user left-clicks on a scale handle.
+        :param event: the mouse event that the user performed by left-clicking on a scale handle.
+        :param handle: the scale handle that the user clicked on.
+        """
+
+        self.is_being_scaled = True
+        self.active_scale_handle = handle  # Keep track of which handle is active.
+        self.previous_scale_handle_position = event.scenePos()
+        handle.setCursor(Qt.ClosedHandCursor)
+
+        # Get the current polygon (points), and the number of points in the current polygon.
+        polygon = self.polygon()
+        number_of_points = len(polygon)
+
+        # If the current polygon has no points, the scene center will be (0.0, 0.0) in scene coordinates;
+        # else, the scene center is the center of all points in the polygon.
+        if number_of_points == 0:
+            self.scene_center = QPointF(0.0, 0.0)
+        else:
+            self.scene_center = QPointF(sum(point.x() for point in polygon) / number_of_points, sum(point.y() for point in polygon) / number_of_points)
+            self.scene_center = self.mapToScene(self.scene_center)
+
+        self.on_x_axis = abs(self.previous_scale_handle_position.x() - self.scene_center.x()) <= 5.5
+        self.on_y_axis = abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
+
+    def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
+        """
+        This function is called whenever a scale handle is moved,
+        i.e. when the user holds left click on and drags a scale handle to a new position.
+        :param event: the mouse event that the user performed by holding left click on and dragging a scale handle.
+        """
+
+        # Get the new position in scene coordinates.
+        new_position = event.scenePos()
+
+        # Calculate the scale factors in the x and y directions.
+        # Also, avoid division by zero, which would happen if the previous scale handle position's x or y is equal to
+        # the scene center's x or y respectively; in that case, set the respective scale factor to 1.0.
+        if self.on_x_axis:
+            scale_factor_x = 1.0
+        else:
+            scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(self.previous_scale_handle_position.x() - self.scene_center.x())
+            if scale_factor_x <= 0.96 or scale_factor_x >= 1.04:
+                scale_factor_x = 1.0
+        if self.on_y_axis:
+            scale_factor_y = 1.0
+        else:
+            scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(self.previous_scale_handle_position.y() - self.scene_center.y())
+            if scale_factor_y <= 0.96 or scale_factor_y >= 1.04:
+                scale_factor_y = 1.0
+
+        # Set the previous handle position equal to the new handle position.
+        self.previous_scale_handle_position = new_position
+
+        # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y, origin_plane=self.viewer.displayed_image.image_geometry.plane, handle_pos=self.active_scale_handle.pos())
+
+        # Update the scale handle positions.
+        self.update_scale_handle_positions()
+
+    def scale_handle_release_event_handler(self):
+        """
+        This function is called whenever a scale handle is released,
+        i.e. when the user stops holding left click on the scale handle.
+        """
+
+        self.is_being_scaled = False
+        self.on_x_axis = False
+        self.on_y_axis = False
+
+        # Reset the active scale handle if it was set previously.
+        if self.active_scale_handle is not None:
+            self.active_scale_handle.setCursor(Qt.PointingHandCursor)
+            self.active_scale_handle = None
+
+    def get_plane_axis(self):
+        '''Determine the rotation axis based on the displayed image plane'''
+        plane = self.viewer.displayed_image.image_geometry.plane
+
+        if plane is None:
+            raise ValueError("Image plane is not set in ImageGeometry.")
+
+        plane = plane.lower()
+
+        if plane == 'axial':
+            return 'FH'
+        elif plane == 'sagittal':
+            return 'RL'
+        elif plane == 'coronal':
+            return 'AP'
+        else:
+            raise ValueError(f"Unknown plane: {plane}")
+
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         n_points = len(polygon_in_polygon_coords)
-        # If the polygon is empty, clear the rotation handles and exit early. This check prevents a crash
+        # If the polygon is empty, clear the rotation and scaling handles, and exit early. This check prevents a crash
         if n_points == 0:
             super().setPolygon(polygon_in_polygon_coords)
             for handle in self.rotation_handles:
                 handle.setVisible(False)
             self.rotation_handle_offsets = []
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            self.scale_handle_offsets = []
             return
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
@@ -896,6 +1056,15 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Update rotation handles positions
         self.update_rotation_handle_positions()
 
+        local_center = QPointF(sum(point.x() for point in polygon_in_polygon_coords) / n_points, sum(point.y() for point in polygon_in_polygon_coords) / n_points)
+
+        self.scale_handle_offsets = []
+        for i in range(n_points):
+            offset = (polygon_in_polygon_coords[i] + polygon_in_polygon_coords[(i+1) % n_points]) / 2 - local_center
+            self.scale_handle_offsets.append(offset)
+
+        self.update_scale_handle_positions()
+
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
         polygon_in_polygon_coords = QPolygonF()
         for pt in polygon_in_pixmap_coords:
@@ -906,7 +1075,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
@@ -920,6 +1089,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         direction_vector_in_pixmap_coords = QPointF(self.pos().x() - self.previous_position_in_pixmap_coords.x(),
                                                     self.pos().y() - self.previous_position_in_pixmap_coords.y())
         self.previous_position_in_pixmap_coords = self.pos()
+        self.update_scale_handle_positions()
         direction_vec_in_lps = self.viewer.handle_calculate_direction_vector_from_move_event(direction_vector_in_pixmap_coords)
         # apply volume updates also for current scan planning window polygon
         self.viewer._update_scan_volume_display()
@@ -1144,6 +1314,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
 
+        # Scroll amount value used for scrolling sensitivity
+        self.scroll_amount = 0
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item,
                                                      self)  # Create a custom polygon item that is a child of the pixmap item
@@ -1169,8 +1341,74 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.series_name_label.resize(200, 50)
         self.series_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.series_name_label.move(0, 0)
+        
+        # Up and down buttons
+        self.up_button = QPushButton('▲')
+        self.down_button = QPushButton('▼')
+        self.up_button.setFixedSize(30, 30)
+        self.down_button.setFixedSize(30, 30)
+        self.up_button.setCursor(Qt.PointingHandCursor)
+        self.down_button.setCursor(Qt.PointingHandCursor)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.up_button)
+        button_layout.addWidget(self.down_button)
+        button_layout.setSpacing(8)
+        button_layout.setAlignment(Qt.AlignTop | Qt.AlignRight)
+        self.up_button.clicked.connect(self.go_up)
+        self.down_button.clicked.connect(self.go_down)
+        self.setLayout(button_layout)
+        self.update_buttons_visibility()
 
         self.scene.installEventFilter(self)
+
+    def update_buttons_visibility(self):
+        if self.acquired_series is None:
+            self.up_button.hide()
+            self.down_button.hide()
+        else:
+            self.up_button.show()
+            self.down_button.show()
+
+            # Reduce opacity of up button when on the first image
+            if self.displayed_image_index == 0:
+                self.up_button.setEnabled(False)
+                self.set_button_opacity(self.up_button, 0.8)
+            else:
+                self.up_button.setEnabled(True)
+                self.set_button_opacity(self.up_button, 1.0)
+
+            # Reduce opacity of down button when on the last image
+            if self.displayed_image_index == len(self.acquired_series.list_acquired_images) - 1:
+                self.down_button.setEnabled(False)
+                self.set_button_opacity(self.down_button, 0.8)
+            else:
+                self.down_button.setEnabled(True)
+                self.set_button_opacity(self.down_button, 1.0)
+                
+    def set_button_opacity(self, button, opacity_value):
+        opacity_effect = QGraphicsOpacityEffect(button)
+        opacity_effect.setOpacity(opacity_value)
+        button.setGraphicsEffect(opacity_effect)
+
+    # up button functionality
+    def go_up(self):
+        if self.acquired_series is None:
+            return
+        if self.displayed_image_index > 0:
+            self.displayed_image_index -= 1
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.update_buttons_visibility()
+
+    # down button functionality
+    def go_down(self):
+        if self.acquired_series is None:
+            return
+        if self.displayed_image_index < len(self.acquired_series.list_acquired_images) - 1:
+            self.displayed_image_index += 1
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.update_buttons_visibility()
 
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     def eventFilter(self, source, event):
@@ -1178,9 +1416,14 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             if self.scan_volume_display and self.scan_volume_display.is_rotating:
                 self.scan_volume_display.handle_scene_mouse_move(event)
                 return True
+            if self.scan_volume_display is not None and self.scan_volume_display.is_being_scaled:
+                self.scan_volume_display.scale_handle_move_event_handler(event)
+                return True
         elif event.type() == QEvent.GraphicsSceneMouseRelease:
             if self.scan_volume_display and self.scan_volume_display.is_rotating:
                 self.scan_volume_display.handle_scene_mouse_release(event)
+            if self.scan_volume_display is not None and self.scan_volume_display.is_being_scaled:
+                self.scan_volume_display.scale_handle_release_event_handler()
                 return True
         return super().eventFilter(source, event)
 
@@ -1248,7 +1491,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self._update_scan_volume_display()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
-            print('KWARGS ', kwargs)
             self.scan_volume.remove_observer(self)
             self.scan_volume.translate_scan_volume(kwargs[Keys.SCAN_VOLUME_DIRECTION_VECTOR_IN_COORDS.value])
             self.scan_volume.add_observer(self)
@@ -1259,30 +1501,47 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume.remove_observer(self)
             self.scan_volume.rotate_scan_volume(rotation_angle_rad, rotation_axis)
             self.scan_volume.add_observer(self)
+        elif event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
+            scale_factor_x = kwargs['scale_factor_x']
+            scale_factor_y = kwargs['scale_factor_y']
+            origin_plane = kwargs['origin_plane']
+            handle_pos = kwargs['handle_pos']
+
+            # self.scan_volume.remove_observer(self)
+            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y, origin_plane, handle_pos)
+            self._update_scan_volume_display()
+            # self.scan_volume.add_observer(self)
 
     def wheelEvent(self, event):
         # Check if the array is None
         if self.array is None:
             # Do nothing and return
             return
-        displayed_image_index = self.displayed_image_index
         delta = event.angleDelta().y()
-        if delta > 0:
-            new_displayed_image_index = max(0, min(displayed_image_index + 1,
-                                                   len(self.acquired_series.list_acquired_images) - 1))
-        elif delta < 0:
-            new_displayed_image_index = max(0, min(displayed_image_index - 1,
-                                                   len(self.acquired_series.list_acquired_images) - 1))
-        elif delta == 0:
-            new_displayed_image_index = displayed_image_index
-        self.displayed_image_index = new_displayed_image_index
-        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
-                               self.acquired_series.scan_plane, self.acquired_series.series_name)
+        self.scroll_amount += delta 
+        scroll_threshold = 120
+
+        if self.scroll_amount <= -scroll_threshold:
+            self.scroll_amount = 0  
+            new_displayed_image_index = min(self.displayed_image_index + 1,
+                                            len(self.acquired_series.list_acquired_images) - 1)
+            self.displayed_image_index = new_displayed_image_index
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                self.acquired_series.scan_plane, self.acquired_series.series_name)
+            self.update_buttons_visibility()
+        elif self.scroll_amount >= scroll_threshold:
+            self.scroll_amount = 0  
+            new_displayed_image_index = max(self.displayed_image_index - 1, 0)
+            self.displayed_image_index = new_displayed_image_index
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+            self.update_buttons_visibility()
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
+            self.update_buttons_visibility()
 
             self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
                                    self.acquired_series.scan_plane, self.acquired_series.series_name)
@@ -1621,6 +1880,7 @@ class ImageLabel(QGraphicsView):
         self.current_slice = int(new_slice)
         self.displayArray()
 
+
     #ImageLabel holds a copy of the array of MRI data to be displayed.
     def setArray(self, array):
         # Set the array and make current_slice the middle slice by default
@@ -1729,7 +1989,7 @@ class ImageLabel(QGraphicsView):
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, window_width, window_level):
         for observer in self.observers:

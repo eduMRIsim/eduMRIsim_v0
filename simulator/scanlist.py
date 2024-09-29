@@ -1,5 +1,8 @@
 from enum import Enum, auto
 
+from PyQt5.QtCore import QPointF
+
+from events import EventEnum
 import numpy as np
 
 from events import EventEnum
@@ -129,16 +132,16 @@ class Scanlist:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
+        #print("Observer", observer, "removed from", self)
 
 class ScanItemStatusEnum(Enum):
     READY_TO_SCAN = auto() # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
@@ -277,22 +280,22 @@ class ScanItem:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
     def update(self, event):
-            if event == EventEnum.SCAN_VOLUME_CHANGED:
-                parameters = self.scan_volume.get_parameters()
-                self.scan_parameters = parameters 
+        if event == EventEnum.SCAN_VOLUME_CHANGED:
+            parameters = self.scan_volume.get_parameters()
+            self.scan_parameters = parameters
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
+        #print("Observer", observer, "removed from", self)
            
 class ScanVolume:
     ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
@@ -310,6 +313,8 @@ class ScanVolume:
         self.N_slices = None
         self.slice_thickness_mm = None
         self.slice_gap_mm = None
+        self.scanPlane = None
+
         #Angle radians to be used for rotation
         self.RLAngle_rad = 0.0
         self.APAngle_rad = 0.0
@@ -321,7 +326,7 @@ class ScanVolume:
     @property
     def extentZ_mm(self):
         return self.N_slices * self.slice_thickness_mm + (self.N_slices - 1) * self.slice_gap_mm
-     
+
     @property
     def conversion_matrix(self) -> np.ndarray:
         '''Affine transformation matrix that converts scan volume coordinates to LPS coordinates'''
@@ -458,14 +463,47 @@ class ScanVolume:
         self.origin_LPS += translation_vector_LPS
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
+    def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float, origin_plane: str, handle_pos: QPointF):
+        valid_planes = ('Axial', 'Sagittal', 'Coronal')
+        if origin_plane not in valid_planes:
+            raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
+        top_down_plane = self.scanPlane
+        if top_down_plane not in valid_planes:
+            raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
+
+        if top_down_plane == origin_plane:
+            self.extentX_mm *= scale_factor_x
+            self.extentY_mm *= scale_factor_y
+        elif top_down_plane == 'Axial':
+            if origin_plane == 'Sagittal':
+                self.extentY_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == 'Coronal':
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y    
+        elif top_down_plane == 'Sagittal':
+            if origin_plane == 'Axial':
+                self.extentX_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+            elif origin_plane == 'Coronal':
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+        elif top_down_plane == 'Coronal':
+            if origin_plane == 'Axial':
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == 'Sagittal':
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
     # Event reciever for rotation using rotation handlers
     def rotate_scan_volume(self, rotation_angle_rad, rotation_axis):
         '''This function computes the new angle using rotation angle and axis'''
         def normalize_angle_rad(angle_rad):
             return (angle_rad + np.pi) % (2 * np.pi) - np.pi
         # Update the rotation angle for the specified axis
-        print(self.scanPlane)
-        print(self.Rotation_lock)   
         if rotation_axis == 'RL' and self.Rotation_lock in ('None', 'RL'):
             self.RLAngle_rad += rotation_angle_rad
             self.RLAngle_rad = normalize_angle_rad(self.RLAngle_rad)
@@ -690,16 +728,16 @@ class ScanVolume:
  
     def add_observer(self, observer):
         self.observers.append(observer)
-        print("Observer", observer, "added to", self)
+        #print("Observer", observer, "added to", self)
     
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            print("Subject", self, "is updating observer", observer, "with event", event)
+            #print("Subject", self, "is updating observer", observer, "with event", event)
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        print("Observer", observer, "removed from", self)
+        #print("Observer", observer, "removed from", self)
 
     # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):
