@@ -1095,6 +1095,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Initialize array attribute to None
         self.array = None
 
+        # Scroll amount value used for scrolling sensitivity
+        self.scroll_amount = 0
 
         self.scan_volume_display = CustomPolygonItem(self.pixmap_item,
                                                      self)  # Create a custom polygon item that is a child of the pixmap item
@@ -1282,20 +1284,25 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         if self.array is None:
             # Do nothing and return
             return
-        displayed_image_index = self.displayed_image_index
         delta = event.angleDelta().y()
-        if delta < 0:
-            new_displayed_image_index = max(0, min(displayed_image_index + 1,
-                                                   len(self.acquired_series.list_acquired_images) - 1))
-        elif delta > 0:
-            new_displayed_image_index = max(0, min(displayed_image_index - 1,
-                                                   len(self.acquired_series.list_acquired_images) - 1))
-        elif delta == 0:
-            new_displayed_image_index = displayed_image_index
-        self.displayed_image_index = new_displayed_image_index
-        self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
-                               self.acquired_series.scan_plane, self.acquired_series.series_name)
-        self.update_buttons_visibility()
+        self.scroll_amount += delta 
+        scroll_threshold = 120
+
+        if self.scroll_amount <= -scroll_threshold:
+            self.scroll_amount = 0  
+            new_displayed_image_index = min(self.displayed_image_index + 1,
+                                            len(self.acquired_series.list_acquired_images) - 1)
+            self.displayed_image_index = new_displayed_image_index
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                self.acquired_series.scan_plane, self.acquired_series.series_name)
+            self.update_buttons_visibility()
+        elif self.scroll_amount >= scroll_threshold:
+            self.scroll_amount = 0  
+            new_displayed_image_index = max(self.displayed_image_index - 1, 0)
+            self.displayed_image_index = new_displayed_image_index
+            self.setDisplayedImage(self.acquired_series.list_acquired_images[self.displayed_image_index],
+                                   self.acquired_series.scan_plane, self.acquired_series.series_name)
+            self.update_buttons_visibility()
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
