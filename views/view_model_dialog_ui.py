@@ -20,7 +20,7 @@ class ViewWindow(QDialog):
         self.setGeometry(800, 300, 800, 600)
         #self.showMaximized()
 
-        # initialize horizontal layout 
+        # initialize horizontal layout
         main_layout = QHBoxLayout()
 
         # vertical layout for the left side
@@ -42,8 +42,8 @@ class ViewWindow(QDialog):
 
         #populate list with the data
         self.acquiredlistView.acquiredlistView.setModel(self.model)
-      
-        # widget for the left side 
+
+        # widget for the left side
         left_widget = QWidget()
         left_widget.setLayout(left_layout)
 
@@ -52,7 +52,7 @@ class ViewWindow(QDialog):
         background-color: black;
         border: 1px solid white;
         """
-   
+
         # creates default 2x2 grid
         right_layout = QGridLayout()
         for i in range(2):
@@ -74,7 +74,7 @@ class ViewWindow(QDialog):
 
     def exitViewingMode(self):
         QDialog.close(self)
-    
+
     @property
     def acquiredlistView(self):
         return self._acquiredlistView
@@ -93,11 +93,11 @@ class AcquiredList(QWidget):
 
         #self._acquiredlistView.setEditTriggers(QListView.NoEditTriggers) #This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
         self.layout.addWidget(self._acquiredlistView)
-    
+
     @property
     def acquiredlistView(self):
         return self._acquiredlistView
-        
+
 """
 class ModelViewLabel(ImageLabel):
 

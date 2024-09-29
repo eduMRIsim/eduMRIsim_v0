@@ -151,7 +151,7 @@ class MainController:
 
     def handle_viewModelButton_clicked(self):
         #view_model_dialog = ViewModelDialog(self.scanner.model)
-        #view_model_dialog.exec()    
+        #view_model_dialog.exec()
         view_model_window = ViewWindow()
         view_model_window.exec_()
 
