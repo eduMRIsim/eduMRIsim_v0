@@ -1,14 +1,20 @@
-import numpy as np
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
-from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
-                             QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-                             QGraphicsEllipseItem, QApplication, QGraphicsLineItem,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem)
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent, QPainter, QColor, QDragEnterEvent
 import numpy as np
 from simulator.scanlist import AcquiredSeries
+
+
+class NoItemsToViewDialog(QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.setIcon(QMessageBox.Information)
+        self.setWindowTitle("Viewing Mode")
+        self.setText("No items to view.")
+        self.setStandardButtons(QMessageBox.Ok)
+
+    def show_dialog(self):
+        self.exec_()
 
 
 """

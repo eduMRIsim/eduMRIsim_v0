@@ -14,6 +14,7 @@ from simulator.scanlist import ScanItemStatusEnum
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
+from views.view_model_dialog_ui import NoItemsToViewDialog
 
 
 class MainController:
@@ -185,13 +186,20 @@ class MainController:
     def handle_viewModelButton_clicked(self): 
         rightlayout = self.ui.layout
         self.ui.clearLayout(rightlayout)
-        self.save_complete_scanlist_items(self.scanner.scanlist)
-        self.ui._createViewWindow()
-        self.restore_complete_scanlist_items()
-        self.ui.state = UI_state.ViewState()
-        self.ui.update_UI()
-        # handle drops
-        self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
+        if not scanlist:
+            dialog = NoItemsToViewDialog()
+            dialog.show_dialog()
+            self.ui._createMainWindow()
+            self.ui.state = UI_state.ReadyToScanAgainState()
+            self.ui_signals()
+        else:
+            self.ui._createViewWindow()
+            self.restore_complete_scanlist_items()
+            self.ui.state = UI_state.ViewState()
+            self.ui.update_UI()
+            # handle drops
+            self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
     
     def handle_scanningButton_clicked(self): 
         rightlayout = self.ui.layout
