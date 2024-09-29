@@ -16,8 +16,7 @@ from views.qmodels import DictionaryModel
 # from views.view_model_dialog_ui import ViewModelDialog
 from views.view_model_dialog_ui import ViewWindow
 from views.main_view_ui import Ui_MainWindow
-
-from views.export_scanned_image_standard_dialog_ui import ExportScannedImageStandardDialog
+from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
 
 
 class MainController:
@@ -31,7 +30,7 @@ class MainController:
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
 
-        self.export_scanned_image_standard_dialog_ui = ExportScannedImageStandardDialog()
+        self.export_acquired_image_dialog_ui = ExportAcquiredImageDialog()
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting signals from UI to functions that handle the signals.
 
@@ -66,8 +65,8 @@ class MainController:
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(lambda: self.new_examination_dialog_ui.accept())
         self.new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(), self.new_examination_dialog_ui.modelComboBox.currentText()))
 
-        self.ui.scannedImageWidget.scannedImageExportStandardButton.clicked.connect(self.handle_scannedImageExportStandardButton_clicked)
-        self.ui.scannedImageWidget.scannedImageExportMedicalButton.clicked.connect(lambda: None)
+        # Signals related to exporting acquired images
+        self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(self.handle_acquiredImageExportButton_clicked)
 
     def prepare_model_data(self):
         jsonFilePath = 'repository/models/models.json'
@@ -208,10 +207,9 @@ class MainController:
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
 
-    def handle_scannedImageExportStandardButton_clicked(self):
+    def handle_acquiredImageExportButton_clicked(self):
         image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
-        image_data: np.ndarray = image.image_data
-        self.export_scanned_image_standard_dialog_ui.export_file_dialog(image_data)
+        self.export_acquired_image_dialog_ui.export_file_dialog(image)
 
     def update(self, event):
         '''

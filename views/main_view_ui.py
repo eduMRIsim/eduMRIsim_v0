@@ -740,23 +740,12 @@ class ScannedImageWidget(QWidget):
         self._layout: QVBoxLayout = QVBoxLayout()
         self.setLayout(self._layout)
         self._layout.addWidget(scannedImageFrame)
-        self._createButtons()
+        self._acquiredImageExportButton: QPushButton = PrimaryActionButton("Export acquired image to file")
+        self._layout.addWidget(self.acquiredImageExportButton)
 
     @property
-    def scannedImageExportStandardButton(self) -> QPushButton:
-        return self._scannedImageExportStandardButton
-
-    @property
-    def scannedImageExportMedicalButton(self) -> QPushButton:
-        return self._scannedImageExportMedicalButton
-
-    def _createButtons(self) -> None:
-        buttonsLayout = QHBoxLayout()
-        self._scannedImageExportStandardButton: QPushButton = PrimaryActionButton("Export to standard image\nformat (e.g. JPEG, PNG)")
-        self._scannedImageExportMedicalButton: QPushButton = PrimaryActionButton("Export to medical image\nformat (DICOM, NIfTI)")
-        buttonsLayout.addWidget(self._scannedImageExportStandardButton, stretch=1)
-        buttonsLayout.addWidget(self._scannedImageExportMedicalButton, stretch=1)
-        self._layout.addLayout(buttonsLayout)
+    def acquiredImageExportButton(self) -> QPushButton:
+        return self._acquiredImageExportButton
 
 
 class CustomPolygonItem(QGraphicsPolygonItem):
