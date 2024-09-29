@@ -1284,10 +1284,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             return
         displayed_image_index = self.displayed_image_index
         delta = event.angleDelta().y()
-        if delta > 0:
+        if delta < 0:
             new_displayed_image_index = max(0, min(displayed_image_index + 1,
                                                    len(self.acquired_series.list_acquired_images) - 1))
-        elif delta < 0:
+        elif delta > 0:
             new_displayed_image_index = max(0, min(displayed_image_index - 1,
                                                    len(self.acquired_series.list_acquired_images) - 1))
         elif delta == 0:
