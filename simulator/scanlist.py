@@ -6,6 +6,7 @@ from events import EventEnum
 import numpy as np
 
 from events import EventEnum
+from utils.logger import log
 
 
 class ImageGeometry:
@@ -132,16 +133,16 @@ class Scanlist:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        log.debug(f"Observer {observer} added to {self}")
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
+            log.debug(f"Subject {self} is updating observer {observer} with event {event}")
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        #print("Observer", observer, "removed from", self)
+        log.debug(f"Observer {observer}, removed from {self}")
 
 class ScanItemStatusEnum(Enum):
     READY_TO_SCAN = auto() # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
@@ -286,16 +287,16 @@ class ScanItem:
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        log.debug(f"Observer {observer} added to {self}")
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
+            log.debug(f"Subject {self} is updating observer {observer} with event {event}")
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        #print("Observer", observer, "removed from", self)
+        log.debug(f"Observer {observer} removed from {self}")
            
 class ScanVolume:
     ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
@@ -515,9 +516,10 @@ class ScanVolume:
             self.FHAngle_rad = normalize_angle_rad(self.FHAngle_rad)
         else:
             if rotation_axis in ('RL', 'AP', 'FH'):
-                #print("Attempted rotation locked by Rotation Lock")
+                log.warning("Attempted rotation locked by Rotation Lock")
                 pass
             else:
+                log.error(f"Unknown rotation axis: {rotation_axis}")
                 raise ValueError(f"Unknown rotation axis: {rotation_axis}")
 
         # Update the axis vectors based on the new rotation angles
@@ -540,6 +542,7 @@ class ScanVolume:
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([0, 1, 0])
         else:
+            log.error(f"Unknown scanPlane: {self.scanPlane}")
             raise ValueError(f"Unknown scanPlane: {self.scanPlane}")
 
         # Apply rotations in the order RL, AP, FH
@@ -723,22 +726,22 @@ class ScanVolume:
                     # The intersection point lies outside the line segment
                     return None
             except np.linalg.LinAlgError:
-                print("Error: Singular matrix")
+                log.error("Error: Singular matrix")
                 # The line is parallel to the plane
                 return None
  
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        log.debug(f"Observer {observer} added to {self}")
     
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
+            log.debug(f"Subject {self}, is updating observer {observer}, with event, {event}")
             observer.update(event)
             
     def remove_observer(self, observer):
         self.observers.remove(observer)
-        #print("Observer", observer, "removed from", self)
+        log.debug(f"Observer {observer}, removed from {self}")
 
     # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):

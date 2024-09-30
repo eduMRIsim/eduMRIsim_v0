@@ -1,9 +1,10 @@
+import argparse
 import sys
-
-from PyQt5.QtCore import QSettings
+from rich.traceback import install
+from PyQt5.QtCore import QSettings, qInstallMessageHandler
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
-
+from utils.logger import log, qt_message_handler, numpy_handler
 from controllers.main_ctrl import MainController
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
@@ -69,7 +70,23 @@ class App(QApplication):
 
 
 def main():
+    # Enable rich traceback
+    install(show_locals=True)
+
+    # Add support for --log-level command line argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--log-level", default="INFO", help="Set the logging level", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    args = parser.parse_args()
+
+    # Set the log level
+    log.setLevel(args.log_level)
+
+    # Connect Qt messages to the logging module
+    qInstallMessageHandler(qt_message_handler)
+    numpy_handler()
+
     app = App(sys.argv)
+
 
     # Set the default font for the application
     default_font = QFont("Segoe UI", 11)

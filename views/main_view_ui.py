@@ -1,15 +1,6 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QEvent
-from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
-                             QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
-                             QGraphicsEllipseItem, QApplication)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
-
 import math
 from contextlib import contextmanager
-
+from utils.logger import log
 import numpy as np
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
@@ -347,7 +338,7 @@ class Ui_MainWindow(QMainWindow):
     # This function executes automatically right before the main window is closed
     def closeEvent(self, a0):
         self.save_settings()
-        print('Settings saved')
+        log.info('Settings saved')
         super().closeEvent(a0)
 
     def restore_settings(self):
@@ -367,7 +358,7 @@ class Ui_MainWindow(QMainWindow):
         elif state_name == "ReadyToScanState":
             self.state = ReadyToScanState()
         else:
-            print(f"Warning: State '{state_name}' not found. Defaulting to IdleState.")
+            log.warning(f"State '{state_name}' not found. Defaulting to IdleState.")
             self.state = IdleState()
 
         self.restore_widget_states()
@@ -571,7 +562,7 @@ class ScanProgressInfoFrame(QFrame):
         if state is not None:
             self._scanProgressBar.setValue(state.get('progress', 0))
         else:
-            print("Warning: No state found for ScanProgressInfoFrame.")
+            log.warning("No state found for ScanProgressInfoFrame.")
 
     def _createScanButtons(self):
         scanButtonsLayout = QHBoxLayout()
@@ -763,11 +754,6 @@ class ParameterFormLayout(QVBoxLayout):
         params = self.get_parameters()
         return params
 
-    # def restore_state(self, state):
-    #     if state is not None:
-    #         self.set_parameters(state)
-    #     else:
-    #         print("Warning: No state found for parameterFormLayout.")
     def get_parameters(self):
         # Create a dictionary to store the current values of the editor widgets.
         parameters = {}
@@ -1110,16 +1096,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
             polygon_in_polygon_coords.append(pt_in_polygon_coords)
         self.setPolygon(polygon_in_polygon_coords)
-        # self.update_slice_lines()
 
     def add_observer(self, observer: object):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        log.debug(f"Observer {observer} added to {self}")
 
     def notify_observers(self, event: EventEnum, **kwargs):
         for observer in self.observers:
-            #print("Subject", self, "is updating observer", observer, "with event", event)
-            #observer.update(event, direction_vector_in_pixmap_coords = kwargs['direction_vector_in_pixmap_coords'])
+            log.debug(f"Subject {self} is updating observer {observer} with event {event}")
             observer.update(event, **kwargs)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
@@ -2027,7 +2011,7 @@ class ImageLabel(QGraphicsView):
 
     def add_observer(self, observer):
         self.observers.append(observer)
-        #print("Observer", observer, "added to", self)
+        log.debug(f"Observer {observer} added to {self}")
 
     def notify_observers(self, window_width, window_level):
         for observer in self.observers:

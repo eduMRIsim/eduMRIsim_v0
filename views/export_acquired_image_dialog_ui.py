@@ -6,7 +6,7 @@ from pydicom.dataset import FileDataset
 from pydicom.uid import ExplicitVRLittleEndian
 import nibabel as nib
 import datetime
-
+from utils.logger import log
 from simulator.scanlist import AcquiredImage
 
 
@@ -58,19 +58,19 @@ class ExportAcquiredImageDialog(QDialog):
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
                 ExportAcquiredImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "jpeg")
-                print(f"JPEG file saved as {file_name}")
+                log.info(f"JPEG file saved as {file_name}")
             elif selected_filter == "PNG Files (*.png)":
                 # Convert the normalized image data to a grayscale PNG image.
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
                 ExportAcquiredImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "png")
-                print(f"PNG file saved as {file_name}")
+                log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
                 ExportAcquiredImageDialog.export_to_dicom_file(image_data_normalized, file_name)
-                print(f"DICOM file saved as {file_name}")
+                log.info(f"DICOM file saved as {file_name}")
             elif selected_filter == "NIfTI Files (*.nii)" or selected_filter == "Compressed NIfTI Files (*.nii.gz)":
                 ExportAcquiredImageDialog.export_to_nifti_file(image_data_normalized, file_name)
-                print(f"NIfTI file saved as {file_name}")
+                log.info(f"NIfTI file saved as {file_name}")
             else:
                 raise ValueError(f"Unknown file format filter selected: {selected_filter}")
 
