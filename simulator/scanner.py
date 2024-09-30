@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import interpolate
-
+from utils.logger import log
 from simulator.MRI_data_synthesiser import MRIDataSynthesiser
 from simulator.examination import Examination
 from simulator.model import Model
@@ -136,4 +136,4 @@ class Scanner:
             }
             return state
         else:
-            print("No examination to save state for")
+            log.warning("No examination to save state for")

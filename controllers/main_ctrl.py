@@ -1,10 +1,9 @@
 from datetime import datetime
-
 import numpy as np
 from PyQt5.QtWidgets import QListWidgetItem, QApplication, QFileDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QListWidgetItem
-
+from utils.logger import log
 import views.UI_MainWindowState as UI_state
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
@@ -89,7 +88,7 @@ class MainController:
 
         # If canceled, return without doing anything
         if not file_path:
-            print("File save canceled.")
+            log.info("File save canceled.")
             return
 
         # Ensure the file path has a valid .ini extension
@@ -98,7 +97,7 @@ class MainController:
 
         settings_manager = SettingsManager.get_instance()
         settings_manager.export_settings(file_path)
-        print(f"Session saved to {file_path}")
+        log.info(f"Session saved to {file_path}")
 
     def handle_newExaminationButton_clicked(self):
         jsonFilePath = 'repository/models/models.json'
