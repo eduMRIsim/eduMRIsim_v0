@@ -1,12 +1,3 @@
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QPointF, QEvent
-from PyQt5.QtWidgets import (QComboBox, QFormLayout, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
-                             QGridLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QListWidget, QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-                             QStackedLayout, QTabWidget, QVBoxLayout, QWidget, QSpacerItem, QScrollArea,
-                             QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsSceneMouseEvent, QGraphicsItem,
-                             QGraphicsEllipseItem, QApplication)
-from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, QFont, QPolygonF
-
 import math
 from contextlib import contextmanager
 
