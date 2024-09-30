@@ -332,8 +332,6 @@ class Ui_MainWindow(QMainWindow):
         self.scanPlanningWindow2.displayed_image_index = settings.value("acquiredSeriesIDX2", type=int)
         self.scanPlanningWindow3.displayed_image_index = settings.value("acquiredSeriesIDX3", type=int)
 
-        print("SET!")
-
         settings.endGroup()
 
     # Save the state of the main window

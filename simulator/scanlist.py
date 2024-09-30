@@ -515,7 +515,8 @@ class ScanVolume:
             self.FHAngle_rad = normalize_angle_rad(self.FHAngle_rad)
         else:
             if rotation_axis in ('RL', 'AP', 'FH'):
-                print("Attempted rotation locked by Rotation Lock")
+                #print("Attempted rotation locked by Rotation Lock")
+                pass
             else:
                 raise ValueError(f"Unknown rotation axis: {rotation_axis}")
 
