@@ -1,0 +1,28 @@
+name: Reformat on push
+on: push
+jobs:
+  python-code-format:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+      - name: Display Python version
+        run: python --version
+      - name: Install formatter
+        run: pip install black
+      - name: Install requirements
+        run: pip install -r ./requirements.txt
+      - name: Formatter
+        run: |
+          black .
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Auto code format
+          title: Fixes by format action
+          body: This is an auto-generated PR with fixes.
+          labels: automated pr
+          branch: python-code-format-patches
