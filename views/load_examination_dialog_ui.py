@@ -20,7 +20,13 @@ class LoadExaminationDialog(QDialog):
     def open_file_dialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
-        file_name, _ = QFileDialog.getOpenFileName(self, "Choose INI File", "", "INI Files (*.ini);;All Files (*)", options=options)
+        file_name, _ = QFileDialog.getOpenFileName(
+            self,
+            "Choose INI File",
+            "",
+            "INI Files (*.ini);;All Files (*)",
+            options=options,
+        )
         if file_name:
             log.info(f"Selected file: {file_name}")
 
