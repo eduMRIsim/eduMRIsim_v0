@@ -142,4 +142,7 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.stopScanButton.setVisible(False)
         context.scanningModeButton.setVisible(False)
         context.viewingModeButton.setVisible(False)
+        context.scanPlanningWindow1ExportButton.setEnabled(False)
+        context.scanPlanningWindow2ExportButton.setEnabled(False)
+        context.scanPlanningWindow3ExportButton.setEnabled(False)
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)

@@ -2,7 +2,7 @@ import math
 from contextlib import contextmanager
 from utils.logger import log
 import numpy as np
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray, QSize
 from PyQt5.QtGui import QPainter, QPixmap, QImage, QResizeEvent, QColor, QDragEnterEvent, QDragMoveEvent, QDropEvent, \
     QFont, QPolygonF, QPen
 from PyQt5.QtWidgets import (QComboBox, QFrame, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem,
@@ -57,7 +57,7 @@ class Ui_MainWindow(QMainWindow):
         super().__init__()
 
         self.centralWidget = QWidget(self)
-  
+
         self.layout = QHBoxLayout()
         self.centralWidget.setLayout(self.layout)
 
@@ -69,7 +69,7 @@ class Ui_MainWindow(QMainWindow):
         self._createMainWindow()
         self._state = IdleState()
         self.update_UI()
-        
+
         # delete Planning view and add the grid
         #self.clearLayout(self.layout)
         #self._createViewWindow()
@@ -188,15 +188,27 @@ class Ui_MainWindow(QMainWindow):
     @property
     def scanPlanningWindow3(self):
         return self.scanPlanningWindow.ImageLabelTuple[2]
-    
+
+    @property
+    def scanPlanningWindow1ExportButton(self):
+        return self.scanPlanningWindow.viewingPortButtonTuple[0]
+
+    @property
+    def scanPlanningWindow2ExportButton(self):
+        return self.scanPlanningWindow.viewingPortButtonTuple[1]
+
+    @property
+    def scanPlanningWindow3ExportButton(self):
+        return self.scanPlanningWindow.viewingPortButtonTuple[2]
+
     @property
     def gridViewingWindowLayout(self):
         return self.gridViewingWindowLayout
-    
-    @property 
+
+    @property
     def GridCell(self):
         return self.GridCell
-    
+
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch=1)
@@ -217,7 +229,7 @@ class Ui_MainWindow(QMainWindow):
                     self.clearLayout(sub_layout)
 
             layout.removeItem(item)
-    
+
     def _createViewWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch=1)
@@ -269,16 +281,16 @@ class Ui_MainWindow(QMainWindow):
         rightLayout.addLayout(bottomLayout, stretch=1)
 
         return rightLayout
-    
+
     def _createRightViewLayout(self) -> QVBoxLayout:
-        
+
         rightlayout = QVBoxLayout()
-        
+
         self.gridViewingWindow = gridViewingWindowLayout()
         rightlayout.addWidget(self.gridViewingWindow)
 
         return rightlayout
-    
+
     def save_widget_state(self):
         settings = SettingsManager.get_instance().settings
         settings.beginGroup("WidgetState")
@@ -579,12 +591,16 @@ class ScanProgressInfoFrame(QFrame):
 class ScanPlanningWindow(QFrame):
     def __init__(self):
         super().__init__()
-        layout = QHBoxLayout()
-        layout.setSpacing(0)
+        layout = QGridLayout()
+        layout.setHorizontalSpacing(0)
+        layout.setVerticalSpacing(7)
         self.setLayout(layout)
         self.ImageLabelTuple = tuple(DropAcquiredSeriesViewer2D() for i in range(3))
-        for label in self.ImageLabelTuple:
-            layout.addWidget(label, stretch=1)
+        for i, label in enumerate(self.ImageLabelTuple):
+            layout.addWidget(label, 0, i)
+        self.viewingPortButtonTuple = tuple(PrimaryActionButton(f"Export this viewing port to file") for i in range(3))
+        for i, button in enumerate(self.viewingPortButtonTuple):
+            layout.addWidget(button, 1, i)
 
 
 class EditingStackedLayout(QStackedLayout):
@@ -800,16 +816,16 @@ class ParameterFormLayout(QVBoxLayout):
 
 
 class ScannedImageWidget(QWidget):
-    def __init__(self, scannedImageFrame: QGraphicsView) -> None:
+    def __init__(self, scannedImageFrame: QGraphicsView):
         super().__init__()
-        self._layout: QVBoxLayout = QVBoxLayout()
+        self._layout = QVBoxLayout()
         self.setLayout(self._layout)
         self._layout.addWidget(scannedImageFrame)
         self._acquiredImageExportButton: QPushButton = PrimaryActionButton("Export acquired image to file")
         self._layout.addWidget(self.acquiredImageExportButton)
 
     @property
-    def acquiredImageExportButton(self) -> QPushButton:
+    def acquiredImageExportButton(self):
         return self._acquiredImageExportButton
 
 

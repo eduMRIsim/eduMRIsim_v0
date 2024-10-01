@@ -10,11 +10,11 @@ from utils.logger import log
 from simulator.scanlist import AcquiredImage
 
 
-class ExportAcquiredImageDialog(QDialog):
+class ExportImageDialog(QDialog):
     """
     This class represents a dialog to export acquired images to image files.
     """
-    def __init__(self):
+    def __init__(self, button_index: int | None):
         super().__init__()
         self.setWindowTitle("Choose a file location")
 
@@ -57,19 +57,19 @@ class ExportAcquiredImageDialog(QDialog):
                 # Convert the normalized image data to a grayscale JPEG image.
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
-                ExportAcquiredImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "jpeg")
+                ExportImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "jpeg")
                 log.info(f"JPEG file saved as {file_name}")
             elif selected_filter == "PNG Files (*.png)":
                 # Convert the normalized image data to a grayscale PNG image.
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
-                ExportAcquiredImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "png")
+                ExportImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "png")
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
-                ExportAcquiredImageDialog.export_to_dicom_file(image_data_normalized, file_name)
+                ExportImageDialog.export_to_dicom_file(image_data_normalized, file_name)
                 log.info(f"DICOM file saved as {file_name}")
             elif selected_filter == "NIfTI Files (*.nii)" or selected_filter == "Compressed NIfTI Files (*.nii.gz)":
-                ExportAcquiredImageDialog.export_to_nifti_file(image_data_normalized, file_name)
+                ExportImageDialog.export_to_nifti_file(image_data_normalized, file_name)
                 log.info(f"NIfTI file saved as {file_name}")
             else:
                 raise ValueError(f"Unknown file format filter selected: {selected_filter}")

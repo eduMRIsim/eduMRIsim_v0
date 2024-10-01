@@ -16,7 +16,7 @@ from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import NoItemsToViewDialog
 from views.main_view_ui import Ui_MainWindow
-from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
+from views.export_image_dialog_ui import ExportImageDialog
 
 
 class MainController:
@@ -33,12 +33,10 @@ class MainController:
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
 
-        self.export_acquired_image_dialog_ui = ExportAcquiredImageDialog()
-
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
 
-        # Signals related to examinations 
+        # Signals related to examinations
         self.ui.loadExaminationButton.clicked.connect(lambda: self.load_examination_dialog_ui.open_file_dialog())
         self.ui.newExaminationButton.clicked.connect(self.handle_newExaminationButton_clicked)
         self.ui.stopExaminationButton.clicked.connect(self.handle_stopExaminationButton_clicked)
@@ -72,7 +70,15 @@ class MainController:
             lambda: self.handle_newExaminationOkButton_clicked(self.new_examination_dialog_ui.examNameLineEdit.text(),
                                                                self.new_examination_dialog_ui.modelComboBox.currentText()))
 
-        # Signals related to exporting acquired images
+        # Signals and UIs related to exporting images
+        self.export_viewing_port_1_dialog_ui = ExportImageDialog(1)
+        self.export_viewing_port_2_dialog_ui = ExportImageDialog(2)
+        self.export_viewing_port_3_dialog_ui = ExportImageDialog(3)
+        self.export_acquired_image_dialog_ui = ExportImageDialog(None)
+
+        self.ui.scanPlanningWindow1ExportButton.clicked.connect(lambda: self.handle_viewingPortExportButton_clicked(1))
+        self.ui.scanPlanningWindow2ExportButton.clicked.connect(lambda: self.handle_viewingPortExportButton_clicked(2))
+        self.ui.scanPlanningWindow3ExportButton.clicked.connect(lambda: self.handle_viewingPortExportButton_clicked(3))
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(self.handle_acquiredImageExportButton_clicked)
 
     def prepare_model_data(self):
@@ -150,10 +156,10 @@ class MainController:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
         progress = scanlist.get_progress()
-        self.ui.scanProgressBar.setValue(int(progress * 100))   
+        self.ui.scanProgressBar.setValue(int(progress * 100))
 
     def save_complete_scanlist_items(self, scanlist):
-        # saves scanlist elements that were scanned 
+        # saves scanlist elements that were scanned
         complete_items = []
         for item in scanlist.scanlist_elements:
             if item.scan_item.status == ScanItemStatusEnum.COMPLETE:
@@ -168,7 +174,7 @@ class MainController:
         settings.endGroup()
 
         return complete_items
-    
+
     def restore_complete_scanlist_items(self):
         # restores complete scanlist elements
         settings = SettingsManager.get_instance().settings
@@ -191,8 +197,8 @@ class MainController:
 
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
-             
-    def handle_viewModelButton_clicked(self): 
+
+    def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
         self.ui.clearLayout(rightlayout)
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
@@ -209,8 +215,8 @@ class MainController:
             self.ui.update_UI()
             # handle drops
             self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
-    
-    def handle_scanningButton_clicked(self): 
+
+    def handle_scanningButton_clicked(self):
         rightlayout = self.ui.layout
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
         self.ui.clearLayout(rightlayout)
@@ -221,12 +227,12 @@ class MainController:
 
 
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
-        grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col) 
+        grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         acquired_series = scanlist_element.acquired_data
-        grid_cell.setAcquiredSeries(acquired_series)  
+        grid_cell.setAcquiredSeries(acquired_series)
         self.update_scanlistListWidget(self.scanner.scanlist)
-  
+
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 
@@ -296,6 +302,22 @@ class MainController:
     def handle_acquiredImageExportButton_clicked(self):
         image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
         self.export_acquired_image_dialog_ui.export_file_dialog(image)
+
+    def handle_viewingPortExportButton_clicked(self, button_index: int):
+        if button_index != 1 and button_index != 2 and button_index != 3:
+            raise ValueError(f"{button_index} is not a valid button index")
+
+        if button_index == 1:
+            image = self.ui.scanPlanningWindow1.displayed_image
+            self.export_viewing_port_1_dialog_ui.export_file_dialog(image)
+        elif button_index == 2:
+            image = self.ui.scanPlanningWindow2.acquired_series[1]
+            self.export_viewing_port_2_dialog_ui.export_file_dialog(image)
+        else:
+            assert button_index == 3
+            image = self.ui.scanPlanningWindow3.displayed_image
+            self.export_viewing_port_3_dialog_ui.export_file_dialog(image)
+
 
     def update(self, event):
         '''
