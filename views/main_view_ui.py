@@ -1777,10 +1777,11 @@ class GridCell(QGraphicsView):
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
 
-    def setDisplayedImage(self, image):
+    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
+            self.set_displayed_image(image)
         else:
             self.array = None
 
