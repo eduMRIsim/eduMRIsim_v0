@@ -1452,7 +1452,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def resizeEvent(self, event: QResizeEvent):
         '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.'''
         super().resizeEvent(event)
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        #self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
         self.updateLabelPosition()
 
     def updateLabelPosition(self):
@@ -1487,19 +1488,26 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             pixmap = QPixmap.fromImage(qimage)
             self.pixmap_item.setPixmap(pixmap)
 
+            self.pixmap_item.setPos(0, 0)  # Ensure the pixmap item is at (0, 0)
+            self.scene.setSceneRect(0, 0, width, height)  # Adjust the scene rectangle to match the pixmap dimensions
+
         else:
             # Set a black image when self.array is None
             black_image = QImage(1, 1, QImage.Format_Grayscale8)
             black_image.fill(Qt.black)
             pixmap = QPixmap.fromImage(black_image)
             self.pixmap_item.setPixmap(pixmap)
+            self.scene.setSceneRect(0, 0, 1, 1)
 
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.resetTransform()
+        #self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.centerOn(self.pixmap_item)
 
         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        self.scene.setSceneRect(0, 0, width, height)
+        #self.scene.setSceneRect(0, 0, width, height)
         # The centerOn method is used to center the view on a particular point within the scene.
-        self.centerOn(width / 2, height / 2)
+        #self.centerOn(width / 2, height / 2)
 
         # calculate LPS direction vector from the moved direction vector
     def handle_calculate_direction_vector_from_move_event(self, direction_vector_in_pixmap_coords: QPointF) -> np.array:
@@ -1588,7 +1596,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             scan_number = self.displayed_image_index + 1
             self.series_name_label.setText(f"{series_name} ({scan_number}) ")
 
-            self.updateLabelPosition()
+            self.updateLabelPosition()         
         else:
             self.array = None
             self.scan_plane_label.clear()
@@ -1715,6 +1723,12 @@ class GridCell(QGraphicsView):
 
         self.setAcceptDrops(True)
 
+    def resizeEvent(self, event: QResizeEvent):
+        '''This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.'''
+        super().resizeEvent(event)
+        #self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.updateLabelPosition()
 
     def _displayArray(self):
         width, height = 0, 0
@@ -1733,19 +1747,21 @@ class GridCell(QGraphicsView):
             pixmap = QPixmap.fromImage(qimage)
             self.pixmap_item.setPixmap(pixmap)
 
+            self.pixmap_item.setPos(0, 0)  # Ensure the pixmap item is at (0, 0)
+            self.scene.setSceneRect(0, 0, width, height)  # Adjust the scene rectangle to match the pixmap dimensions
+
         else:
             # Set a black image when self.array is None
             black_image = QImage(1, 1, QImage.Format_Grayscale8)
             black_image.fill(Qt.black)
             pixmap = QPixmap.fromImage(black_image)
             self.pixmap_item.setPixmap(pixmap)
+            self.scene.setSceneRect(0, 0, 1, 1)
 
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-
-        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        self.scene.setSceneRect(0, 0, width, height)
-        # The centerOn method is used to center the view on a particular point within the scene.
-        self.centerOn(width / 2, height / 2)
+        self.resetTransform()
+        #self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.centerOn(self.pixmap_item)
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
@@ -1761,15 +1777,15 @@ class GridCell(QGraphicsView):
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
 
-    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
+    def setDisplayedImage(self, image):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
-            self.set_displayed_image(image)
         else:
             self.array = None
 
         self._displayArray()
+
 
     def dropEvent(self, event: QDropEvent) -> None:
         source_widget = event.source()
@@ -1884,6 +1900,7 @@ class ImageLabel(QGraphicsView):
         super().resizeEvent(event)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
 
+
     # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget.
     def wheelEvent(self, event):
         # Check if the array is None
@@ -1939,13 +1956,18 @@ class ImageLabel(QGraphicsView):
             black_image.fill(Qt.black)
             pixmap = QPixmap.fromImage(black_image)
             self.pixmap_item.setPixmap(pixmap)
+            #
+            self.scene.setSceneRect(0, 0, 1, 1)
 
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        #self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.resetTransform()
+        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.centerOn(self.pixmap_item)
 
         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        self.scene.setSceneRect(0, 0, width, height)
+        #self.scene.setSceneRect(0, 0, width, height)
         # The centerOn method is used to center the view on a particular point within the scene.
-        self.centerOn(width / 2, height / 2)
+        #self.centerOn(width / 2, height / 2)
 
     def update_text_item(self):
         # set text
