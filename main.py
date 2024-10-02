@@ -44,18 +44,24 @@ class App(QApplication):
         
     # Set up the menu bar
     def setup_menu_bar(self):
-        self.menu_bar.add_section('Session')
-        self.menu_bar.add_action('Session', 'Save session', self.main_controller.export_examination)
-        self.menu_bar.add_action('Session', 'Load session', self.test_action)
+        # Session menu
+        session_section = self.menu_bar.add_section('Session')
+        session_section.add_action('Save session', self.main_controller.export_examination)
+        session_section.add_action('Load session', self.test_action)
 
-        self.menu_bar.add_section('Mode')
-        self.menu_bar.add_action('Mode', 'Scanning Mode', self.main_controller.handle_scanningButton_clicked)
-        self.menu_bar.add_action('Mode', 'Viewing Mode', self.main_controller.handle_viewModelButton_clicked)
+        # Mode menu
+        mode_section = self.menu_bar.add_section('Mode')
+        mode_group = mode_section.add_action_group()
         
-        self.menu_bar.add_section('Tools')
-        self.menu_bar.add_action('Tools', 'Measure Distance', self.test_action)
-        self.menu_bar.add_action('Tools', 'Measure Area', self.test_action)
-        
+        # Add Scanning Mode and Viewing Mode to a group
+        scanning_action = mode_section.add_action_to_group('Scanning Mode', self.main_controller.handle_scanningButton_clicked, mode_group, checked=True)
+        viewing_action = mode_section.add_action_to_group('Viewing Mode', self.main_controller.handle_viewModelButton_clicked, mode_group)
+
+        # Tools menu
+        tools_section = self.menu_bar.add_section('Tools')
+        tools_section.add_action('Measure Distance', self.test_action)
+        tools_section.add_action('Measure Area', self.test_action)
+
         
     def test_action(self):
         # print("Action test")
