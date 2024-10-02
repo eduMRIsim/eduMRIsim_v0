@@ -1,6 +1,15 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent, QPainter, QColor, QDragEnterEvent
+from PyQt5.QtGui import (
+    QMouseEvent,
+    QPixmap,
+    QImage,
+    QDragMoveEvent,
+    QDropEvent,
+    QPainter,
+    QColor,
+    QDragEnterEvent,
+)
 import numpy as np
 from simulator.scanlist import AcquiredSeries
 
