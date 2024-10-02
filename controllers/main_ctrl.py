@@ -311,7 +311,7 @@ class MainController:
             image = self.ui.scanPlanningWindow1.displayed_image
             self.export_viewing_port_1_dialog_ui.export_file_dialog(image)
         elif button_index == 2:
-            image = self.ui.scanPlanningWindow2.acquired_series[1]
+            image = self.ui.scanPlanningWindow2.displayed_image
             self.export_viewing_port_2_dialog_ui.export_file_dialog(image)
         else:
             assert button_index == 3

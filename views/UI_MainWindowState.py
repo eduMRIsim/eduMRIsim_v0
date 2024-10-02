@@ -134,6 +134,9 @@ class IdleState(UI_MainWindowState):
         context.scanPlanningWindow1.setAcquiredSeries(None)
         context.scanPlanningWindow2.setAcquiredSeries(None)
         context.scanPlanningWindow3.setAcquiredSeries(None)
+        context.scanPlanningWindow1ExportButton.setEnabled(False)
+        context.scanPlanningWindow2ExportButton.setEnabled(False)
+        context.scanPlanningWindow3ExportButton.setEnabled(False)
 
 
 class MRIfortheBrainState(UI_MainWindowState):
@@ -146,3 +149,13 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)
+
+        if (context.scanPlanningWindow1.acquired_series is not None
+                and context.scanPlanningWindow1.acquired_series.list_acquired_images is not None):
+            context.scanPlanningWindow1ExportButton.setEnabled(True)
+        if (context.scanPlanningWindow2.acquired_series is not None
+                and context.scanPlanningWindow2.acquired_series.list_acquired_images is not None):
+            context.scanPlanningWindow2ExportButton.setEnabled(True)
+        if (context.scanPlanningWindow3.acquired_series is not None
+                and context.scanPlanningWindow3.acquired_series.list_acquired_images is not None):
+            context.scanPlanningWindow3ExportButton.setEnabled(True)
