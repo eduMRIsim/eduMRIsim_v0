@@ -14,6 +14,7 @@ class ExportImageDialog(QDialog):
     """
     This class represents a dialog to export acquired images to image files.
     """
+
     def __init__(self, button_index: int | None):
         super().__init__()
         self.setWindowTitle("Choose a file location")
@@ -29,7 +30,9 @@ class ExportImageDialog(QDialog):
         image_data: np.ndarray = image.image_data
 
         if image_data is None:
-            raise ValueError("At least one scan should be performed before trying to export an image")
+            raise ValueError(
+                "At least one scan should be performed before trying to export an image"
+            )
 
         # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
         # and multiplying by 255.0.
@@ -39,7 +42,6 @@ class ExportImageDialog(QDialog):
         image_data_normalized = ((image_data - min_val) / (max_val - min_val)) * 255.0
         image_data_normalized = image_data_normalized.astype(np.uint8)
 
-
         # Open a save file dialog so that the user can save the image.
         options = QFileDialog.Options()
         file_name: str
@@ -48,7 +50,7 @@ class ExportImageDialog(QDialog):
             parent=self,
             caption="Export acquired image to file",
             filter="JPEG Files (*.jpeg);;PNG Files (*.png);;DICOM Files (*.dcm);;NIfTI Files (*.nii);;Compressed (Zipped) NIfTI Files (*.nii.gz)",
-            options=options
+            options=options,
         )
 
         # If the user specified a file name, save the image in that file name and using the filter that they selected.
@@ -57,25 +59,36 @@ class ExportImageDialog(QDialog):
                 # Convert the normalized image data to a grayscale JPEG image.
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
-                ExportImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "jpeg")
+                ExportImageDialog.export_to_standard_image_file(
+                    file_name, image_data_normalized, "jpeg"
+                )
                 log.info(f"JPEG file saved as {file_name}")
             elif selected_filter == "PNG Files (*.png)":
                 # Convert the normalized image data to a grayscale PNG image.
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
-                ExportImageDialog.export_to_standard_image_file(file_name, image_data_normalized, "png")
+                ExportImageDialog.export_to_standard_image_file(
+                    file_name, image_data_normalized, "png"
+                )
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
                 ExportImageDialog.export_to_dicom_file(image_data_normalized, file_name)
                 log.info(f"DICOM file saved as {file_name}")
-            elif selected_filter == "NIfTI Files (*.nii)" or selected_filter == "Compressed NIfTI Files (*.nii.gz)":
+            elif (
+                selected_filter == "NIfTI Files (*.nii)"
+                or selected_filter == "Compressed NIfTI Files (*.nii.gz)"
+            ):
                 ExportImageDialog.export_to_nifti_file(image_data_normalized, file_name)
                 log.info(f"NIfTI file saved as {file_name}")
             else:
-                raise ValueError(f"Unknown file format filter selected: {selected_filter}")
+                raise ValueError(
+                    f"Unknown file format filter selected: {selected_filter}"
+                )
 
     @staticmethod
-    def export_to_standard_image_file(file_name: str, image_data: np.ndarray, file_filter: str) -> None:
+    def export_to_standard_image_file(
+        file_name: str, image_data: np.ndarray, file_filter: str
+    ) -> None:
         """
         Static method to export image data to a standard image file, e.g. JPEG or PNG files.
         """
@@ -117,8 +130,8 @@ class ExportImageDialog(QDialog):
         ds.BitsStored = 16
         ds.HighBit = 15
         ds.PixelRepresentation = 1
-        ds.InstanceCreationDate = datetime.datetime.now().strftime('%Y%m%d')
-        ds.InstanceCreationTime = datetime.datetime.now().strftime('%H%M%S')
+        ds.InstanceCreationDate = datetime.datetime.now().strftime("%Y%m%d")
+        ds.InstanceCreationTime = datetime.datetime.now().strftime("%H%M%S")
 
         # Save the DICOM file.
         ds.save_as(file_name)

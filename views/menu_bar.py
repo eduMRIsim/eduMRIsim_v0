@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QAction
 
+
 class MenuBar:
     def __init__(self, main_view):
         self.main_view = main_view

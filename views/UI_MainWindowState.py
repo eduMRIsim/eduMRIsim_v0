@@ -5,8 +5,8 @@ class UI_MainWindowState(ABC):
     def update_UI(self, context) -> None:
         MRIfortheBrainState().update_UI(
             context
-        )  # all states will call this method first to implement the UI configuration for the MRI for the brain course. 
-                      # This hides buttons whose functionalities have not been implemented yet.
+        )  # all states will call this method first to implement the UI configuration for the MRI for the brain course.
+        # This hides buttons whose functionalities have not been implemented yet.
 
 
 class ExamState(UI_MainWindowState):
@@ -27,7 +27,8 @@ class ExamState(UI_MainWindowState):
         context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
-        
+
+
 class ReadyToScanAgainState(ExamState):
     name = "ReadyToScanState"
 
@@ -93,6 +94,7 @@ class ScanCompleteState(ExamState):
         super().update_UI(context)
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(True)
 
+
 class ViewState(UI_MainWindowState):
     name = "ViewState"
 
@@ -109,6 +111,7 @@ class ViewState(UI_MainWindowState):
         context.addScanItemButton.setEnabled(False)
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
+
 
 class IdleState(UI_MainWindowState):
     name = "IdleState"
@@ -150,12 +153,21 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.scanPlanningWindow3ExportButton.setEnabled(False)
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)
 
-        if (context.scanPlanningWindow1.acquired_series is not None
-                and context.scanPlanningWindow1.acquired_series.list_acquired_images is not None):
+        if (
+            context.scanPlanningWindow1.acquired_series is not None
+            and context.scanPlanningWindow1.acquired_series.list_acquired_images
+            is not None
+        ):
             context.scanPlanningWindow1ExportButton.setEnabled(True)
-        if (context.scanPlanningWindow2.acquired_series is not None
-                and context.scanPlanningWindow2.acquired_series.list_acquired_images is not None):
+        if (
+            context.scanPlanningWindow2.acquired_series is not None
+            and context.scanPlanningWindow2.acquired_series.list_acquired_images
+            is not None
+        ):
             context.scanPlanningWindow2ExportButton.setEnabled(True)
-        if (context.scanPlanningWindow3.acquired_series is not None
-                and context.scanPlanningWindow3.acquired_series.list_acquired_images is not None):
+        if (
+            context.scanPlanningWindow3.acquired_series is not None
+            and context.scanPlanningWindow3.acquired_series.list_acquired_images
+            is not None
+        ):
             context.scanPlanningWindow3ExportButton.setEnabled(True)
