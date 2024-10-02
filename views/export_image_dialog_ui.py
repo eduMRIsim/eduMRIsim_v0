@@ -15,7 +15,7 @@ class ExportImageDialog(QDialog):
     This class represents a dialog to export acquired images to image files.
     """
 
-    def __init__(self, button_index: int | None):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("Choose a file location")
 

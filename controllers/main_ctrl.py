@@ -97,10 +97,10 @@ class MainController:
         )
 
         # Signals and UIs related to exporting images
-        self.export_viewing_port_1_dialog_ui = ExportImageDialog(1)
-        self.export_viewing_port_2_dialog_ui = ExportImageDialog(2)
-        self.export_viewing_port_3_dialog_ui = ExportImageDialog(3)
-        self.export_acquired_image_dialog_ui = ExportImageDialog(None)
+        self.export_viewing_port_1_dialog_ui = ExportImageDialog()
+        self.export_viewing_port_2_dialog_ui = ExportImageDialog()
+        self.export_viewing_port_3_dialog_ui = ExportImageDialog()
+        self.export_acquired_image_dialog_ui = ExportImageDialog()
 
         self.ui.scanPlanningWindow1ExportButton.clicked.connect(
             lambda: self.handle_viewingPortExportButton_clicked(1)
