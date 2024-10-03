@@ -1894,26 +1894,26 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.stacks_displays = []
         # self.scan_volume_display.update_slice_lines()
 
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
+    def contextMenuEvent(self, event):
+        """ Event handler for if the user requests to open the right-click context menu. """
 
-        # If the user right-clicks on this viewer, open the context menu.
-        if event.button() == Qt.RightButton:
-            # Enable the export button only if we have a displayed image that can be exported.
-            if self.displayed_image is not None:
-                self.export_action.setEnabled(True)
-            else:
-                self.export_action.setEnabled(False)
+        super().contextMenuEvent(event)
 
-            # Execute and open the menu.
-            action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
+        # Enable the export button only if we have a displayed image that can be exported.
+        if self.displayed_image is not None:
+            self.export_action.setEnabled(True)
+        else:
+            self.export_action.setEnabled(False)
 
-            # If action_performed is None, the user didn't click on any action,
-            # but instead they clicked outside the menu to close it.
-            if action_performed is not None:
-                log.info(f"{repr(action_performed.text())} action performed")
-            else:
-                log.info("No action performed")
+        # Execute and open the menu.
+        action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
+
+        # If action_performed is None, the user didn't click on any action,
+        # but instead they clicked outside the menu to close it.
+        if action_performed is not None:
+            log.info(f"{repr(action_performed.text())} action performed")
+        else:
+            log.info("No action performed")
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     """Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs."""
