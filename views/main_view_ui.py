@@ -263,7 +263,8 @@ class Ui_MainWindow(QMainWindow):
 
             if item.widget():
                 widget = item.widget()
-                widget.deleteLater()
+                # widget.deleteLater()
+                widget.setVisible(False)
 
             if item.layout():
                 sub_layout = item.layout()
@@ -1972,7 +1973,10 @@ class GridCell(QGraphicsView):
         super().resizeEvent(event)
         # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
-        self.updateLabelPosition()
+
+        # I commented this out because it was throwing an error when switching to view mode but if
+        # it's necessary you can always uncomment and handle the error
+        # self.updateLabelPosition()
 
     def _displayArray(self):
         width, height = 0, 0
