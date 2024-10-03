@@ -1118,6 +1118,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
         )
 
+        # The logic for determining which axis the user is scaling on TBD
+        #print(self.scene_center)
+
     def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
         """
         This function is called whenever a scale handle is moved,
@@ -1131,7 +1134,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Calculate the scale factors in the x and y directions.
         # Also, avoid division by zero, which would happen if the previous scale handle position's x or y is equal to
         # the scene center's x or y respectively; in that case, set the respective scale factor to 1.0.
-        if self.on_x_axis:
+        if self.on_x_axis or abs(self.previous_scale_handle_position.x() - self.scene_center.x()) == 0:
             scale_factor_x = 1.0
         else:
             scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(
@@ -1139,7 +1142,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             )
             if scale_factor_x <= 0.96 or scale_factor_x >= 1.04:
                 scale_factor_x = 1.0
-        if self.on_y_axis:
+        if self.on_y_axis or abs(self.previous_scale_handle_position.y() - self.scene_center.y()) == 0:
             scale_factor_y = 1.0
         else:
             scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(
@@ -1152,13 +1155,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.previous_scale_handle_position = new_position
 
         # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
-        self.notify_observers(
-            EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
-            scale_factor_x=scale_factor_x,
-            scale_factor_y=scale_factor_y,
-            origin_plane=self.viewer.displayed_image.image_geometry.plane,
-            handle_pos=self.active_scale_handle.pos(),
-        )
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y, origin_plane=self.viewer.displayed_image.image_geometry.plane, handle_pos=self.active_scale_handle.pos(), center_pos=self.scene_center)
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
@@ -1226,10 +1223,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Update rotation handles positions
         self.update_rotation_handle_positions()
 
-        local_center = QPointF(
-            sum(point.x() for point in polygon_in_polygon_coords) / n_points,
-            sum(point.y() for point in polygon_in_polygon_coords) / n_points,
-        )
+        # Calculate offset and update position for scale handles
+        local_center = QPointF(sum(point.x() for point in polygon_in_polygon_coords) / n_points, sum(point.y() for point in polygon_in_polygon_coords) / n_points)
 
         self.scale_handle_offsets = []
         for i in range(n_points):
@@ -1796,11 +1791,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             scale_factor_y = kwargs["scale_factor_y"]
             origin_plane = kwargs["origin_plane"]
             handle_pos = kwargs["handle_pos"]
+            center_pos = kwargs["center_pos"]
 
             # self.scan_volume.remove_observer(self)
-            self.scan_volume.scale_scan_volume(
-                scale_factor_x, scale_factor_y, origin_plane, handle_pos
-            )
+            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos)
             self._update_scan_volume_display()
             # self.scan_volume.add_observer(self)
 
