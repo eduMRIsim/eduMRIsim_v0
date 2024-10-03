@@ -1578,6 +1578,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.setLayout(button_layout)
         self.update_buttons_visibility()
 
+        # Initialize a right-click context menu for this viewer
+        self.right_click_menu = QMenu(self)
+        self.export_action = QAction("Export")
+        self.right_click_menu.addAction(self.export_action)
+
         self.scene.installEventFilter(self)
 
     def update_buttons_visibility(self):
@@ -1892,16 +1897,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         if event.button() == Qt.RightButton:
-            export_action = QAction("Export")
-            right_click_menu = QMenu()
-            right_click_menu.addAction(export_action)
-
             if self.displayed_image is not None:
-                export_action.setEnabled(True)
+                self.export_action.setEnabled(True)
             else:
-                export_action.setEnabled(False)
+                self.export_action.setEnabled(False)
 
-            action_performed = right_click_menu.exec_(self.mapToGlobal(event.pos()))
+            action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
             if action_performed is not None:
                 log.info(f"{repr(action_performed.text())} action performed")
             else:
