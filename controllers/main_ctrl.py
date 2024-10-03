@@ -17,6 +17,7 @@ from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import NoItemsToViewDialog
 from views.main_view_ui import Ui_MainWindow
 from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
+from views.view_model_dialog_ui import ViewModelDialog
 
 
 class MainController:
@@ -192,7 +193,7 @@ class MainController:
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
              
-    def handle_viewModelButton_clicked(self): 
+    def handle_viewingButton_clicked(self): 
         rightlayout = self.ui.layout
         self.ui.clearLayout(rightlayout)
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
@@ -219,6 +220,10 @@ class MainController:
         self.restore_complete_scanlist_items()
         self.ui_signals()
 
+    def handle_viewModelButton_clicked(self):
+        # view model for the view model dialogue
+        view_model_dialog = ViewModelDialog(self.scanner.model)
+        view_model_dialog.exec()
 
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
         grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col) 

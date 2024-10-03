@@ -1,8 +1,13 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QStringListModel
+
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage, QDragMoveEvent, QDropEvent, QPainter, QColor, QDragEnterEvent
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtWidgets import  QDialog, QHBoxLayout, QPushButton, QLabel, QSlider, QVBoxLayout, QGridLayout, QLineEdit, QFrame, QWidget
+from PyQt5.QtGui import QMouseEvent, QPixmap, QImage
 import numpy as np
-from simulator.scanlist import AcquiredSeries
+from views.main_view_ui import ImageLabel
+from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
 
 
 class NoItemsToViewDialog(QMessageBox):
@@ -17,7 +22,6 @@ class NoItemsToViewDialog(QMessageBox):
         self.exec_()
 
 
-"""
 class ModelViewLabel(ImageLabel):
 
     mouse_moved_signal = pyqtSignal(int, int, int) 
@@ -191,4 +195,3 @@ class ViewModelDialog(QDialog):
 
     def mouseMoveEvent(self, a0: QMouseEvent) -> None:
             self.tissue_property_value_display.setText("")
-"""
