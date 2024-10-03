@@ -196,6 +196,14 @@ class ScanItem:
                 self._scan_parameters[key] = value
         self.scan_volume.remove_observer(self) # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not respond to events that they themselves initiated.
         self.scan_volume.set_scan_volume_geometry(self.scan_parameters)
+
+        # Update with clamped values
+        params = self.scan_volume.get_parameters()
+
+        for key, value in params.items():
+            self._scan_parameters[key] = value
+
+
         self.scan_volume.add_observer(self) # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
         self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
@@ -228,6 +236,7 @@ class ScanItem:
         self.valid = True
         self.messages = {}
         self.scan_parameters = scan_parameters
+
 
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
@@ -379,18 +388,29 @@ class ScanVolume:
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def clamp_to_scanner_dimensions(self):
+
+        # Clamp extent in all planes
+        if self.scanPlane == 'Axial':
+            self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_RL_mm)
+            self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_AP_mm)
+        elif self.scanPlane == 'Sagittal':
+            self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_AP_mm)
+            self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_FH_mm)
+        elif self.scanPlane == 'Coronal':
+            self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_RL_mm)
+            self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_FH_mm)
+
         half_extentX = self.extentX_mm / 2
         half_extentY = self.extentY_mm / 2
         half_extentZ = self.extentZ_mm / 2
 
         # Clamp origin and extent in RL direction
-        log.warning(f"Clamping to scanner dimensions: {self.origin_LPS[0]}, {self.scanner_RL_mm}")
         self.origin_LPS[0] = np.clip(self.origin_LPS[0], -self.scanner_RL_mm / 2 + half_extentX, self.scanner_RL_mm / 2 - half_extentX)
-        log.warning(f"Clamped to scanner dimensions: {self.origin_LPS[0]}")
         # AP direction
         self.origin_LPS[1] = np.clip(self.origin_LPS[1], -self.scanner_AP_mm / 2 + half_extentY, self.scanner_AP_mm / 2 - half_extentY)
         #  FH direction
         self.origin_LPS[2] = np.clip(self.origin_LPS[2], -self.scanner_FH_mm / 2 + half_extentZ, self.scanner_FH_mm / 2 - half_extentZ)
+
 
     def calculate_from_edges_intersection_points_pixamp(self, edges: list[tuple], acquired_image: AcquiredImage) -> list[np.array]:
         list_intersection_pts_LPS = []
@@ -651,12 +671,6 @@ class ScanVolume:
             (bottom_right, bottom_left),
             (bottom_left, top_left)
         ]
-
-        test_distance = 10
-        point_1 = front_bottom_left + test_distance*v_hat1
-        point_2 = front_bottom_right + test_distance*v_hat2
-        point_3 = back_bottom_right + test_distance*v_hat3
-        point_4 = back_bottom_left + test_distance*v_hat4
 
         slice_center_distances = []
         for i in range(self.N_slices):

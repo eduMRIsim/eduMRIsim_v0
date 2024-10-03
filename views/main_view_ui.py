@@ -1510,6 +1510,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
     def update(self, event: EventEnum, **kwargs):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
+            self.scan_volume.clamp_to_scanner_dimensions()
             self._update_scan_volume_display()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:

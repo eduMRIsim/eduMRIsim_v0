@@ -321,4 +321,6 @@ class MainController:
             self.update_scanlistListWidget(self.scanner.scanlist)
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
+            # self._scan_vo
+            self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
