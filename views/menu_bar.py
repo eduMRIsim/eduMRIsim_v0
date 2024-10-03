@@ -48,7 +48,7 @@ class Section:
 
     def _switch_mode(self, action_name, triggered_function, condition):
         """Switches the mode if the condition is met."""
-        if condition is None or condition():  # Check if the condition is satisfied
-            triggered_function()  # Execute the function linked to the mode
+        if condition is None or condition(): 
+            triggered_function() 
         else:
             print(f"Condition for {action_name} not met.")
