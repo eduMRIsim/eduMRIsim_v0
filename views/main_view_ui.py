@@ -1895,7 +1895,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # self.scan_volume_display.update_slice_lines()
 
     def contextMenuEvent(self, event):
-        """ Event handler for if the user requests to open the right-click context menu. """
+        """Event handler for if the user requests to open the right-click context menu."""
 
         super().contextMenuEvent(event)
 
@@ -1914,6 +1914,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             log.info(f"{repr(action_performed.text())} action performed")
         else:
             log.info("No action performed")
+
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     """Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs."""
