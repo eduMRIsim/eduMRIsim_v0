@@ -46,6 +46,8 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
     QPushButton,
     QGraphicsOpacityEffect,
+    QAction,
+    QMenu,
 )
 
 from controllers.settings_mgr import SettingsManager
@@ -1887,6 +1889,23 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.stacks_displays = []
         # self.scan_volume_display.update_slice_lines()
 
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        if event.button() == Qt.RightButton:
+            export_action = QAction("Export")
+            right_click_menu = QMenu()
+            right_click_menu.addAction(export_action)
+
+            if self.displayed_image is not None:
+                export_action.setEnabled(True)
+            else:
+                export_action.setEnabled(False)
+
+            action_performed = right_click_menu.exec_(self.mapToGlobal(event.pos()))
+            if action_performed is not None:
+                log.info(f"{repr(action_performed.text())} action performed")
+            else:
+                log.info("No action performed")
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     """Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs."""
