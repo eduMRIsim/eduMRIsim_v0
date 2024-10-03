@@ -1896,13 +1896,20 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
+
+        # If the user right-clicks on this viewer, open the context menu.
         if event.button() == Qt.RightButton:
+            # Enable the export button only if we have a displayed image that can be exported.
             if self.displayed_image is not None:
                 self.export_action.setEnabled(True)
             else:
                 self.export_action.setEnabled(False)
 
+            # Execute and open the menu.
             action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
+
+            # If action_performed is None, the user didn't click on any action,
+            # but instead they clicked outside the menu to close it.
             if action_performed is not None:
                 log.info(f"{repr(action_performed.text())} action performed")
             else:
