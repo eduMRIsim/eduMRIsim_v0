@@ -61,6 +61,7 @@ from views.UI_MainWindowState import (
     ScanCompleteState,
     ViewState,
 )
+from views.export_image_dialog_ui import ExportImageDialog
 from views.styled_widgets import (
     PrimaryActionButton,
     SecondaryActionButton,
@@ -1578,9 +1579,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.setLayout(button_layout)
         self.update_buttons_visibility()
 
-        # Initialize a right-click context menu for this viewer
+        # Right-click context menu
         self.right_click_menu = QMenu(self)
-        self.export_action = QAction("Export")
+        self.export_action = QAction("Export...")
+        self.export_image_dialog_ui = ExportImageDialog()
+        self.export_action.triggered.connect(lambda: self.export_image_dialog_ui.export_file_dialog(self.displayed_image))
         self.right_click_menu.addAction(self.export_action)
 
         self.scene.installEventFilter(self)

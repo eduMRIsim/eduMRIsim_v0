@@ -12,7 +12,7 @@ from simulator.scanlist import AcquiredImage
 
 class ExportImageDialog(QDialog):
     """
-    This class represents a dialog to export acquired images to image files.
+    This class represents a dialog to export (acquired) images to image files.
     """
 
     def __init__(self):
@@ -21,17 +21,17 @@ class ExportImageDialog(QDialog):
 
     def export_file_dialog(self, image: AcquiredImage | None) -> None:
         """
-        This method exports acquired image data to an image file through a file save dialog.
+        This method exports (acquired) image data to an image file through a file save dialog.
         """
 
         if image is None:
-            raise ValueError("No acquired image")
+            raise ValueError("No image found to export")
 
         image_data: np.ndarray = image.image_data
 
         if image_data is None:
             raise ValueError(
-                "At least one scan should be performed before trying to export an image"
+                "No image data found; at least one scan should be performed before attempting to export an image"
             )
 
         # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
@@ -48,7 +48,7 @@ class ExportImageDialog(QDialog):
         selected_filter: str
         file_name, selected_filter = QFileDialog.getSaveFileName(
             parent=self,
-            caption="Export acquired image to file",
+            caption="Export image to file",
             filter="JPEG Files (*.jpeg);;PNG Files (*.png);;DICOM Files (*.dcm);;NIfTI Files (*.nii);;Compressed (Zipped) NIfTI Files (*.nii.gz)",
             options=options,
         )
