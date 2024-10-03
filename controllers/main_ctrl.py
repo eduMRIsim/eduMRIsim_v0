@@ -75,6 +75,15 @@ class MainController:
         # Signals related to exporting acquired images
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(self.handle_acquiredImageExportButton_clicked)
 
+    def check_items_to_view(self):
+        """Check if scanlist has items before switching to Viewing Mode."""
+        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
+        if not scanlist:
+            dialog = NoItemsToViewDialog()
+            dialog.show_dialog()
+            return False
+        return True
+
     def prepare_model_data(self):
         jsonFilePath = 'repository/models/models.json'
         self.model_data = load_json(jsonFilePath)
@@ -197,11 +206,7 @@ class MainController:
         self.ui.clearLayout(rightlayout)
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
         if not scanlist:
-            dialog = NoItemsToViewDialog()
-            dialog.show_dialog()
-            self.ui._createMainWindow()
-            self.ui.state = UI_state.ReadyToScanAgainState()
-            self.ui_signals()
+            return
         else:
             self.ui._createViewWindow()
             self.restore_complete_scanlist_items()
