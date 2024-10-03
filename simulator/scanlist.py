@@ -205,6 +205,9 @@ class ScanItem:
 
 
         self.scan_volume.add_observer(self) # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
+        self.scan_volume.add_observer(
+            self
+        )  # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
         self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
     @property
@@ -230,18 +233,13 @@ class ScanItem:
         self.status = ScanItemStatusEnum.READY_TO_SCAN    
 
     def validate_scan_parameters(self, scan_parameters):
-        '''This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid.'''
-
+        """This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid."""
 
         self.valid = True
         self.messages = {}
         self.scan_parameters = scan_parameters
-
-
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
-
-
         
         # old code for validating contrast parameters
         # try: scan_parameters["TE"] = float(scan_parameters["TE"])
@@ -330,7 +328,7 @@ class ScanVolume:
         self.slice_gap_mm = None
         self.scanPlane = None
 
-        # Angle radians to be used for rotation
+        #Angle radians to be used for rotation
         self.RLAngle_rad = 0.0
         self.APAngle_rad = 0.0
         self.FHAngle_rad = 0.0
@@ -338,20 +336,36 @@ class ScanVolume:
         self.scanPlane = 'None'
         self.observers = []
 
-        # Default scanner dimensions in mm
-        self.scanner_AP_mm = 700.0
-        self.scanner_RL_mm = 700.0
-        self.scanner_FH_mm = 2000.0
-
     @property
     def extentZ_mm(self):
         return self.N_slices * self.slice_thickness_mm + (self.N_slices - 1) * self.slice_gap_mm
 
     @property
     def conversion_matrix(self) -> np.ndarray:
-        '''Affine transformation matrix that converts scan volume coordinates to LPS coordinates'''
-        return np.array([[self.axisX_LPS[0], self.axisY_LPS[0], self.axisZ_LPS[0], self.origin_LPS[0]], [self.axisX_LPS[1], self.axisY_LPS[1], self.axisZ_LPS[1], self.origin_LPS[1]], [self.axisX_LPS[2], self.axisY_LPS[2], self.axisZ_LPS[2], self.origin_LPS[2]], [0, 0, 0, 1]])
-
+        """Affine transformation matrix that converts scan volume coordinates to LPS coordinates"""
+        return np.array(
+            [
+                [
+                    self.axisX_LPS[0],
+                    self.axisY_LPS[0],
+                    self.axisZ_LPS[0],
+                    self.origin_LPS[0],
+                ],
+                [
+                    self.axisX_LPS[1],
+                    self.axisY_LPS[1],
+                    self.axisZ_LPS[1],
+                    self.origin_LPS[1],
+                ],
+                [
+                    self.axisX_LPS[2],
+                    self.axisY_LPS[2],
+                    self.axisZ_LPS[2],
+                    self.origin_LPS[2],
+                ],
+                [0, 0, 0, 1],
+]
+        )
     def set_scan_volume_geometry(self, scan_parameters: dict):
         self.N_slices = int(float(scan_parameters['NSlices']))
         self.slice_gap_mm = float(scan_parameters['SliceGap_mm'])
@@ -383,7 +397,41 @@ class ScanVolume:
 
         self.origin_LPS = np.array([float(scan_parameters['OffCenterRL_mm']), float(scan_parameters['OffCenterAP_mm']), float(scan_parameters['OffCenterFH_mm'])])
 
-        self.clamp_to_scanner_dimensions()
+        # Commented this out since upadte_axis_vectors() does the same job. Can be deleted if not being used by anywhere else
+        # rotate the axes according to the angle parameters
+
+        # # first rotate around RL axis
+        # angleRL_deg = scan_parameters.get('RLAngle_deg', 0)
+        # # make sure angleRL is type float
+        # angleRL_deg = float(angleRL_deg)
+        # # rotate the LPS axes by the angleRL
+        # angleRL_rad = np.deg2rad(angleRL_deg)
+        # rotation_matrix_RL = np.array([[1, 0, 0], [0, np.cos(angleRL_rad), -np.sin(angleRL_rad)], [0, np.sin(angleRL_rad), np.cos(angleRL_rad)]])
+        # self.axisX_LPS = np.dot(rotation_matrix_RL, self.axisX_LPS)
+        # self.axisY_LPS = np.dot(rotation_matrix_RL, self.axisY_LPS)
+        # self.axisZ_LPS = np.dot(rotation_matrix_RL, self.axisZ_LPS)
+
+        # # then rotate around AP axis
+        # angleAP_deg = scan_parameters.get('APAngle_deg', 0)
+        # # make sure angleAP is type float
+        # angleAP_deg = float(angleAP_deg)
+        # # rotate the LPS axes by the angleAP
+        # angleAP_rad = np.deg2rad(angleAP_deg)
+        # rotation_matrix_AP = np.array([[np.cos(angleAP_rad), 0, np.sin(angleAP_rad)], [0, 1, 0], [-np.sin(angleAP_rad), 0, np.cos(angleAP_rad)]])
+        # self.axisX_LPS = np.dot(rotation_matrix_AP, self.axisX_LPS)
+        # self.axisY_LPS = np.dot(rotation_matrix_AP, self.axisY_LPS)
+        # self.axisZ_LPS = np.dot(rotation_matrix_AP, self.axisZ_LPS)
+
+        # # finally rotate around FH axis
+        # angleFH_deg = scan_parameters.get('FHAngle_deg', 0)
+        # # make sure angleFH is type float
+        # angleFH_deg = float(angleFH_deg)
+        # # rotate the LPS axes by the angleFH
+        # angleFH_rad = np.deg2rad(angleFH_deg)
+        # rotation_matrix_FH = np.array([[np.cos(angleFH_rad), -np.sin(angleFH_rad), 0], [np.sin(angleFH_rad), np.cos(angleFH_rad), 0], [0, 0, 1]])
+        # self.axisX_LPS = np.dot(rotation_matrix_FH, self.axisX_LPS)
+        # self.axisY_LPS = np.dot(rotation_matrix_FH, self.axisY_LPS)
+        # self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)
 
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
@@ -412,7 +460,9 @@ class ScanVolume:
         self.origin_LPS[2] = np.clip(self.origin_LPS[2], -self.scanner_FH_mm / 2 + half_extentZ, self.scanner_FH_mm / 2 - half_extentZ)
 
 
-    def calculate_from_edges_intersection_points_pixamp(self, edges: list[tuple], acquired_image: AcquiredImage) -> list[np.array]:
+    def calculate_from_edges_intersection_points_pixamp(
+        self, edges: list[tuple], acquired_image: AcquiredImage
+    ) -> list[np.array]:
         list_intersection_pts_LPS = []
         acquired_image_geometry = acquired_image.image_geometry
         origin_acq_im = acquired_image_geometry.origin_LPS
@@ -472,7 +522,6 @@ class ScanVolume:
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
         # translate the scan volume by the translation vector (which is in LPS coordinates)
         self.origin_LPS += translation_vector_LPS
-        self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float, origin_plane: str, handle_pos: QPointF):
@@ -508,7 +557,6 @@ class ScanVolume:
                 self.extentY_mm *= scale_factor_y
                 self.slice_gap_mm *= scale_factor_x
 
-        self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     # Event reciever for rotation using rotation handlers
@@ -536,7 +584,6 @@ class ScanVolume:
 
         # Update the axis vectors based on the new rotation angles
         self.update_axis_vectors()
-        self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def update_axis_vectors(self):
