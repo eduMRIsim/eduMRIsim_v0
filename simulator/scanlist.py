@@ -10,32 +10,33 @@ from utils.logger import log
 
 
 class ImageGeometry:
-    '''This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates.'''
-    def __init__(self, geometry_parameters : dict):
-        self.axisX_LPS = geometry_parameters['axisX_LPS']
-        self.axisY_LPS = geometry_parameters['axisY_LPS']
-        self.extentX_mm = geometry_parameters['extentX_mm']
-        self.extentY_mm = geometry_parameters['extentY_mm']
-        self.resX_mm = geometry_parameters['resX_mm']
-        self.resY_mm = geometry_parameters['resY_mm']
-        self.origin_LPS = geometry_parameters['origin_LPS']
-        self.plane = geometry_parameters['plane']
+    """This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates."""
+
+    def __init__(self, geometry_parameters: dict):
+        self.axisX_LPS = geometry_parameters["axisX_LPS"]
+        self.axisY_LPS = geometry_parameters["axisY_LPS"]
+        self.extentX_mm = geometry_parameters["extentX_mm"]
+        self.extentY_mm = geometry_parameters["extentY_mm"]
+        self.resX_mm = geometry_parameters["resX_mm"]
+        self.resY_mm = geometry_parameters["resY_mm"]
+        self.origin_LPS = geometry_parameters["origin_LPS"]
+        self.plane = geometry_parameters["plane"]
 
     @property
     def axisZ_LPS(self):
         # The Z axis is the cross product of the X and Y axes, i.e., the vector that is perpendicular to the 2D image plane
-        return np.cross(self.axisX_LPS, self.axisY_LPS) 
-    
+        return np.cross(self.axisX_LPS, self.axisY_LPS)
+
     def image_mm_coords_to_pixmap_coords(self, image_mm_coords: tuple) -> tuple:
-        '''Convert image coordinates to pixmap coordinates. The image coordinates are in millimeters, and the pixmap coordinates are in pixels. The origin of the pixmap coordinate system is at the top left corner of the image. The image coordinate origin is at the center of the image.'''
+        """Convert image coordinates to pixmap coordinates. The image coordinates are in millimeters, and the pixmap coordinates are in pixels. The origin of the pixmap coordinate system is at the top left corner of the image. The image coordinate origin is at the center of the image."""
         x, y, z = image_mm_coords
         x_pixmap = (x + (self.extentX_mm / 2)) / self.resX_mm
         y_pixmap = (y + (self.extentY_mm / 2)) / self.resY_mm
         return (x_pixmap, y_pixmap)
 
-    def pixmap_coords_to_image_mm_coords(self, pixmap_coords: tuple) -> tuple:  
-        '''Convert pixmap coordinates to image coordinates. The pixmap coordinates are in pixels, and the image coordinates are in millimeters. The origin of the pixmap coordinate system is at the top left corner of the image. The image coordinate origin is at the center of the image.'''
-        x, y= pixmap_coords
+    def pixmap_coords_to_image_mm_coords(self, pixmap_coords: tuple) -> tuple:
+        """Convert pixmap coordinates to image coordinates. The pixmap coordinates are in pixels, and the image coordinates are in millimeters. The origin of the pixmap coordinate system is at the top left corner of the image. The image coordinate origin is at the center of the image."""
+        x, y = pixmap_coords
         x_image_mm = (x * self.resX_mm) - (self.extentX_mm / 2)
         y_image_mm = (y * self.resY_mm) - (self.extentY_mm / 2)
         z_image_mm = 0
@@ -43,38 +44,63 @@ class ImageGeometry:
         return (x_image_mm, y_image_mm, z_image_mm)
 
     def image_mm_coords_to_LPS_coords(self, image_mm_coords: tuple) -> tuple:
-        '''Convert image coordinates to LPS coordinates. The image coordinates are in millimeters, and the LPS coordinates are in millimeters. '''
+        """Convert image coordinates to LPS coordinates. The image coordinates are in millimeters, and the LPS coordinates are in millimeters."""
 
         x, y, z = image_mm_coords
 
         L, P, S, one = np.dot(self.conversion_matrix, np.array([x, y, z, 1]))
 
         return (L, P, S)
-    
+
     def LPS_coords_to_image_mm_coords(self, LPS_coords: tuple) -> tuple:
-        '''Convert LPS coordinates to image coordinates. The LPS coordinates are in millimeters, and the image coordinates are in millimeters. '''
+        """Convert LPS coordinates to image coordinates. The LPS coordinates are in millimeters, and the image coordinates are in millimeters."""
 
         L, P, S = LPS_coords
 
-        x, y, z, one = np.dot(np.linalg.inv(self.conversion_matrix), np.array([L, P, S, 1]))
+        x, y, z, one = np.dot(
+            np.linalg.inv(self.conversion_matrix), np.array([L, P, S, 1])
+        )
 
         return (x, y, z)
-    
+
     def LPS_coords_to_pixmap_coords(self, LPS_coords: tuple) -> tuple:
-        '''Convert LPS coordinates to pixmap coordinates. The LPS coordinates are in millimeters, and the pixmap coordinates are in pixels.'''
+        """Convert LPS coordinates to pixmap coordinates. The LPS coordinates are in millimeters, and the pixmap coordinates are in pixels."""
         x, y, z = self.LPS_coords_to_image_mm_coords(LPS_coords)
         return self.image_mm_coords_to_pixmap_coords((x, y, z))
 
     def pixmap_coords_to_LPS_coords(self, pixmap_coords: tuple) -> tuple:
-        '''Convert pixmap coordinates to LPS coordinates. The pixmap coordinates are in pixels, and the LPS coordinates are in millimeters.'''
+        """Convert pixmap coordinates to LPS coordinates. The pixmap coordinates are in pixels, and the LPS coordinates are in millimeters."""
         x, y = pixmap_coords
         x, y, z = self.pixmap_coords_to_image_mm_coords((x, y))
         return self.image_mm_coords_to_LPS_coords((x, y, z))
 
     @property
     def conversion_matrix(self) -> np.ndarray:
-        '''Affine transformation matrix'''
-        return np.array([[self.axisX_LPS[0], self.axisY_LPS[0], self.axisZ_LPS[0], self.origin_LPS[0]], [self.axisX_LPS[1], self.axisY_LPS[1], self.axisZ_LPS[1], self.origin_LPS[1]], [self.axisX_LPS[2], self.axisY_LPS[2], self.axisZ_LPS[2], self.origin_LPS[2]], [0, 0, 0, 1]])
+        """Affine transformation matrix"""
+        return np.array(
+            [
+                [
+                    self.axisX_LPS[0],
+                    self.axisY_LPS[0],
+                    self.axisZ_LPS[0],
+                    self.origin_LPS[0],
+                ],
+                [
+                    self.axisX_LPS[1],
+                    self.axisY_LPS[1],
+                    self.axisZ_LPS[1],
+                    self.origin_LPS[1],
+                ],
+                [
+                    self.axisX_LPS[2],
+                    self.axisY_LPS[2],
+                    self.axisZ_LPS[2],
+                    self.origin_LPS[2],
+                ],
+                [0, 0, 0, 1],
+            ]
+        )
+
 
 class AcquiredImage:
     # An acquired image is a 2D image that is acquired during a scan. It consists of image data and image geometry.
@@ -82,9 +108,13 @@ class AcquiredImage:
         self.image_data = image_data
         self.image_geometry = image_geometry
 
+
 class AcquiredSeries:
-    '''A series of acquired images. The acquired images are 2D.'''
-    def __init__(self, series_name, scan_plane, list_acquired_images: list[AcquiredImage]):
+    """A series of acquired images. The acquired images are 2D."""
+
+    def __init__(
+        self, series_name, scan_plane, list_acquired_images: list[AcquiredImage]
+    ):
         self.series_name = series_name
         self.scan_plane = scan_plane
         self.list_acquired_images = list_acquired_images
@@ -93,7 +123,7 @@ class AcquiredSeries:
 class Scanlist:
     def __init__(self):
         self.scanlist_elements = []
-        self._active_idx = None 
+        self._active_idx = None
         self.observers = []
 
     def add_scanlist_element(self, name, scan_parameters):
@@ -102,11 +132,11 @@ class Scanlist:
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
         if self.active_idx is None:
             self.active_idx = 0
-    
+
     @property
     def active_idx(self):
         return self._active_idx
-    
+
     @active_idx.setter
     def active_idx(self, idx):
         self._active_idx = idx
@@ -115,7 +145,7 @@ class Scanlist:
     @property
     def active_scanlist_element(self):
         return self.scanlist_elements[self.active_idx]
-    
+
     @property
     def active_scan_item(self):
         return self.scanlist_elements[self.active_idx].scan_item
@@ -128,7 +158,7 @@ class Scanlist:
                 completed += 1
         if len(self.scanlist_elements) == 0:
             return 0
-        else:        
+        else:
             return completed / len(self.scanlist_elements)
 
     def add_observer(self, observer):
@@ -137,18 +167,28 @@ class Scanlist:
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            log.debug(f"Subject {self} is updating observer {observer} with event {event}")
+            log.debug(
+                f"Subject {self} is updating observer {observer} with event {event}"
+            )
             observer.update(event)
-            
+
     def remove_observer(self, observer):
         self.observers.remove(observer)
         log.debug(f"Observer {observer}, removed from {self}")
 
+
 class ScanItemStatusEnum(Enum):
-    READY_TO_SCAN = auto() # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
-    BEING_MODIFIED = auto() # Scan parameters are being modified by the user on the UI
-    INVALID = auto() # Scan parameters are invalid and the scan item cannot be applied to "scan" the anatomical model
-    COMPLETE = auto() # The scan item has been applied to "scan" the anatomical model. The acquired data is available.
+    READY_TO_SCAN = (
+        auto()
+    )  # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
+    BEING_MODIFIED = auto()  # Scan parameters are being modified by the user on the UI
+    INVALID = (
+        auto()
+    )  # Scan parameters are invalid and the scan item cannot be applied to "scan" the anatomical model
+    COMPLETE = (
+        auto()
+    )  # The scan item has been applied to "scan" the anatomical model. The acquired data is available.
+
 
 class ScanlistElement:
     def __init__(self, name, scan_parameters):
@@ -156,12 +196,15 @@ class ScanlistElement:
         self.acquired_data = None
         self.name = name
 
-class ScanItem: 
+
+class ScanItem:
     def __init__(self, name, scan_parameters):
         self.name = name
         self._scan_parameters = {}
         self.scan_volume = ScanVolume()
-        self.scan_volume.add_observer(self) # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed. It receives notifications when changes are caused by user interactions with the scan volume display on viewing windows on the UI. 
+        self.scan_volume.add_observer(
+            self
+        )  # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed. It receives notifications when changes are caused by user interactions with the scan volume display on viewing windows on the UI.
         self.observers = []
         self.scan_parameters = scan_parameters
         self._scan_parameters_original = {}
@@ -173,7 +216,7 @@ class ScanItem:
     @property
     def status(self):
         return self._status
-    
+
     @property
     def axisZ_LPS(self):
         return self.axisZ_LPS
@@ -186,15 +229,17 @@ class ScanItem:
     @property
     def scan_parameters(self):
         return self._scan_parameters
-    
+
     @scan_parameters.setter
     def scan_parameters(self, scan_parameters):
         for key, value in scan_parameters.items():
-            try: 
-                self._scan_parameters[key] = float(value) 
-            except: 
+            try:
+                self._scan_parameters[key] = float(value)
+            except:
                 self._scan_parameters[key] = value
-        self.scan_volume.remove_observer(self) # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not respond to events that they themselves initiated.
+        self.scan_volume.remove_observer(
+            self
+        )  # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not respond to events that they themselves initiated.
         self.scan_volume.set_scan_volume_geometry(self.scan_parameters)
 
         # Update with clamped values
@@ -203,50 +248,49 @@ class ScanItem:
         for key, value in params.items():
             self._scan_parameters[key] = value
 
-
-        self.scan_volume.add_observer(self) # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
+        self.scan_volume.add_observer(
+            self
+        )  # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
         self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
     @property
     def scan_parameters_original(self):
         return self._scan_parameters_original
-    
+
     @scan_parameters_original.setter
     def scan_parameters_original(self, scan_parameters):
         for key, value in scan_parameters.items():
-            try: self._scan_parameters_original[key] = float(value)   
-            except: self._scan_parameters_original[key] = value       
-    
+            try:
+                self._scan_parameters_original[key] = float(value)
+            except:
+                self._scan_parameters_original[key] = value
+
     def cancel_changes(self):
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
         else:
             self.status = ScanItemStatusEnum.INVALID
 
-    def reset_parameters(self):      
+    def reset_parameters(self):
         self.scan_parameters = self.scan_parameters_original
         self.valid = True
         self.messages = {}
-        self.status = ScanItemStatusEnum.READY_TO_SCAN    
+        self.status = ScanItemStatusEnum.READY_TO_SCAN
 
     def validate_scan_parameters(self, scan_parameters):
-        '''This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid.'''
-
+        """This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid."""
 
         self.valid = True
         self.messages = {}
         self.scan_parameters = scan_parameters
 
-
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
-
-
 
         # old code for validating contrast parameters
         # try: scan_parameters["TE"] = float(scan_parameters["TE"])
 
-        # except: 
+        # except:
         #     self.valid = False
         #     self.messages['TE'] = "TE must be a number."
 
@@ -256,17 +300,17 @@ class ScanItem:
         #         self.messages['TE'] = "TE cannot be a negative number."
 
         # try: scan_parameters["TR"] = float(scan_parameters["TR"])
-        # except: 
+        # except:
         #     self.valid = False
         #     self.messages['TR'] = "TR must be a number."
-        
+
         # if isinstance(scan_parameters["TR"], float):
         #     if scan_parameters["TR"] < 0:
         #         self.valid = False
         #         self.messages['TR'] = "TR cannot be a negative number."
 
         # try: scan_parameters["TI"] = float(scan_parameters["TI"])
-        # except: 
+        # except:
         #     self.valid = False
         #     self.messages["TI"] = "TI must be a number."
 
@@ -276,7 +320,7 @@ class ScanItem:
         #         self.messages['TI'] = "TI cannot be a negative number."
 
         # try: scan_parameters["FA"] = float(scan_parameters["FA"])
-        # except: 
+        # except:
         #     self.valid = False
         #     self.messages["FA"] = "FA must be a number."
 
@@ -286,11 +330,10 @@ class ScanItem:
         #         self.messages['FA'] = "FA cannot be a negative number."
 
         # self.scan_parameters = scan_parameters
-  
 
         # if self.valid == True:
         #     self.status = ScanlistElementStatusEnum.READY_TO_SCAN
-            
+
         # else:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
@@ -305,22 +348,26 @@ class ScanItem:
 
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            log.debug(f"Subject {self} is updating observer {observer} with event {event}")
+            log.debug(
+                f"Subject {self} is updating observer {observer} with event {event}"
+            )
             observer.update(event)
-            
+
     def remove_observer(self, observer):
         self.observers.remove(observer)
         log.debug(f"Observer {observer} removed from {self}")
-           
+
+
 class ScanVolume:
-    ''' The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter. '''
+    """The scan volume defines the rectangular volume to be scanned next. Its orientation with respect to the LPS coordinate system is defined by the axisX_LPS, axisY_LPS and axisZ_LPS parameters. The extent of the scan volume in the X, Y and Z directions is defined by the extentX_mm, extentY_mm and extentZ_mm parameters. The position of the center of the volume with respect to the LPS coordinate system is defined by the origin_LPS parameter."""
+
     def __init__(self):
         self.axisX_LPS = None
         self.axisY_LPS = None
         self.axisZ_LPS = None
         self.extentX_mm = None
         self.extentY_mm = None
-        self._extentZ_mm = None # See property extentZ_mm:  N_slices * slice_thickness_mm + (N_slices - 1) * slice_gap_mm
+        self._extentZ_mm = None  # See property extentZ_mm:  N_slices * slice_thickness_mm + (N_slices - 1) * slice_gap_mm
         self.resX_mm = 1
         self.resY_mm = 1
         # resolution in Z direction is the slice thickness
@@ -334,8 +381,8 @@ class ScanVolume:
         self.RLAngle_rad = 0.0
         self.APAngle_rad = 0.0
         self.FHAngle_rad = 0.0
-        self.Rotation_lock = 'None'
-        self.scanPlane = 'None'
+        self.Rotation_lock = "None"
+        self.scanPlane = "None"
         self.observers = []
 
         # Default scanner dimensions in mm
@@ -345,43 +392,74 @@ class ScanVolume:
 
     @property
     def extentZ_mm(self):
-        return self.N_slices * self.slice_thickness_mm + (self.N_slices - 1) * self.slice_gap_mm
+        return (
+            self.N_slices * self.slice_thickness_mm
+            + (self.N_slices - 1) * self.slice_gap_mm
+        )
 
     @property
     def conversion_matrix(self) -> np.ndarray:
-        '''Affine transformation matrix that converts scan volume coordinates to LPS coordinates'''
-        return np.array([[self.axisX_LPS[0], self.axisY_LPS[0], self.axisZ_LPS[0], self.origin_LPS[0]], [self.axisX_LPS[1], self.axisY_LPS[1], self.axisZ_LPS[1], self.origin_LPS[1]], [self.axisX_LPS[2], self.axisY_LPS[2], self.axisZ_LPS[2], self.origin_LPS[2]], [0, 0, 0, 1]])
+        """Affine transformation matrix that converts scan volume coordinates to LPS coordinates"""
+        return np.array(
+            [
+                [
+                    self.axisX_LPS[0],
+                    self.axisY_LPS[0],
+                    self.axisZ_LPS[0],
+                    self.origin_LPS[0],
+                ],
+                [
+                    self.axisX_LPS[1],
+                    self.axisY_LPS[1],
+                    self.axisZ_LPS[1],
+                    self.origin_LPS[1],
+                ],
+                [
+                    self.axisX_LPS[2],
+                    self.axisY_LPS[2],
+                    self.axisZ_LPS[2],
+                    self.origin_LPS[2],
+                ],
+                [0, 0, 0, 1],
+            ]
+        )
 
     def set_scan_volume_geometry(self, scan_parameters: dict):
-        self.N_slices = int(float(scan_parameters['NSlices']))
-        self.slice_gap_mm = float(scan_parameters['SliceGap_mm'])
-        self.slice_thickness_mm = float(scan_parameters['SliceThickness_mm'])
-        self.extentX_mm = float(scan_parameters['FOVPE_mm'])
-        self.extentY_mm = float(scan_parameters['FOVFE_mm'])
-        self.Rotation_lock = scan_parameters.get('Rotation_lock', self.Rotation_lock)
-        if scan_parameters['ScanPlane'] == 'Axial':
-            self.scanPlane = 'Axial'
+        self.N_slices = int(float(scan_parameters["NSlices"]))
+        self.slice_gap_mm = float(scan_parameters["SliceGap_mm"])
+        self.slice_thickness_mm = float(scan_parameters["SliceThickness_mm"])
+        self.extentX_mm = float(scan_parameters["FOVPE_mm"])
+        self.extentY_mm = float(scan_parameters["FOVFE_mm"])
+        self.Rotation_lock = scan_parameters.get("Rotation_lock", self.Rotation_lock)
+        if scan_parameters["ScanPlane"] == "Axial":
+            self.scanPlane = "Axial"
             self.axisX_LPS = np.array([1, 0, 0])
             self.axisY_LPS = np.array([0, 1, 0])
             self.axisZ_LPS = np.array([0, 0, 1])
-        if scan_parameters['ScanPlane'] == 'Sagittal':
-            self.scanPlane = 'Sagittal'
+        if scan_parameters["ScanPlane"] == "Sagittal":
+            self.scanPlane = "Sagittal"
             self.axisX_LPS = np.array([0, 1, 0])
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([-1, 0, 0])
-        if scan_parameters['ScanPlane'] == 'Coronal':
-            self.scanPlane = 'Coronal'
+        if scan_parameters["ScanPlane"] == "Coronal":
+            self.scanPlane = "Coronal"
             self.axisX_LPS = np.array([1, 0, 0])
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([0, 1, 0])
         self.resXmm = 1
         self.resYmm = 1
-        self.RLAngle_rad = np.deg2rad(float(scan_parameters.get('RLAngle_deg', 0)))
-        self.APAngle_rad = np.deg2rad(float(scan_parameters.get('APAngle_deg', 0)))
-        self.FHAngle_rad = np.deg2rad(float(scan_parameters.get('FHAngle_deg', 0)))
+        self.RLAngle_rad = np.deg2rad(float(scan_parameters.get("RLAngle_deg", 0)))
+        self.APAngle_rad = np.deg2rad(float(scan_parameters.get("APAngle_deg", 0)))
+        self.FHAngle_rad = np.deg2rad(float(scan_parameters.get("FHAngle_deg", 0)))
         self.update_axis_vectors()
 
-        self.origin_LPS = np.array([float(scan_parameters['OffCenterRL_mm']), float(scan_parameters['OffCenterAP_mm']), float(scan_parameters['OffCenterFH_mm'])])
+        self.origin_LPS = np.array(
+            [
+                float(scan_parameters["OffCenterRL_mm"]),
+                float(scan_parameters["OffCenterAP_mm"]),
+                float(scan_parameters["OffCenterFH_mm"]),
+            ]
+        )
 
         self.clamp_to_scanner_dimensions()
 
@@ -390,13 +468,13 @@ class ScanVolume:
     def clamp_to_scanner_dimensions(self):
 
         # Clamp extent in all planes
-        if self.scanPlane == 'Axial':
+        if self.scanPlane == "Axial":
             self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_RL_mm)
             self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_AP_mm)
-        elif self.scanPlane == 'Sagittal':
+        elif self.scanPlane == "Sagittal":
             self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_AP_mm)
             self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_FH_mm)
-        elif self.scanPlane == 'Coronal':
+        elif self.scanPlane == "Coronal":
             self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_RL_mm)
             self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_FH_mm)
 
@@ -405,14 +483,27 @@ class ScanVolume:
         half_extentZ = self.extentZ_mm / 2
 
         # Clamp origin and extent in RL direction
-        self.origin_LPS[0] = np.clip(self.origin_LPS[0], -self.scanner_RL_mm / 2 + half_extentX, self.scanner_RL_mm / 2 - half_extentX)
+        self.origin_LPS[0] = np.clip(
+            self.origin_LPS[0],
+            -self.scanner_RL_mm / 2 + half_extentX,
+            self.scanner_RL_mm / 2 - half_extentX,
+        )
         # AP direction
-        self.origin_LPS[1] = np.clip(self.origin_LPS[1], -self.scanner_AP_mm / 2 + half_extentY, self.scanner_AP_mm / 2 - half_extentY)
+        self.origin_LPS[1] = np.clip(
+            self.origin_LPS[1],
+            -self.scanner_AP_mm / 2 + half_extentY,
+            self.scanner_AP_mm / 2 - half_extentY,
+        )
         #  FH direction
-        self.origin_LPS[2] = np.clip(self.origin_LPS[2], -self.scanner_FH_mm / 2 + half_extentZ, self.scanner_FH_mm / 2 - half_extentZ)
+        self.origin_LPS[2] = np.clip(
+            self.origin_LPS[2],
+            -self.scanner_FH_mm / 2 + half_extentZ,
+            self.scanner_FH_mm / 2 - half_extentZ,
+        )
 
-
-    def calculate_from_edges_intersection_points_pixamp(self, edges: list[tuple], acquired_image: AcquiredImage) -> list[np.array]:
+    def calculate_from_edges_intersection_points_pixamp(
+        self, edges: list[tuple], acquired_image: AcquiredImage
+    ) -> list[np.array]:
         list_intersection_pts_LPS = []
         acquired_image_geometry = acquired_image.image_geometry
         origin_acq_im = acquired_image_geometry.origin_LPS
@@ -421,7 +512,13 @@ class ScanVolume:
         for edge in edges:
             start_pt_line_LPS = self.scan_volume_mm_coords_to_LPS_coords(edge[0])
             end_pt_line_LPS = self.scan_volume_mm_coords_to_LPS_coords(edge[1])
-            intersection_pts_LPS = self._line_plane_intersection(origin_acq_im, axisX_acq_im, axisY_acq_im, start_pt_line_LPS, end_pt_line_LPS)
+            intersection_pts_LPS = self._line_plane_intersection(
+                origin_acq_im,
+                axisX_acq_im,
+                axisY_acq_im,
+                start_pt_line_LPS,
+                end_pt_line_LPS,
+            )
             if intersection_pts_LPS is not None:
                 for pt in intersection_pts_LPS:
                     list_intersection_pts_LPS.append(pt)
@@ -435,38 +532,63 @@ class ScanVolume:
         # sort the 2D intersection points in a clockwise manner
         # find the centroid of the intersection points
         centroid = np.mean(list_intersection_pts_pixmap, axis=0)
-        list_intersection_pts_pixmap = sorted(list_intersection_pts_pixmap, key=lambda pt: np.arctan2(pt[1] - centroid[1], pt[0] - centroid[0]))
+        list_intersection_pts_pixmap = sorted(
+            list_intersection_pts_pixmap,
+            key=lambda pt: np.arctan2(pt[1] - centroid[1], pt[0] - centroid[0]),
+        )
 
         return list_intersection_pts_pixmap
 
-    def compute_intersection_with_acquired_image(self, acquired_image: AcquiredImage) -> list[np.array]:
+    def compute_intersection_with_acquired_image(
+        self, acquired_image: AcquiredImage
+    ) -> list[np.array]:
         # compute the intersection of the scan volume with the acquired image and return a list of the corners of the polygon that represents the intersection. The corners are in pixmap coordinates and are ordered in a clockwise manner.
         # list the edges of the scan volume in scan volume coordinates. For each edge, find the intersection points (if any) with the 2D acquired image. Also find middle line of scan and intersection with the acquired image.
         edges, middle_lines, slice_collection = self._list_edges_of_scan_volume()
 
         intersections_points_slices = []
         for slice_edges in slice_collection:
-            intersections_points_slices.append(self.calculate_from_edges_intersection_points_pixamp(slice_edges, acquired_image))
+            intersections_points_slices.append(
+                self.calculate_from_edges_intersection_points_pixamp(
+                    slice_edges, acquired_image
+                )
+            )
 
-        return (self.calculate_from_edges_intersection_points_pixamp(edges, acquired_image), self.calculate_from_edges_intersection_points_pixamp(middle_lines, acquired_image), intersections_points_slices)
+        return (
+            self.calculate_from_edges_intersection_points_pixamp(edges, acquired_image),
+            self.calculate_from_edges_intersection_points_pixamp(
+                middle_lines, acquired_image
+            ),
+            intersections_points_slices,
+        )
 
     def _get_geometry_parameters(self) -> dict:
         geometry_parameters = {}
-        geometry_parameters['axisX_LPS'] = self.axisX_LPS
-        geometry_parameters['axisY_LPS'] = self.axisY_LPS
-        geometry_parameters['extentX_mm'] = self.extentX_mm
-        geometry_parameters['extentY_mm'] = self.extentY_mm
-        geometry_parameters['resX_mm'] = self.resX_mm
-        geometry_parameters['resY_mm'] = self.resY_mm
+        geometry_parameters["axisX_LPS"] = self.axisX_LPS
+        geometry_parameters["axisY_LPS"] = self.axisY_LPS
+        geometry_parameters["extentX_mm"] = self.extentX_mm
+        geometry_parameters["extentY_mm"] = self.extentY_mm
+        geometry_parameters["resX_mm"] = self.resX_mm
+        geometry_parameters["resY_mm"] = self.resY_mm
         return geometry_parameters
 
     def get_image_geometry_of_slice(self, slice_number: int) -> ImageGeometry:
-        '''This function returns the ImageGeometry of each slice in the scan volume.'''
-        origin_slice_in_scan_volume_coords = np.array([0, 0, -self.extentZ_mm / 2 + slice_number * (self.slice_thickness_mm + self.slice_gap_mm) + self.slice_thickness_mm / 2])
-        origin_slice_in_LPS_coords = self.scan_volume_mm_coords_to_LPS_coords(origin_slice_in_scan_volume_coords)
+        """This function returns the ImageGeometry of each slice in the scan volume."""
+        origin_slice_in_scan_volume_coords = np.array(
+            [
+                0,
+                0,
+                -self.extentZ_mm / 2
+                + slice_number * (self.slice_thickness_mm + self.slice_gap_mm)
+                + self.slice_thickness_mm / 2,
+            ]
+        )
+        origin_slice_in_LPS_coords = self.scan_volume_mm_coords_to_LPS_coords(
+            origin_slice_in_scan_volume_coords
+        )
         geometry_parameters = self._get_geometry_parameters()
-        geometry_parameters['origin_LPS'] = origin_slice_in_LPS_coords
-        geometry_parameters['plane'] = self.scanPlane
+        geometry_parameters["origin_LPS"] = origin_slice_in_LPS_coords
+        geometry_parameters["plane"] = self.scanPlane
         return ImageGeometry(geometry_parameters)
 
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
@@ -475,8 +597,14 @@ class ScanVolume:
         self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
-    def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float, origin_plane: str, handle_pos: QPointF):
-        valid_planes = ('Axial', 'Sagittal', 'Coronal')
+    def scale_scan_volume(
+        self,
+        scale_factor_x: float,
+        scale_factor_y: float,
+        origin_plane: str,
+        handle_pos: QPointF,
+    ):
+        valid_planes = ("Axial", "Sagittal", "Coronal")
         if origin_plane not in valid_planes:
             raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
         top_down_plane = self.scanPlane
@@ -486,25 +614,25 @@ class ScanVolume:
         if top_down_plane == origin_plane:
             self.extentX_mm *= scale_factor_x
             self.extentY_mm *= scale_factor_y
-        elif top_down_plane == 'Axial':
-            if origin_plane == 'Sagittal':
+        elif top_down_plane == "Axial":
+            if origin_plane == "Sagittal":
                 self.extentY_mm *= scale_factor_x
                 self.slice_gap_mm *= scale_factor_y
-            elif origin_plane == 'Coronal':
-                self.extentX_mm *= scale_factor_x
-                self.slice_gap_mm *= scale_factor_y    
-        elif top_down_plane == 'Sagittal':
-            if origin_plane == 'Axial':
-                self.extentX_mm *= scale_factor_y
-                self.slice_gap_mm *= scale_factor_x
-            elif origin_plane == 'Coronal':
-                self.extentY_mm *= scale_factor_y
-                self.slice_gap_mm *= scale_factor_x
-        elif top_down_plane == 'Coronal':
-            if origin_plane == 'Axial':
+            elif origin_plane == "Coronal":
                 self.extentX_mm *= scale_factor_x
                 self.slice_gap_mm *= scale_factor_y
-            elif origin_plane == 'Sagittal':
+        elif top_down_plane == "Sagittal":
+            if origin_plane == "Axial":
+                self.extentX_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+            elif origin_plane == "Coronal":
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+        elif top_down_plane == "Coronal":
+            if origin_plane == "Axial":
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == "Sagittal":
                 self.extentY_mm *= scale_factor_y
                 self.slice_gap_mm *= scale_factor_x
 
@@ -513,21 +641,23 @@ class ScanVolume:
 
     # Event reciever for rotation using rotation handlers
     def rotate_scan_volume(self, rotation_angle_rad, rotation_axis):
-        '''This function computes the new angle using rotation angle and axis'''
+        """This function computes the new angle using rotation angle and axis"""
+
         def normalize_angle_rad(angle_rad):
             return (angle_rad + np.pi) % (2 * np.pi) - np.pi
+
         # Update the rotation angle for the specified axis
-        if rotation_axis == 'RL' and self.Rotation_lock in ('None', 'RL'):
+        if rotation_axis == "RL" and self.Rotation_lock in ("None", "RL"):
             self.RLAngle_rad += rotation_angle_rad
             self.RLAngle_rad = normalize_angle_rad(self.RLAngle_rad)
-        elif rotation_axis == 'AP' and self.Rotation_lock in ('None', 'AP'):
+        elif rotation_axis == "AP" and self.Rotation_lock in ("None", "AP"):
             self.APAngle_rad += rotation_angle_rad
             self.APAngle_rad = normalize_angle_rad(self.APAngle_rad)
-        elif rotation_axis == 'FH' and self.Rotation_lock in ('None', 'FH'):
+        elif rotation_axis == "FH" and self.Rotation_lock in ("None", "FH"):
             self.FHAngle_rad += rotation_angle_rad
             self.FHAngle_rad = normalize_angle_rad(self.FHAngle_rad)
         else:
-            if rotation_axis in ('RL', 'AP', 'FH'):
+            if rotation_axis in ("RL", "AP", "FH"):
                 log.warning("Attempted rotation locked by Rotation Lock")
                 pass
             else:
@@ -540,17 +670,17 @@ class ScanVolume:
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def update_axis_vectors(self):
-        '''Updates the scan area for rotation purposes'''
+        """Updates the scan area for rotation purposes"""
         # Reset axes to initial state
-        if self.scanPlane == 'Axial':
+        if self.scanPlane == "Axial":
             self.axisX_LPS = np.array([1, 0, 0])
             self.axisY_LPS = np.array([0, 1, 0])
             self.axisZ_LPS = np.array([0, 0, 1])
-        elif self.scanPlane == 'Sagittal':
+        elif self.scanPlane == "Sagittal":
             self.axisX_LPS = np.array([0, 1, 0])
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([-1, 0, 0])
-        elif self.scanPlane == 'Coronal':
+        elif self.scanPlane == "Coronal":
             self.axisX_LPS = np.array([1, 0, 0])
             self.axisY_LPS = np.array([0, 0, -1])
             self.axisZ_LPS = np.array([0, 1, 0])
@@ -559,16 +689,14 @@ class ScanVolume:
             raise ValueError(f"Unknown scanPlane: {self.scanPlane}")
 
         # Apply rotations in the order RL, AP, FH
-        rotation_matrix_RL = self.get_rotation_matrix('RL', self.RLAngle_rad)
-        rotation_matrix_AP = self.get_rotation_matrix('AP', self.APAngle_rad)
-        rotation_matrix_FH = self.get_rotation_matrix('FH', self.FHAngle_rad)
+        rotation_matrix_RL = self.get_rotation_matrix("RL", self.RLAngle_rad)
+        rotation_matrix_AP = self.get_rotation_matrix("AP", self.APAngle_rad)
+        rotation_matrix_FH = self.get_rotation_matrix("FH", self.FHAngle_rad)
 
         # Combined rotation matrix
-        combined_rotation_matrix = np.linalg.multi_dot([
-            rotation_matrix_FH,
-            rotation_matrix_AP,
-            rotation_matrix_RL
-        ])
+        combined_rotation_matrix = np.linalg.multi_dot(
+            [rotation_matrix_FH, rotation_matrix_AP, rotation_matrix_RL]
+        )
 
         # Rotate axes
         self.axisX_LPS = np.dot(combined_rotation_matrix, self.axisX_LPS)
@@ -576,57 +704,83 @@ class ScanVolume:
         self.axisZ_LPS = np.dot(combined_rotation_matrix, self.axisZ_LPS)
 
     def get_rotation_matrix(self, axis, angle_rad):
-        '''Returns the rotation matrix for a given axis and angle'''
-        if axis == 'RL':
-            rotation_matrix = np.array([
-                [1, 0, 0],
-                [0, np.cos(angle_rad), -np.sin(angle_rad)],
-                [0, np.sin(angle_rad), np.cos(angle_rad)]
-            ])
-        elif axis == 'AP':
-            rotation_matrix = np.array([
-                [np.cos(angle_rad), 0, np.sin(angle_rad)],
-                [0, 1, 0],
-                [-np.sin(angle_rad), 0, np.cos(angle_rad)]
-            ])
-        elif axis == 'FH':
-            rotation_matrix = np.array([
-                [np.cos(angle_rad), -np.sin(angle_rad), 0],
-                [np.sin(angle_rad), np.cos(angle_rad), 0],
-                [0, 0, 1]
-            ])
+        """Returns the rotation matrix for a given axis and angle"""
+        if axis == "RL":
+            rotation_matrix = np.array(
+                [
+                    [1, 0, 0],
+                    [0, np.cos(angle_rad), -np.sin(angle_rad)],
+                    [0, np.sin(angle_rad), np.cos(angle_rad)],
+                ]
+            )
+        elif axis == "AP":
+            rotation_matrix = np.array(
+                [
+                    [np.cos(angle_rad), 0, np.sin(angle_rad)],
+                    [0, 1, 0],
+                    [-np.sin(angle_rad), 0, np.cos(angle_rad)],
+                ]
+            )
+        elif axis == "FH":
+            rotation_matrix = np.array(
+                [
+                    [np.cos(angle_rad), -np.sin(angle_rad), 0],
+                    [np.sin(angle_rad), np.cos(angle_rad), 0],
+                    [0, 0, 1],
+                ]
+            )
         else:
             raise ValueError(f"Unknown rotation axis: {axis}")
         return rotation_matrix
 
-    def scan_volume_mm_coords_to_LPS_coords(self, scan_volume_mm_coords: tuple) -> tuple:
-        '''Convert scan volume coordinates to LPS coordinates. The scan volume coordinates are in millimeters, and the LPS coordinates are in millimeters. '''
+    def scan_volume_mm_coords_to_LPS_coords(
+        self, scan_volume_mm_coords: tuple
+    ) -> tuple:
+        """Convert scan volume coordinates to LPS coordinates. The scan volume coordinates are in millimeters, and the LPS coordinates are in millimeters."""
         x, y, z = scan_volume_mm_coords
 
         L, P, S, one = np.dot(self.conversion_matrix, np.array([x, y, z, 1]))
 
         return (L, P, S)
-    
+
     def LPS_coords_to_scan_volume_mm_coords(self, LPS_coords: tuple) -> tuple:
-        '''Convert LPS coordinates to scan volume coordinates. The LPS coordinates are in millimeters, and the scan volume coordinates are in millimeters. '''
+        """Convert LPS coordinates to scan volume coordinates. The LPS coordinates are in millimeters, and the scan volume coordinates are in millimeters."""
 
         L, P, S = LPS_coords
 
-        x, y, z, one = np.dot(np.linalg.inv(self.conversion_matrix), np.array([L, P, S, 1]))
+        x, y, z, one = np.dot(
+            np.linalg.inv(self.conversion_matrix), np.array([L, P, S, 1])
+        )
 
         return (x, y, z)
-    
+
     def _list_edges_of_scan_volume(self) -> list[tuple]:
-        '''list the edges of the scan volume in scan volume coordinates'''
+        """list the edges of the scan volume in scan volume coordinates"""
         # Define the corners of the FOV in FOV coordinates
-        front_top_left = np.array([-self.extentX_mm / 2, -self.extentY_mm / 2, -self.extentZ_mm / 2])
-        front_top_right = np.array([self.extentX_mm / 2, -self.extentY_mm / 2, -self.extentZ_mm / 2])
-        front_bottom_right = np.array([self.extentX_mm / 2, self.extentY_mm / 2, -self.extentZ_mm / 2])
-        front_bottom_left = np.array([-self.extentX_mm / 2, self.extentY_mm / 2, -self.extentZ_mm / 2])
-        back_top_left = np.array([-self.extentX_mm / 2, -self.extentY_mm / 2, self.extentZ_mm / 2])
-        back_top_right = np.array([self.extentX_mm / 2, -self.extentY_mm / 2, self.extentZ_mm / 2])
-        back_bottom_right = np.array([self.extentX_mm / 2, self.extentY_mm / 2, self.extentZ_mm / 2])
-        back_bottom_left = np.array([-self.extentX_mm / 2, self.extentY_mm / 2, self.extentZ_mm / 2]) 
+        front_top_left = np.array(
+            [-self.extentX_mm / 2, -self.extentY_mm / 2, -self.extentZ_mm / 2]
+        )
+        front_top_right = np.array(
+            [self.extentX_mm / 2, -self.extentY_mm / 2, -self.extentZ_mm / 2]
+        )
+        front_bottom_right = np.array(
+            [self.extentX_mm / 2, self.extentY_mm / 2, -self.extentZ_mm / 2]
+        )
+        front_bottom_left = np.array(
+            [-self.extentX_mm / 2, self.extentY_mm / 2, -self.extentZ_mm / 2]
+        )
+        back_top_left = np.array(
+            [-self.extentX_mm / 2, -self.extentY_mm / 2, self.extentZ_mm / 2]
+        )
+        back_top_right = np.array(
+            [self.extentX_mm / 2, -self.extentY_mm / 2, self.extentZ_mm / 2]
+        )
+        back_bottom_right = np.array(
+            [self.extentX_mm / 2, self.extentY_mm / 2, self.extentZ_mm / 2]
+        )
+        back_bottom_left = np.array(
+            [-self.extentX_mm / 2, self.extentY_mm / 2, self.extentZ_mm / 2]
+        )
 
         # List the edges of the scan volume in scan volume coordinates. Each edge is a tuple containing the coordinates of the two endpoints of the edge.
         edges = [
@@ -641,7 +795,7 @@ class ScanVolume:
             (front_top_left, back_top_left),
             (front_top_right, back_top_right),
             (front_bottom_right, back_bottom_right),
-            (front_bottom_left, back_bottom_left)
+            (front_bottom_left, back_bottom_left),
         ]
 
         top_left = (back_top_left - front_top_left) / 2 + front_top_left
@@ -653,45 +807,56 @@ class ScanVolume:
         # dy = P2.y - P1.y
         # dz = P2.z - P1.z
         # Len = sqrt(dx*dx+dy*dy+dz*dz)
-        # dx /= Len 
-        # dy /= Len 
+        # dx /= Len
+        # dy /= Len
         # dz /= Len
         v1 = back_top_left - front_top_left
         v2 = back_top_right - front_top_right
         v3 = back_bottom_left - front_bottom_left
         v4 = back_bottom_right - front_bottom_right
-        v_hat1 = v1 / (v1**2).sum()**0.5
-        v_hat2 = v2 / (v2**2).sum()**0.5
-        v_hat3 = v3 / (v3**2).sum()**0.5
-        v_hat4 = v4 / (v4**2).sum()**0.5
+        v_hat1 = v1 / (v1**2).sum() ** 0.5
+        v_hat2 = v2 / (v2**2).sum() ** 0.5
+        v_hat3 = v3 / (v3**2).sum() ** 0.5
+        v_hat4 = v4 / (v4**2).sum() ** 0.5
 
         middle_lines = [
             (top_left, top_right),
             (top_right, bottom_right),
             (bottom_right, bottom_left),
-            (bottom_left, top_left)
+            (bottom_left, top_left),
         ]
 
         slice_center_distances = []
         for i in range(self.N_slices):
-            center = (self.slice_thickness_mm / 2) + i * (self.slice_thickness_mm + self.slice_gap_mm)
+            center = (self.slice_thickness_mm / 2) + i * (
+                self.slice_thickness_mm + self.slice_gap_mm
+            )
             slice_center_distances.append(center)
 
         slices_collection = []
 
         for i in range(len(slice_center_distances)):
             disatance_from_0 = slice_center_distances[i]
-            point_1 = front_top_left + disatance_from_0*v_hat1
-            point_2 = front_top_right + disatance_from_0*v_hat2
-            point_3 = front_bottom_left + disatance_from_0*v_hat3
-            point_4 = front_bottom_right + disatance_from_0*v_hat4
+            point_1 = front_top_left + disatance_from_0 * v_hat1
+            point_2 = front_top_right + disatance_from_0 * v_hat2
+            point_3 = front_bottom_left + disatance_from_0 * v_hat3
+            point_4 = front_bottom_right + disatance_from_0 * v_hat4
 
-            slices_collection.append(((point_1, point_2), (point_2, point_4), (point_4, point_3), (point_3, point_1)))
+            slices_collection.append(
+                (
+                    (point_1, point_2),
+                    (point_2, point_4),
+                    (point_4, point_3),
+                    (point_3, point_1),
+                )
+            )
 
         return edges, middle_lines, slices_collection
 
-    def _line_plane_intersection(self, origin_plane, axisX_plane, axisY_plane, start_pt_line, end_pt_line) -> list[np.array]:
-        
+    def _line_plane_intersection(
+        self, origin_plane, axisX_plane, axisY_plane, start_pt_line, end_pt_line
+    ) -> list[np.array]:
+
         # Convert inputs to numpy arrays
         origin_plane = np.array(origin_plane)
         axisX_plane = np.array(axisX_plane)
@@ -712,7 +877,7 @@ class ScanVolume:
         # Check if the matrix is singular
         if np.linalg.matrix_rank(mat) < 3:
             # The line is parallel to the plane
-            mat2 = np.column_stack((-axisX_plane, -axisY_plane, vec)) 
+            mat2 = np.column_stack((-axisX_plane, -axisY_plane, vec))
             if np.linalg.matrix_rank(mat2) == 3:
                 # The line is parallel to the plane and does not lie on the plane
                 return None
@@ -721,13 +886,13 @@ class ScanVolume:
                 intersection_pts.append(start_pt_line)
                 intersection_pts.append(end_pt_line)
                 return intersection_pts
-            
-        else: 
-            try: 
+
+        else:
+            try:
                 t, u, v = np.linalg.solve(mat, vec)
                 # Check if the intersection lies within the line segment
                 if 0 <= t <= 1:
-                    intersection_pts.append(start_pt_line + t*line_dir)
+                    intersection_pts.append(start_pt_line + t * line_dir)
                     return intersection_pts
                 else:
                     # The intersection point lies outside the line segment
@@ -736,27 +901,45 @@ class ScanVolume:
                 log.error("Error: Singular matrix")
                 # The line is parallel to the plane
                 return None
- 
+
     def add_observer(self, observer):
         self.observers.append(observer)
         log.debug(f"Observer {observer} added to {self}")
-    
+
     def notify_observers(self, event: EventEnum):
         for observer in self.observers:
-            log.debug(f"Subject {self}, is updating observer {observer}, with event, {event}")
+            log.debug(
+                f"Subject {self}, is updating observer {observer}, with event, {event}"
+            )
             observer.update(event)
-            
+
     def remove_observer(self, observer):
         self.observers.remove(observer)
         log.debug(f"Observer {observer}, removed from {self}")
 
     # Added angles and scan plane as parameters. Needed to compute rotation
     def get_parameters(self):
-         return {'NSlices': self.N_slices, 'SliceGap_mm': self.slice_gap_mm, 'SliceThickness_mm': self.slice_thickness_mm, 'FOVPE_mm': self.extentX_mm, 'FOVFE_mm': self.extentY_mm, 'OffCenterRL_mm': self.origin_LPS[0], 'OffCenterAP_mm': self.origin_LPS[1], 'OffCenterFH_mm': self.origin_LPS[2], 'RLAngle_deg': np.degrees(self.RLAngle_rad), 'APAngle_deg': np.degrees(self.APAngle_rad),'FHAngle_deg': np.degrees(self.FHAngle_rad), 'ScanPlane': self.scanPlane,  'Rotation_lock': self.Rotation_lock}
+        return {
+            "NSlices": self.N_slices,
+            "SliceGap_mm": self.slice_gap_mm,
+            "SliceThickness_mm": self.slice_thickness_mm,
+            "FOVPE_mm": self.extentX_mm,
+            "FOVFE_mm": self.extentY_mm,
+            "OffCenterRL_mm": self.origin_LPS[0],
+            "OffCenterAP_mm": self.origin_LPS[1],
+            "OffCenterFH_mm": self.origin_LPS[2],
+            "RLAngle_deg": np.degrees(self.RLAngle_rad),
+            "APAngle_deg": np.degrees(self.APAngle_rad),
+            "FHAngle_deg": np.degrees(self.FHAngle_rad),
+            "ScanPlane": self.scanPlane,
+            "Rotation_lock": self.Rotation_lock,
+        }
 
     def calculate_slice_positions(self):
         slice_positions = []
         for i in range(self.N_slices):
-            z_position = -self.extentZ_mm / 2 + i * (self.slice_thickness_mm + self.slice_gap_mm)
+            z_position = -self.extentZ_mm / 2 + i * (
+                self.slice_thickness_mm + self.slice_gap_mm
+            )
             slice_positions.append(z_position)
         return slice_positions
