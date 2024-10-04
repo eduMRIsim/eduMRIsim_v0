@@ -1580,10 +1580,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.update_buttons_visibility()
 
         # Right-click context menu
+        # The trigger for export_action is set in main_ctrl.py, ui_signals() and handle_viewingPortExport_triggered()
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
-        self.export_image_dialog_ui = ExportImageDialog()
-        self.export_action.triggered.connect(lambda: self.export_image_dialog_ui.export_file_dialog(self.displayed_image))
         self.right_click_menu.addAction(self.export_action)
 
         self.scene.installEventFilter(self)

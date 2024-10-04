@@ -97,22 +97,31 @@ class MainController:
         )
 
         # Signals and UIs related to exporting images
-        self.export_viewing_port_1_dialog_ui = ExportImageDialog()
-        self.export_viewing_port_2_dialog_ui = ExportImageDialog()
-        self.export_viewing_port_3_dialog_ui = ExportImageDialog()
-        self.export_acquired_image_dialog_ui = ExportImageDialog()
+        self.export_image_dialog_ui = ExportImageDialog()
 
+        self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExport_triggered(0)
+        )
+        self.ui.scannedImageFrame.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(0)
+        )
         self.ui.scanPlanningWindow1ExportButton.clicked.connect(
-            lambda: self.handle_viewingPortExportButton_clicked(1)
+            lambda: self.handle_viewingPortExport_triggered(1)
+        )
+        self.ui.scanPlanningWindow1.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(1)
         )
         self.ui.scanPlanningWindow2ExportButton.clicked.connect(
-            lambda: self.handle_viewingPortExportButton_clicked(2)
+            lambda: self.handle_viewingPortExport_triggered(2)
+        )
+        self.ui.scanPlanningWindow2.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(2)
         )
         self.ui.scanPlanningWindow3ExportButton.clicked.connect(
-            lambda: self.handle_viewingPortExportButton_clicked(3)
+            lambda: self.handle_viewingPortExport_triggered(3)
         )
-        self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
-            self.handle_acquiredImageExportButton_clicked
+        self.ui.scanPlanningWindow3.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(3)
         )
 
     def prepare_model_data(self):
@@ -340,24 +349,22 @@ class MainController:
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
 
-    def handle_acquiredImageExportButton_clicked(self):
-        image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
-        self.export_acquired_image_dialog_ui.export_file_dialog(image)
+    def handle_viewingPortExport_triggered(self, index: int):
+        if index not in range(0, 4):
+            raise ValueError(f"Index {index} does not refer to a valid image viewing port")
 
-    def handle_viewingPortExportButton_clicked(self, button_index: int):
-        if button_index != 1 and button_index != 2 and button_index != 3:
-            raise ValueError(f"{button_index} is not a valid button index")
+        parameters = self.ui.parameterFormLayout.get_parameters()
 
-        if button_index == 1:
+        if index == 0:
+            image = self.ui.scannedImageFrame.displayed_image
+        elif index == 1:
             image = self.ui.scanPlanningWindow1.displayed_image
-            self.export_viewing_port_1_dialog_ui.export_file_dialog(image)
-        elif button_index == 2:
+        elif index == 2:
             image = self.ui.scanPlanningWindow2.displayed_image
-            self.export_viewing_port_2_dialog_ui.export_file_dialog(image)
         else:
-            assert button_index == 3
+            assert index == 3
             image = self.ui.scanPlanningWindow3.displayed_image
-            self.export_viewing_port_3_dialog_ui.export_file_dialog(image)
+        self.export_image_dialog_ui.export_file_dialog(image, parameters)
 
     def update(self, event):
         """

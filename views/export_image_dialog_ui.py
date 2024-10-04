@@ -5,7 +5,6 @@ import pydicom
 from pydicom.dataset import FileDataset
 from pydicom.uid import ExplicitVRLittleEndian
 import nibabel as nib
-import datetime
 from utils.logger import log
 from simulator.scanlist import AcquiredImage
 
@@ -19,7 +18,7 @@ class ExportImageDialog(QDialog):
         super().__init__()
         self.setWindowTitle("Choose a file location")
 
-    def export_file_dialog(self, image: AcquiredImage | None) -> None:
+    def export_file_dialog(self, image: AcquiredImage | None, parameters: dict) -> None:
         """
         This method exports (acquired) image data to an image file through a file save dialog.
         """
@@ -72,7 +71,7 @@ class ExportImageDialog(QDialog):
                 )
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
-                ExportImageDialog.export_to_dicom_file(image_data_normalized, file_name)
+                ExportImageDialog.export_to_dicom_file(image_data_normalized, parameters, file_name)
                 log.info(f"DICOM file saved as {file_name}")
             elif (
                 selected_filter == "NIfTI Files (*.nii)"
@@ -96,44 +95,44 @@ class ExportImageDialog(QDialog):
         image.save(file_name, filter=file_filter)
 
     @staticmethod
-    def export_to_dicom_file(image_data: np.ndarray, file_name: str) -> None:
+    def export_to_dicom_file(image_data: np.ndarray, parameters: dict, file_name: str) -> None:
         """
         Static method to export image data to a DICOM file.
+        For reference, the following websites were used for the DICOM tags that are set within this method:
+            https://dicom.innolitics.com/ciods/mr-image
+            http://dicomlookup.com/
         """
         # Create a FileDataset instance
         file_meta = pydicom.dataset.FileMetaDataset()
+        file_meta.MediaStorageSOPClassUID = pydicom.uid.generate_uid()
+        file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+        file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
+        file_meta.ImplementationClassUID = pydicom.uid.generate_uid()
         ds = FileDataset(file_name, {}, file_meta=file_meta, preamble=b"\0" * 128)
 
-        # Set the transfer syntax.
-        # Commented out for now, will be implemented properly in the near future.
-        # file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
+        # Set required DICOM tags
+        ds.StudyInstanceUID = pydicom.uid.generate_uid()
+        ds.SeriesInstanceUID = pydicom.uid.generate_uid()
+        ds.SOPInstanceUID = pydicom.uid.generate_uid()
 
-        # Add the necessary DICOM tags.
-        # These tags should be changed in the future to reflect the actual DICOM tags that are to be used.
-        ds.PatientName = "Test^Firstname"
-        ds.PatientID = "123456"
-        ds.Modality = "CT"
-        ds.StudyInstanceUID = "1.2.3.4"
-        ds.SeriesInstanceUID = "1.2.3.4.5"
-        ds.SOPInstanceUID = "1.2.3.4.5.6"
-        ds.SOPClassUID = pydicom.uid.CTImageStorage
-
-        # Set the image data
+        # Set DICOM tags either referring to image data, or referring to one of the scan parameters
+        ds.Modality = "MR"
         ds.Rows, ds.Columns = image_data.shape
+        ds.BitsAllocated = 16 # This may be changed in the future
+        ds.BitsStored = 12 # This may be changed in the future
+        ds.HighBit = 11 # This may be changed in the future
+        ds.PixelRepresentation = 0
+        ds.SamplesPerPixel = 1 # This may be changed in the future
+        ds.PhotometricInterpretation = "MONOCHROME2" # Set this to a different value if a different color scale is used
         ds.PixelData = image_data.tobytes()
+        ds.SliceThickness = parameters["SliceThickness_mm"]
+        ds.SpacingBetweenSlices = parameters["SliceGap_mm"] # This is referred to as "Slice gap" in the scan parameters
+        ds.ScanningSequence = parameters["ScanTechnique"] # This is referred to as "Scan technique" in the scan parameters
+        ds.EchoTime = parameters["TE_ms"]
+        ds.RepetitionTime = parameters["TR_ms"]
+        ds.InversionTime = parameters["TI_ms"]
 
-        # Set additional metadata.
-        # This metadata may not be correct, and may be changed in the future.
-        ds.SamplesPerPixel = 1
-        ds.PhotometricInterpretation = "MONOCHROME2"
-        ds.BitsAllocated = 16
-        ds.BitsStored = 16
-        ds.HighBit = 15
-        ds.PixelRepresentation = 1
-        ds.InstanceCreationDate = datetime.datetime.now().strftime("%Y%m%d")
-        ds.InstanceCreationTime = datetime.datetime.now().strftime("%H%M%S")
-
-        # Save the DICOM file.
+        # Save the DICOM file
         ds.save_as(file_name)
 
     @staticmethod
