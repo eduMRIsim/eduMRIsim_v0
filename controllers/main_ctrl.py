@@ -351,7 +351,9 @@ class MainController:
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
-            raise ValueError(f"Index {index} does not refer to a valid image viewing port")
+            raise ValueError(
+                f"Index {index} does not refer to a valid image viewing port"
+            )
 
         parameters = self.ui.parameterFormLayout.get_parameters()
 
