@@ -71,7 +71,9 @@ class ExportImageDialog(QDialog):
                 )
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
-                ExportImageDialog.export_to_dicom_file(image_data_normalized, parameters, file_name)
+                ExportImageDialog.export_to_dicom_file(
+                    image_data_normalized, parameters, file_name
+                )
                 log.info(f"DICOM file saved as {file_name}")
             elif (
                 selected_filter == "NIfTI Files (*.nii)"
@@ -95,7 +97,9 @@ class ExportImageDialog(QDialog):
         image.save(file_name, filter=file_filter)
 
     @staticmethod
-    def export_to_dicom_file(image_data: np.ndarray, parameters: dict, file_name: str) -> None:
+    def export_to_dicom_file(
+        image_data: np.ndarray, parameters: dict, file_name: str
+    ) -> None:
         """
         Static method to export image data to a DICOM file.
         For reference, the following websites were used for the DICOM tags that are set within this method:
@@ -118,16 +122,20 @@ class ExportImageDialog(QDialog):
         # Set DICOM tags either referring to image data, or referring to one of the scan parameters
         ds.Modality = "MR"
         ds.Rows, ds.Columns = image_data.shape
-        ds.BitsAllocated = 16 # This may be changed in the future
-        ds.BitsStored = 12 # This may be changed in the future
-        ds.HighBit = 11 # This may be changed in the future
+        ds.BitsAllocated = 16  # This may be changed in the future
+        ds.BitsStored = 12  # This may be changed in the future
+        ds.HighBit = 11  # This may be changed in the future
         ds.PixelRepresentation = 0
-        ds.SamplesPerPixel = 1 # This may be changed in the future
-        ds.PhotometricInterpretation = "MONOCHROME2" # Set this to a different value if a different color scale is used
+        ds.SamplesPerPixel = 1  # This may be changed in the future
+        ds.PhotometricInterpretation = "MONOCHROME2"  # Set this to a different value if a different color scale is used
         ds.PixelData = image_data.tobytes()
         ds.SliceThickness = parameters["SliceThickness_mm"]
-        ds.SpacingBetweenSlices = parameters["SliceGap_mm"] # This is referred to as "Slice gap" in the scan parameters
-        ds.ScanningSequence = parameters["ScanTechnique"] # This is referred to as "Scan technique" in the scan parameters
+        ds.SpacingBetweenSlices = parameters[
+            "SliceGap_mm"
+        ]  # This is referred to as "Slice gap" in the scan parameters
+        ds.ScanningSequence = parameters[
+            "ScanTechnique"
+        ]  # This is referred to as "Scan technique" in the scan parameters
         ds.EchoTime = parameters["TE_ms"]
         ds.RepetitionTime = parameters["TR_ms"]
         ds.InversionTime = parameters["TI_ms"]
