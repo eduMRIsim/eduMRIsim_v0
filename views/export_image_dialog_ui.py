@@ -76,7 +76,7 @@ class ExportImageDialog(QDialog):
                 log.info(f"DICOM file saved as {file_name}")
             elif (
                 selected_filter == "NIfTI Files (*.nii)"
-                or selected_filter == "Compressed NIfTI Files (*.nii.gz)"
+                or selected_filter == "Compressed (Zipped) NIfTI Files (*.nii.gz)"
             ):
                 ExportImageDialog.export_to_nifti_file(image_data_normalized, file_name)
                 log.info(f"NIfTI file saved as {file_name}")
@@ -144,6 +144,9 @@ class ExportImageDialog(QDialog):
         # Create an affine transformation matrix.
         # Currently, this is just the identity matrix, but this may be changed in the future.
         transformation_matrix: np.ndarray = np.eye(4)
+
+        # if file_name.endswith(".nii"):
+        image_data = np.rot90(image_data)
 
         # Create a NIfTI image.
         nifti_img = nib.Nifti1Image(image_data, transformation_matrix)
