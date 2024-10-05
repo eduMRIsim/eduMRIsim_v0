@@ -9,7 +9,7 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
-from simulator.scanlist import ScanItemStatusEnum, AcquiredImage, Scanlist
+from simulator.scanlist import ScanItemStatusEnum, AcquiredImage, Scanlist, AcquiredSeries
 from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
@@ -355,18 +355,48 @@ class MainController:
                 f"Index {index} does not refer to a valid image viewing port"
             )
 
-        parameters = self.ui.parameterFormLayout.get_parameters()
-
         if index == 0:
             image = self.ui.scannedImageFrame.displayed_image
+            parameters = self.ui.parameterFormLayout.get_parameters()
         elif index == 1:
             image = self.ui.scanPlanningWindow1.displayed_image
+            parameters = self._find_image_in_scanlist(image)
         elif index == 2:
             image = self.ui.scanPlanningWindow2.displayed_image
+            parameters = self._find_image_in_scanlist(image)
         else:
-            assert index == 3
             image = self.ui.scanPlanningWindow3.displayed_image
+            parameters = self._find_image_in_scanlist(image)
         self.export_image_dialog_ui.export_file_dialog(image, parameters)
+
+    def _find_image_in_scanlist(self, image: AcquiredImage) -> dict:
+        parameters: dict | None = None
+        found = False
+        for scanlist_element in self.scanner.scanlist.scanlist_elements:
+            acquired_series: AcquiredSeries = scanlist_element.acquired_data
+            acquired_image: AcquiredImage
+            for acquired_image in acquired_series.list_acquired_images:
+                if not np.array_equal(acquired_image.image_data, image.image_data):
+                    continue
+                values_correct = True
+                for key, value in acquired_image.image_geometry.geometry_parameters.items():
+                    if isinstance(value, np.ndarray):
+                        if not np.array_equal(value, image.image_geometry.geometry_parameters[key]):
+                            values_correct = False
+                    elif value != image.image_geometry.geometry_parameters[key]:
+                        values_correct = False
+                    if not values_correct:
+                        break
+                if not values_correct:
+                    continue
+                found = True
+                parameters = scanlist_element.scan_item.scan_parameters
+                break
+            if found:
+                break
+        if parameters is None:
+            raise ValueError("Image not found in scan list")
+        return parameters
 
     def update(self, event):
         """

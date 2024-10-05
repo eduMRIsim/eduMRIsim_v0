@@ -27,6 +27,20 @@ class ImageGeometry:
         # The Z axis is the cross product of the X and Y axes, i.e., the vector that is perpendicular to the 2D image plane
         return np.cross(self.axisX_LPS, self.axisY_LPS)
 
+    @property
+    def geometry_parameters(self):
+        return {
+            "axisX_LPS": self.axisX_LPS,
+            "axisY_LPS": self.axisY_LPS,
+            "axisZ_LPS": self.axisZ_LPS,
+            "extentX_mm": self.extentX_mm,
+            "extentY_mm": self.extentY_mm,
+            "resX_mm": self.resX_mm,
+            "resY_mm": self.resY_mm,
+            "origin_LPS": self.origin_LPS,
+            "plane": self.plane
+        }
+
     def image_mm_coords_to_pixmap_coords(self, image_mm_coords: tuple) -> tuple:
         """Convert image coordinates to pixmap coordinates. The image coordinates are in millimeters, and the pixmap coordinates are in pixels. The origin of the pixmap coordinate system is at the top left corner of the image. The image coordinate origin is at the center of the image."""
         x, y, z = image_mm_coords
