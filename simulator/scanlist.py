@@ -44,7 +44,7 @@ class ImageGeometry:
             "resX_mm": self.resX_mm,
             "resY_mm": self.resY_mm,
             "origin_LPS": self.origin_LPS,
-            "plane": self.plane
+            "plane": self.plane,
         }
 
     def image_mm_coords_to_pixmap_coords(self, image_mm_coords: tuple) -> tuple:

@@ -9,7 +9,12 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
-from simulator.scanlist import ScanItemStatusEnum, AcquiredImage, Scanlist, AcquiredSeries
+from simulator.scanlist import (
+    ScanItemStatusEnum,
+    AcquiredImage,
+    Scanlist,
+    AcquiredSeries,
+)
 from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
@@ -395,13 +400,20 @@ class MainController:
                 if not np.array_equal(acquired_image.image_data, image.image_data):
                     continue
 
-                geometry_parameters_correct = True  # Flag to check if the geometry parameters match
+                geometry_parameters_correct = (
+                    True  # Flag to check if the geometry parameters match
+                )
 
                 # Loop over the key-value pairs in the geometry parameters dictionary of this acquired image
-                for key, value in acquired_image.image_geometry.geometry_parameters.items():
+                for (
+                    key,
+                    value,
+                ) in acquired_image.image_geometry.geometry_parameters.items():
                     # This isinstance check is for (in)equality in case the current value is of type np.ndarray
                     if isinstance(value, np.ndarray):
-                        if not np.array_equal(value, image.image_geometry.geometry_parameters[key]):
+                        if not np.array_equal(
+                            value, image.image_geometry.geometry_parameters[key]
+                        ):
                             geometry_parameters_correct = False
                     # If we don't have an np.ndarray as our value, just check for (in)equality
                     elif value != image.image_geometry.geometry_parameters[key]:
