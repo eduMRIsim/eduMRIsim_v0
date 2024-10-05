@@ -360,42 +360,74 @@ class MainController:
             parameters = self.ui.parameterFormLayout.get_parameters()
         elif index == 1:
             image = self.ui.scanPlanningWindow1.displayed_image
-            parameters = self._find_image_in_scanlist(image)
+            parameters = self._return_parameters_from_image_in_scanlist(image)
         elif index == 2:
             image = self.ui.scanPlanningWindow2.displayed_image
-            parameters = self._find_image_in_scanlist(image)
+            parameters = self._return_parameters_from_image_in_scanlist(image)
         else:
             image = self.ui.scanPlanningWindow3.displayed_image
-            parameters = self._find_image_in_scanlist(image)
+            parameters = self._return_parameters_from_image_in_scanlist(image)
         self.export_image_dialog_ui.export_file_dialog(image, parameters)
 
-    def _find_image_in_scanlist(self, image: AcquiredImage) -> dict:
-        parameters: dict | None = None
-        found = False
+    def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
+        """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.
+
+        Args:
+            image (AcquiredImage): the image that is to be found in the scan list.
+
+        Returns:
+            The parameters from the scan list element that is associated with the image argument of this method.
+
+        Raises:
+             ValueError: If the image argument of this method was not found in the scan list.
+        """
+
+        parameters: dict | None = None  # Return variable
+        found = False  # Flag to check if the image was found
+
+        # Loop over all scan list elements
         for scanlist_element in self.scanner.scanlist.scanlist_elements:
+            # For each scan list element, loop over all (acquired) images
             acquired_series: AcquiredSeries = scanlist_element.acquired_data
             acquired_image: AcquiredImage
             for acquired_image in acquired_series.list_acquired_images:
+                # If the image data does not match, continue to the next image
                 if not np.array_equal(acquired_image.image_data, image.image_data):
                     continue
-                values_correct = True
+
+                geometry_parameters_correct = True  # Flag to check if the geometry parameters match
+
+                # Loop over the key-value pairs in the geometry parameters dictionary of this acquired image
                 for key, value in acquired_image.image_geometry.geometry_parameters.items():
+                    # This isinstance check is for (in)equality in case the current value is of type np.ndarray
                     if isinstance(value, np.ndarray):
                         if not np.array_equal(value, image.image_geometry.geometry_parameters[key]):
-                            values_correct = False
+                            geometry_parameters_correct = False
+                    # If we don't have an np.ndarray as our value, just check for (in)equality
                     elif value != image.image_geometry.geometry_parameters[key]:
-                        values_correct = False
-                    if not values_correct:
+                        geometry_parameters_correct = False
+
+                    # If any of the geometry parameters don't match, stop checking this dictionary
+                    if not geometry_parameters_correct:
                         break
-                if not values_correct:
+                # If any of the geometry parameters don't match, continue to the next image
+                if not geometry_parameters_correct:
                     continue
+
+                # If both the image data and all the geometry parameters match, we have found (acquired) image that we were looking for
                 found = True
                 parameters = scanlist_element.scan_item.scan_parameters
                 break
+
+            # If we found the image that we were looking for, break out of the scan list element loop
             if found:
                 break
+
+        # If the parameters variable is still None after checking all possible options, raise an error
         if parameters is None:
             raise ValueError("Image not found in scan list")
+
+        # Return the parameters dictionary
         return parameters
 
     def update(self, event):

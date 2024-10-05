@@ -28,7 +28,13 @@ class ImageGeometry:
         return np.cross(self.axisX_LPS, self.axisY_LPS)
 
     @property
-    def geometry_parameters(self):
+    def geometry_parameters(self) -> dict:
+        """Convenience getter to get all geometry parameters at once, in a single dictionary.
+
+        Returns:
+            A dictionary that maps parameters that have been set in this object as string keys,
+            to the values of those parameters in this object.
+        """
         return {
             "axisX_LPS": self.axisX_LPS,
             "axisY_LPS": self.axisY_LPS,
