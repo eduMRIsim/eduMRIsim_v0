@@ -280,6 +280,137 @@ class ScanItem:
         # else:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
+    #Rotation check for Plane changing according to rotation. Only gets called when the save button is pressed
+    def perform_rotation_check(self, scan_parameters):
+        scanPlane = scan_parameters['ScanPlane']
+        RLAngle_deg = float(scan_parameters['RLAngle_deg'])
+        APAngle_deg = float(scan_parameters['APAngle_deg'])
+        FHAngle_deg = float(scan_parameters['FHAngle_deg'])
+
+        THRESHOLD_ANGLE = 45  # degrees. Keep at 45 for expected behaviour
+
+        changed = False  # Flag to indicate if a plane change occurred
+
+        # Check for Axial plane
+        if scanPlane == 'Axial':
+            if abs(APAngle_deg) > THRESHOLD_ANGLE and abs(RLAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Sagittal plane
+                scan_parameters['ScanPlane'] = 'Sagittal'
+
+                # Adjust APAngle_deg
+                if APAngle_deg > 0:
+                    #FHAngle_deg += 90
+                    APAngle_deg -= 90
+                else:
+                    #FHAngle_deg -= 90
+                    APAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+            elif abs(RLAngle_deg) > THRESHOLD_ANGLE and abs(APAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Coronal plane
+                scan_parameters['ScanPlane'] = 'Coronal'
+
+                # Adjust RLAngle_deg
+                if RLAngle_deg > 0:
+                    #FHAngle_deg -= 90
+                    RLAngle_deg -= 90
+                else:
+                    #FHAngle_deg += 90
+                    RLAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+        elif scanPlane == 'Sagittal':
+            if abs(APAngle_deg) > THRESHOLD_ANGLE and abs(FHAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Axial plane
+                scan_parameters['ScanPlane'] = 'Axial'
+
+                # Adjust APAngle_deg
+                if APAngle_deg > 0:
+                    APAngle_deg -= 90
+                    #RLAngle_deg -= 90
+                else:
+                    APAngle_deg += 90
+                    #RLAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+            elif abs(FHAngle_deg) > THRESHOLD_ANGLE and abs(APAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Coronal plane
+                scan_parameters['ScanPlane'] = 'Coronal'
+
+                # Adjust FHAngle_deg
+                if FHAngle_deg > 0:
+                    #APAngle_deg += 90
+                    FHAngle_deg -= 90
+                else:
+                    #APAngle_deg -= 90
+                    FHAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+        elif scanPlane == 'Coronal':
+            if abs(RLAngle_deg) > THRESHOLD_ANGLE and abs(FHAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Axial plane
+                scan_parameters['ScanPlane'] = 'Axial'
+
+                # Adjust RLAngle_deg
+                if RLAngle_deg > 0:
+                    RLAngle_deg += 90
+                    #APAngle_deg -= 90
+                else:
+                    RLAngle_deg -= 90
+                    #APAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+            elif abs(FHAngle_deg) > THRESHOLD_ANGLE and abs(RLAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Sagittal plane
+                scan_parameters['ScanPlane'] = 'Sagittal'
+
+                # Adjust FHAngle_deg
+                if FHAngle_deg > 0:
+                    #RLAngle_deg -= 90
+                    FHAngle_deg -= 90
+                else:
+                    #RLAngle_deg += 90
+                    FHAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+        if changed:
+            # Update the scan volume geometry
+            self.scan_volume.set_scan_volume_geometry(scan_parameters)
+            self.scan_volume.update_axis_vectors()
+
+            # Notify observers
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
     def update(self, event):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
             parameters = self.scan_volume.get_parameters()
