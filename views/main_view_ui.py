@@ -1732,7 +1732,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.text_item.setDefaultTextColor(QColor(255, 0, 0))
         self.scene.addItem(self.text_item)
 
-        self.measure = MeasurementTool(self.line_item, self.text_item)
+        self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
 
     # start zoom when pressed

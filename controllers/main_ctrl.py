@@ -365,7 +365,7 @@ class MainController:
             log.warn("Measuring enabled")
         else:
             self.ui._scannedImageFrame.measuring_enabled = False
-            self.ui._scannedImageFrame.measuring_tool.hide_items()
+            self.ui._scannedImageFrame.measure.hide_items()
             log.warn("Measuring disabled")
 
 
