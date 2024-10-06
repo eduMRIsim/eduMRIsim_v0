@@ -1,7 +1,17 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QPushButton, QFrame, QHBoxLayout, QWidget, QLabel, QVBoxLayout, QGridLayout, QSpacerItem, \
-    QSizePolicy, QLineEdit
+from PyQt5.QtWidgets import (
+    QPushButton,
+    QFrame,
+    QHBoxLayout,
+    QWidget,
+    QLabel,
+    QVBoxLayout,
+    QGridLayout,
+    QSpacerItem,
+    QSizePolicy,
+    QLineEdit,
+)
 
 
 class SegmentedButtonFrame(QFrame):
@@ -12,7 +22,7 @@ class SegmentedButtonFrame(QFrame):
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
 
-        # Create an instance of the SegmentedButton class and add it to the layout 
+        # Create an instance of the SegmentedButton class and add it to the layout
         self.segmented_button = SegmentedButton(button_texts)
         self.layout.addWidget(self.segmented_button)
 
@@ -102,11 +112,11 @@ class SegmentedButton(QWidget):
 
 #         )
 
+
 class PrimaryActionButton(QPushButton):
     def __init__(self, text=""):
         super().__init__(text)
-        self.default_stylesheet = (
-            """
+        self.default_stylesheet = """
             QPushButton {
                 background-color: #417d9d;
                 color: white;
@@ -121,10 +131,8 @@ class PrimaryActionButton(QPushButton):
                 color: #7a7a7a; /* Adjust text color for better readability */
             }
             """
-        )
 
-        self.highlighted_stylesheet = (
-            """
+        self.highlighted_stylesheet = """
             QPushButton {
                 background-color: #2c566c; /* Darker background for highlighted state */
                 color: white;
@@ -132,7 +140,6 @@ class PrimaryActionButton(QPushButton):
                 padding: 5px 20px;
             }
             """
-        )
 
         self.setStyleSheet(self.default_stylesheet)
 
@@ -163,6 +170,7 @@ class PrimaryActionButton(QPushButton):
 #             }
 #             """
 #         )
+
 
 class SecondaryActionButton(QPushButton):
     def __init__(self, text=""):
@@ -248,13 +256,15 @@ class InfoFrame(QFrame):
         super().__init__()
         layout = QVBoxLayout()
         self.setLayout(layout)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             InfoFrame {
                 background-color: white; /* Background color */
                 border: 1px solid #BFBFBF; /* Border color and thickness */
                 border-radius: 5px; /* Radius for rounded corners */
             }
-        """)
+        """
+        )
 
         # Add labels for each section
         section1_layout = QHBoxLayout()
@@ -301,8 +311,9 @@ class InfoFrame(QFrame):
         line2.setFrameShadow(QFrame.Sunken)
         layout.addWidget(line2)
 
+
 # class InfoFrame(QFrame):
-#     def __init__(self, exam_name, model_name):  
+#     def __init__(self, exam_name, model_name):
 #         super().__init__()
 #         layout = QVBoxLayout()
 #         self.setLayout(layout)

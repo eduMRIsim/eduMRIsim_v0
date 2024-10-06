@@ -24,7 +24,8 @@ logging.basicConfig(
 
 log = logging.getLogger("rich")
 
-# Context is not used, but it is required by the Qt message handler 
+
+# Context is not used, but it is required by the Qt message handler
 # This function routes Qt messages to Python's logging module (which is linked to the RichHandler)
 def qt_message_handler(mode, context, message):
     """
@@ -41,6 +42,7 @@ def qt_message_handler(mode, context, message):
     else:
         log.debug(f"QtDebug: {message}")
 
+
 def numpy_handler():
-    np.seterr(all='warn')
+    np.seterr(all="warn")
     logging.captureWarnings(True)
