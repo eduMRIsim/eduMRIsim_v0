@@ -2,7 +2,7 @@ import math
 from contextlib import contextmanager
 from utils.logger import log
 import numpy as np
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray, QSize
 from PyQt5.QtGui import (
     QPainter,
     QPixmap,
@@ -245,6 +245,17 @@ class Ui_MainWindow(QMainWindow):
         return self.scanPlanningWindow.ImageLabelTuple[2]
 
     @property
+    def scanPlanningWindow1ExportButton(self):
+        return self.scanPlanningWindow.viewingPortButtonTuple[0]
+
+    @property
+    def scanPlanningWindow2ExportButton(self):
+        return self.scanPlanningWindow.viewingPortButtonTuple[1]
+
+    @property
+    def scanPlanningWindow3ExportButton(self):
+        return self.scanPlanningWindow.viewingPortButtonTuple[2]
+    @property
     def gridViewingWindowLayout(self):
         return self.gridViewingWindowLayout
 
@@ -314,6 +325,7 @@ class Ui_MainWindow(QMainWindow):
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
 
         self._scannedImageFrame = AcquiredSeriesViewer2D()
+        self._scannedImageFrame.zooming_enabled = True
         self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
         bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
 
@@ -675,12 +687,18 @@ class ScanProgressInfoFrame(QFrame):
 class ScanPlanningWindow(QFrame):
     def __init__(self):
         super().__init__()
-        layout = QHBoxLayout()
-        layout.setSpacing(0)
+        layout = QGridLayout()
+        layout.setHorizontalSpacing(0)
+        layout.setVerticalSpacing(7)
         self.setLayout(layout)
         self.ImageLabelTuple = tuple(DropAcquiredSeriesViewer2D() for i in range(3))
-        for label in self.ImageLabelTuple:
-            layout.addWidget(label, stretch=1)
+        for i, label in enumerate(self.ImageLabelTuple):
+            layout.addWidget(label, 0, i)
+        self.viewingPortButtonTuple = tuple(
+            PrimaryActionButton(f"Export this viewing port to file") for i in range(3)
+        )
+        for i, button in enumerate(self.viewingPortButtonTuple):
+            layout.addWidget(button, 1, i)
 
 
 class EditingStackedLayout(QStackedLayout):
@@ -915,9 +933,9 @@ class ParameterFormLayout(QVBoxLayout):
 
 
 class ScannedImageWidget(QWidget):
-    def __init__(self, scannedImageFrame: QGraphicsView) -> None:
+    def __init__(self, scannedImageFrame: QGraphicsView):
         super().__init__()
-        self._layout: QVBoxLayout = QVBoxLayout()
+        self._layout = QVBoxLayout()
         self.setLayout(self._layout)
         self._layout.addWidget(scannedImageFrame)
         self._acquiredImageExportButton: QPushButton = PrimaryActionButton(
@@ -926,7 +944,7 @@ class ScannedImageWidget(QWidget):
         self._layout.addWidget(self.acquiredImageExportButton)
 
     @property
-    def acquiredImageExportButton(self) -> QPushButton:
+    def acquiredImageExportButton(self):
         return self._acquiredImageExportButton
 
 
@@ -1825,43 +1843,53 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scene.installEventFilter(self)
 
         # zoom controls
+        self.zooming_enabled = False
         self.mouse_pressed = False
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
 
     # start zoom when pressed
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.mouse_pressed = True
-            self.last_mouse_pos = event.pos()
+        if self.zooming_enabled:
+            if event.button() == Qt.LeftButton:
+                self.mouse_pressed = True
+                self.last_mouse_pos = event.pos()
+        else:
+            super().mousePressEvent(event)
 
     # stop zoom when released
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.mouse_pressed = False
-            self.last_mouse_pos = None
+        if self.zooming_enabled:
+            if event.button() == Qt.LeftButton:
+                self.mouse_pressed = False
+                self.last_mouse_pos = None
+        else:
+            super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
-        """Handle zoom when the mouse is being dragged."""
-        if self.mouse_pressed and self.last_mouse_pos is not None:
+        if self.zooming_enabled:
+            """Handle zoom when the mouse is being dragged."""
+            if self.mouse_pressed and self.last_mouse_pos is not None:
 
-            max_zoom_out = 0.5
-            max_zoom_in = 10
-            current_pos = event.pos()
-            delta_y = current_pos.y() - self.last_mouse_pos.y()
+                max_zoom_out = 0.5
+                max_zoom_in = 10
+                current_pos = event.pos()
+                delta_y = current_pos.y() - self.last_mouse_pos.y()
 
-            # cursor_pos = self.mapToScene(current_pos)
-            zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+                # cursor_pos = self.mapToScene(current_pos)
+                zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
 
-            # get current zoom level (scaling factor)
-            current_zoom = self.transform().m11()
+                # get current zoom level (scaling factor)
+                current_zoom = self.transform().m11()
 
-            new_zoom = current_zoom * zoom_factor
-            if max_zoom_out <= new_zoom <= max_zoom_in:
-                self.scale(zoom_factor, zoom_factor)
+                new_zoom = current_zoom * zoom_factor
+                if max_zoom_out <= new_zoom <= max_zoom_in:
+                    self.scale(zoom_factor, zoom_factor)
 
-            # update the last mouse position
-            self.last_mouse_pos = current_pos
+                # update the last mouse position
+                self.last_mouse_pos = current_pos
+        else:
+            super().mouseMoveEvent(event)
 
     def zoom_in(self, center_point):
         if self.transform().m11() < self.max_zoom_in:
@@ -2200,6 +2228,7 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
+        self.zooming_enabled = False
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         source_widget = event.source()
