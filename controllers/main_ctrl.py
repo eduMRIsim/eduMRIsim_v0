@@ -16,7 +16,7 @@ from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import NoItemsToViewDialog
 from views.main_view_ui import Ui_MainWindow
-from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
+from views.export_image_dialog_ui import ExportImageDialog
 from views.view_model_dialog_ui import ViewModelDialog
 
 
@@ -33,8 +33,6 @@ class MainController:
     def ui_signals(self):
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
-
-        self.export_acquired_image_dialog_ui = ExportAcquiredImageDialog()
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
@@ -83,6 +81,7 @@ class MainController:
         )
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
+
         )
         self.ui.scanPlanningWindow3.dropEventSignal.connect(
             self.handle_scanPlanningWindow3_dropped
@@ -100,7 +99,21 @@ class MainController:
             )
         )
 
-        # Signals related to exporting acquired images
+        # Signals and UIs related to exporting images
+        self.export_viewing_port_1_dialog_ui = ExportImageDialog(1)
+        self.export_viewing_port_2_dialog_ui = ExportImageDialog(2)
+        self.export_viewing_port_3_dialog_ui = ExportImageDialog(3)
+        self.export_acquired_image_dialog_ui = ExportImageDialog(None)
+
+        self.ui.scanPlanningWindow1ExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExportButton_clicked(1)
+        )
+        self.ui.scanPlanningWindow2ExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExportButton_clicked(2)
+        )
+        self.ui.scanPlanningWindow3ExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExportButton_clicked(3)
+        )
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
             self.handle_acquiredImageExportButton_clicked
         )
@@ -186,6 +199,39 @@ class MainController:
         progress = scanlist.get_progress()
         self.ui.scanProgressBar.setValue(int(progress * 100))
 
+    def save_complete_scanlist_items(self, scanlist):
+        # saves scanlist elements that were scanned
+        complete_items = []
+        for item in scanlist.scanlist_elements:
+            if item.scan_item.status == ScanItemStatusEnum.COMPLETE:
+                complete_items.append({
+                    'name': item.name,
+                    'status': 'COMPLETE'
+                })
+
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+        settings.setValue("completeItems", complete_items)
+        settings.endGroup()
+
+        return complete_items
+
+    def restore_complete_scanlist_items(self):
+        # restores complete scanlist elements
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+
+        complete_items = settings.value("completeItems", [])
+        self.ui.scanlistListWidget.clear()
+
+        for item_data in complete_items:
+            list_item = QListWidgetItem(item_data['name'])
+            list_item.setIcon(QIcon("resources/icons/checkmark-circle-2-outline.png"))  # COMPLETE icon
+            self.ui.scanlistListWidget.addItem(list_item)
+            self.scanner.scanlist.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
+
+        settings.endGroup()
+
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
@@ -197,7 +243,6 @@ class MainController:
         # view model for the view model dialogue
         view_model_dialog = ViewModelDialog(self.scanner.model)
         view_model_dialog.exec()
-
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
         grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
@@ -219,6 +264,7 @@ class MainController:
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
@@ -283,6 +329,21 @@ class MainController:
     def handle_acquiredImageExportButton_clicked(self):
         image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
         self.export_acquired_image_dialog_ui.export_file_dialog(image)
+
+    def handle_viewingPortExportButton_clicked(self, button_index: int):
+        if button_index != 1 and button_index != 2 and button_index != 3:
+            raise ValueError(f"{button_index} is not a valid button index")
+
+        if button_index == 1:
+            image = self.ui.scanPlanningWindow1.displayed_image
+            self.export_viewing_port_1_dialog_ui.export_file_dialog(image)
+        elif button_index == 2:
+            image = self.ui.scanPlanningWindow2.acquired_series[1]
+            self.export_viewing_port_2_dialog_ui.export_file_dialog(image)
+        else:
+            assert button_index == 3
+            image = self.ui.scanPlanningWindow3.displayed_image
+            self.export_viewing_port_3_dialog_ui.export_file_dialog(image)
 
     def update(self, event):
         """
