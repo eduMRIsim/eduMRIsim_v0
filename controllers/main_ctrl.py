@@ -87,6 +87,9 @@ class MainController:
         self.ui.scanPlanningWindow3.dropEventSignal.connect(
             self.handle_scanPlanningWindow3_dropped
         )
+        self.ui.gridViewingWindow.connect_drop_signals(
+            self.handle_dropped_cells
+        )
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(
@@ -185,71 +188,12 @@ class MainController:
         progress = scanlist.get_progress()
         self.ui.scanProgressBar.setValue(int(progress * 100))
 
-    def save_complete_scanlist_items(self, scanlist):
-        # saves scanlist elements that were scanned
-        complete_items = []
-        for item in scanlist.scanlist_elements:
-            if item.scan_item.status == ScanItemStatusEnum.COMPLETE:
-                complete_items.append({"name": item.name, "status": "COMPLETE"})
-
-        settings = SettingsManager.get_instance().settings
-        settings.beginGroup("CompleteScanlistState")
-        settings.setValue("completeItems", complete_items)
-        settings.endGroup()
-
-        return complete_items
-
-    def restore_complete_scanlist_items(self):
-        # restores complete scanlist elements
-        settings = SettingsManager.get_instance().settings
-        settings.beginGroup("CompleteScanlistState")
-
-        complete_items = settings.value("completeItems", [])
-        self.ui.scanlistListWidget.clear()
-
-        for item_data in complete_items:
-            list_item = QListWidgetItem(item_data["name"])
-            list_item.setIcon(
-                QIcon("resources/icons/checkmark-circle-2-outline.png")
-            )  # COMPLETE icon
-            self.ui.scanlistListWidget.addItem(list_item)
-            self.scanner.scanlist.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
-
-        settings.endGroup()
-
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
 
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
-
-    def handle_viewingButton_clicked(self):
-        rightlayout = self.ui.layout
-        self.ui.clearLayout(rightlayout)
-        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
-        if not scanlist:
-            dialog = NoItemsToViewDialog()
-            dialog.show_dialog()
-            self.ui._createMainWindow()
-            self.ui.state = UI_state.ReadyToScanAgainState()
-            self.ui_signals()
-        else:
-            self.ui._createViewWindow()
-            self.restore_complete_scanlist_items()
-            self.ui.state = UI_state.ViewState()
-            self.ui.update_UI()
-            # handle drops
-            self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
-
-    def handle_scanningButton_clicked(self):
-        rightlayout = self.ui.layout
-        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
-        self.ui.clearLayout(rightlayout)
-        self.ui._createMainWindow()
-        self.ui.state = UI_state.ReadyToScanAgainState()
-        self.restore_complete_scanlist_items()
-        self.ui_signals()
 
     def handle_viewModelButton_clicked(self):
         # view model for the view model dialogue
@@ -262,6 +206,10 @@ class MainController:
         acquired_series = scanlist_element.acquired_data
         grid_cell.setAcquiredSeries(acquired_series)
         self.update_scanlistListWidget(self.scanner.scanlist)
+
+    def connect_drop_signals(self):
+        # Connect the drop event signals from the grid cells to the handle_dropped_cells method
+        self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
