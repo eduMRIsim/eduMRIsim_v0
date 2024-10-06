@@ -1,3 +1,4 @@
+import glob
 from PyQt5.QtCore import QSettings
 from events import EventEnum
 from simulator.scanner import Scanner
@@ -74,6 +75,17 @@ class SettingsManager:
                     )
 
         self.main_view.restore_settings()
+
+    def is_previous_session(self) -> bool:
+    # Scan current working directory for settings files
+        settings_files = glob.glob("settings.ini")
+
+        from utils.logger import log
+        log.info(f"settings_files: {settings_files}")
+
+        if len(settings_files) > 0:
+            return True
+        return False
 
     @classmethod
     def get_instance(cls):

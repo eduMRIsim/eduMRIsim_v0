@@ -34,6 +34,9 @@ class App(QApplication):
 
         # Show the starting screen
         self.starting_window = StartingWindow(self.start_new_examination, self.load_examination)
+
+        if not self.settings_manager.is_previous_session():
+            self.starting_window.load_previous_examination_button.setDisabled(True)
         self.starting_window.show()
 
     def start_main_app(self, settings_file=None):
