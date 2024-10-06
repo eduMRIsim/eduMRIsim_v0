@@ -45,7 +45,9 @@ from PyQt5.QtWidgets import (
     QGraphicsSceneMouseEvent,
     QGraphicsItem,
     QPushButton,
-    QGraphicsOpacityEffect, QMenu, QAction,
+    QGraphicsOpacityEffect,
+    QMenu,
+    QAction,
 )
 
 from controllers.settings_mgr import SettingsManager
