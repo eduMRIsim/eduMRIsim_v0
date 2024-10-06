@@ -45,7 +45,7 @@ from PyQt5.QtWidgets import (
     QGraphicsSceneMouseEvent,
     QGraphicsItem,
     QPushButton,
-    QGraphicsOpacityEffect,
+    QGraphicsOpacityEffect, QMenu, QAction,
 )
 
 from controllers.settings_mgr import SettingsManager
@@ -59,6 +59,7 @@ from views.UI_MainWindowState import (
     ScanCompleteState,
     ViewState,
 )
+from views.export_image_dialog_ui import ExportImageDialog
 from views.styled_widgets import (
     PrimaryActionButton,
     SecondaryActionButton,
@@ -246,15 +247,16 @@ class Ui_MainWindow(QMainWindow):
 
     @property
     def scanPlanningWindow1ExportButton(self):
-        return self.scanPlanningWindow.viewingPortButtonTuple[0]
+        return self.scanPlanningWindow.viewingPortExportButtonTuple[0]
 
     @property
     def scanPlanningWindow2ExportButton(self):
-        return self.scanPlanningWindow.viewingPortButtonTuple[1]
+        return self.scanPlanningWindow.viewingPortExportButtonTuple[1]
 
     @property
     def scanPlanningWindow3ExportButton(self):
-        return self.scanPlanningWindow.viewingPortButtonTuple[2]
+        return self.scanPlanningWindow.viewingPortExportButtonTuple[2]
+
     @property
     def gridViewingWindowLayout(self):
         return self.gridViewingWindowLayout
@@ -310,7 +312,7 @@ class Ui_MainWindow(QMainWindow):
     def _createRightLayout(self) -> QVBoxLayout:
         rightLayout = QVBoxLayout()
 
-        self.scanPlanningWindow = ScanPlanningWindow()
+        self.scanPlanningWindow = ScanPlanningWindow(self)
         rightLayout.addWidget(self.scanPlanningWindow, stretch=1)
 
         bottomLayout = QHBoxLayout()
@@ -685,19 +687,20 @@ class ScanProgressInfoFrame(QFrame):
 
 
 class ScanPlanningWindow(QFrame):
-    def __init__(self):
+    def __init__(self, ui: Ui_MainWindow):
         super().__init__()
         layout = QGridLayout()
         layout.setHorizontalSpacing(0)
         layout.setVerticalSpacing(7)
         self.setLayout(layout)
-        self.ImageLabelTuple = tuple(DropAcquiredSeriesViewer2D() for i in range(3))
+        self.ui = ui
+        self.ImageLabelTuple = tuple(DropAcquiredSeriesViewer2D(ui) for i in range(3))
         for i, label in enumerate(self.ImageLabelTuple):
             layout.addWidget(label, 0, i)
-        self.viewingPortButtonTuple = tuple(
+        self.viewingPortExportButtonTuple = tuple(
             PrimaryActionButton(f"Export this viewing port to file") for i in range(3)
         )
-        for i, button in enumerate(self.viewingPortButtonTuple):
+        for i, button in enumerate(self.viewingPortExportButtonTuple):
             layout.addWidget(button, 1, i)
 
 
@@ -1572,6 +1575,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.setLayout(button_layout)
         self.update_buttons_visibility()
 
+        # Right-click context menu
+        # The trigger for export_action is set in main_ctrl.py, ui_signals() and handle_viewingPortExport_triggered()
+        self.right_click_menu = QMenu(self)
+        self.export_action = QAction("Export...")
+        self.right_click_menu.addAction(self.export_action)
+
         self.scene.installEventFilter(self)
 
         # zoom controls
@@ -1952,16 +1961,41 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.stacks_displays = []
         # self.scan_volume_display.update_slice_lines()
 
+    def contextMenuEvent(self, event):
+        """Event handler for if the user requests to open the right-click context menu."""
+
+        super().contextMenuEvent(event)
+
+        # Enable the export button only if we have a displayed image that can be exported.
+        if self.displayed_image is not None:
+            self.export_action.setEnabled(True)
+        else:
+            self.export_action.setEnabled(False)
+
+        # Execute and open the menu.
+        action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
+
+        # If action_performed is None, the user didn't click on any action,
+        # but instead they clicked outside the menu to close it.
+        if action_performed is not None:
+            log.info(f"{repr(action_performed.text())} action performed")
+        else:
+            log.info("No action performed")
+
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     """Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs."""
 
     dropEventSignal = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, ui: Ui_MainWindow):
         super().__init__()
         self.setAcceptDrops(True)
         self.zooming_enabled = False
+
+        # This class requires a reference to the UI, since it needs to enable the viewport export buttons
+        # when a scan item is dropped into it, so that the user can export it to a file.
+        self.ui = ui
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         source_widget = event.source()
@@ -1981,6 +2015,27 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
         source_widget = event.source()
         selected_index = source_widget.selectedIndexes()[0].row()
         self.dropEventSignal.emit(selected_index)
+
+        # Enable a viewing port export button only if the viewing port contains at least one image.
+        if (
+            self.ui.scanPlanningWindow1.acquired_series is not None
+            and self.ui.scanPlanningWindow1.acquired_series.list_acquired_images
+            is not None
+        ):
+            self.ui.scanPlanningWindow1ExportButton.setEnabled(True)
+        if (
+            self.ui.scanPlanningWindow2.acquired_series is not None
+            and self.ui.scanPlanningWindow2.acquired_series.list_acquired_images
+            is not None
+        ):
+            self.ui.scanPlanningWindow2ExportButton.setEnabled(True)
+        if (
+            self.ui.scanPlanningWindow3.acquired_series is not None
+            and self.ui.scanPlanningWindow3.acquired_series.list_acquired_images
+            is not None
+        ):
+            self.ui.scanPlanningWindow3ExportButton.setEnabled(True)
+
         event.accept()
 
 
