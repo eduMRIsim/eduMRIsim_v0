@@ -1144,23 +1144,56 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         )
 
         rotations = self.scan_volume.get_rotations()
-        plane = self.get_plane_axis() #FH = Axial, RL = Sagittal, AP = Coronal
-        log.debug(f"{rotations} {plane}, {self.previous_handle_position}, {self.scene_center}")
+        plane = self.get_plane_axis()  # FH = Axial, RL = Sagittal, AP = Coronal
+        log.debug(
+            f"{rotations} {plane}, {self.previous_handle_position}, {self.scene_center}"
+        )
 
-        if plane == 'FH' and rotations['FHAngle_rad'] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Axial', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
-        elif plane == 'RL' and rotations['RLAngle_rad'] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Sagittal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
-        elif plane == 'AP' and rotations['APAngle_rad'] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+        if plane == "FH" and rotations["FHAngle_rad"] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale(
+                "Axial",
+                self.previous_scale_handle_position,
+                self.scene_center,
+                rotations["RLAngle_rad"],
+                rotations["APAngle_rad"],
+                rotations["FHAngle_rad"],
+            )
+        elif plane == "RL" and rotations["RLAngle_rad"] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale(
+                "Sagittal",
+                self.previous_scale_handle_position,
+                self.scene_center,
+                rotations["RLAngle_rad"],
+                rotations["APAngle_rad"],
+                rotations["FHAngle_rad"],
+            )
+        elif plane == "AP" and rotations["APAngle_rad"] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale(
+                "Coronal",
+                self.previous_scale_handle_position,
+                self.scene_center,
+                rotations["RLAngle_rad"],
+                rotations["APAngle_rad"],
+                rotations["FHAngle_rad"],
+            )
 
         # The logic for determining which axis the user is scaling on TBD
         log.debug(f"{self.on_x_axis}, {self.on_y_axis}")
 
-    def determine_axis_to_scale(self, origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad):
-        log.debug(f"{origin_plane}, {handle_pos}, {center_pos}, {RLAngle_rad}, {APAngle_rad}, {FHAngle_rad}")
+    def determine_axis_to_scale(
+        self,
+        origin_plane,
+        handle_pos,
+        center_pos,
+        RLAngle_rad,
+        APAngle_rad,
+        FHAngle_rad,
+    ):
+        log.debug(
+            f"{origin_plane}, {handle_pos}, {center_pos}, {RLAngle_rad}, {APAngle_rad}, {FHAngle_rad}"
+        )
         converter = 180 / math.pi
-        if origin_plane == 'Sagittal': #around RL axis
+        if origin_plane == "Sagittal":  # around RL axis
             # Rotation to positive direction
             if RLAngle_rad * converter < 90 and RLAngle_rad * converter > 0:
                 if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
@@ -1199,7 +1232,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     return False, True
                 if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
                     return True, False
-        elif origin_plane == 'Coronal': #around AP axis
+        elif origin_plane == "Coronal":  # around AP axis
             # Rotation to positive direction
             if APAngle_rad * converter <= 90 and APAngle_rad * converter > 0:
                 if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
@@ -1238,7 +1271,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     return True, False
                 if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
                     return False, True
-        elif origin_plane == 'Axial': #around FH axis
+        elif origin_plane == "Axial":  # around FH axis
             # Rotation to positive direction
             if FHAngle_rad * converter < 90 and FHAngle_rad * converter > 0:
                 if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
@@ -1292,7 +1325,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Calculate the scale factors in the x and y directions.
         # Also, avoid division by zero, which would happen if the previous scale handle position's x or y is equal to
         # the scene center's x or y respectively; in that case, set the respective scale factor to 1.0.
-        if self.on_x_axis or abs(self.previous_scale_handle_position.x() - self.scene_center.x()) == 0:
+        if (
+            self.on_x_axis
+            or abs(self.previous_scale_handle_position.x() - self.scene_center.x()) == 0
+        ):
             scale_factor_x = 1.0
         else:
             scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(
@@ -1300,7 +1336,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             )
             if scale_factor_x <= 0.92 or scale_factor_x >= 1.08:
                 scale_factor_x = 1.0
-        if self.on_y_axis or abs(self.previous_scale_handle_position.y() - self.scene_center.y()) == 0:
+        if (
+            self.on_y_axis
+            or abs(self.previous_scale_handle_position.y() - self.scene_center.y()) == 0
+        ):
             scale_factor_y = 1.0
         else:
             scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(
@@ -1313,7 +1352,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.previous_scale_handle_position = new_position
 
         # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
-        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y, origin_plane=self.viewer.displayed_image.image_geometry.plane, handle_pos=self.active_scale_handle.pos(), center_pos=self.scene_center)
+        self.notify_observers(
+            EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
+            scale_factor_x=scale_factor_x,
+            scale_factor_y=scale_factor_y,
+            origin_plane=self.viewer.displayed_image.image_geometry.plane,
+            handle_pos=self.active_scale_handle.pos(),
+            center_pos=self.scene_center,
+        )
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
@@ -1382,7 +1428,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.update_rotation_handle_positions()
 
         # Calculate offset and update position for scale handles
-        local_center = QPointF(sum(point.x() for point in polygon_in_polygon_coords) / n_points, sum(point.y() for point in polygon_in_polygon_coords) / n_points)
+        local_center = QPointF(
+            sum(point.x() for point in polygon_in_polygon_coords) / n_points,
+            sum(point.y() for point in polygon_in_polygon_coords) / n_points,
+        )
 
         self.scale_handle_offsets = []
         for i in range(n_points):
@@ -1725,7 +1774,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.measuring_enabled = False
 
         self.line_item = QGraphicsLineItem()
-        self.line_item.setPen(QPen(QColor(255, 0,0 ), 2))
+        self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
         self.scene.addItem(self.line_item)
 
         self.text_item = QGraphicsTextItem()
@@ -1733,7 +1782,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
-
 
     # start zoom when pressed
     def mousePressEvent(self, event):
@@ -1987,10 +2035,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             scale_factor_y = kwargs["scale_factor_y"]
             origin_plane = kwargs["origin_plane"]
             handle_pos = kwargs["handle_pos"]
-            center_pos = kwargs['center_pos']
+            center_pos = kwargs["center_pos"]
 
             # self.scan_volume.remove_observer(self)
-            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos)
+            self.scan_volume.scale_scan_volume(
+                scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos
+            )
             self._update_scan_volume_display()
             # self.scan_volume.add_observer(self)
 
@@ -2079,7 +2129,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         if self.scan_volume is not None:
             self.scan_volume.add_observer(self)
             self.scan_volume_display.set_scan_volume(scan_volume)
-        else: 
+        else:
             self.scan_volume_display.set_scan_volume(None)
         self._update_scan_volume_display()
 

@@ -1,5 +1,6 @@
 import math
 
+
 class MeasurementTool:
     def __init__(self, line_item, text_item, ac_series):
         self.start_point = None
@@ -31,14 +32,26 @@ class MeasurementTool:
     def update_measurement(self, point):
         if self.start_point is not None:
             self.end_point = point
-            self.line_item.setLine(self.start_point.x(), self.start_point.y(), self.end_point.x(), self.end_point.y())
+            self.line_item.setLine(
+                self.start_point.x(),
+                self.start_point.y(),
+                self.end_point.x(),
+                self.end_point.y(),
+            )
             distance = self.calculate_distance(self.start_point, self.end_point)
             self.text_item.setPlainText(f"{distance:.2f} mm")
             self.text_item.setPos((self.start_point + self.end_point) / 2)
 
     def calculate_distance(self, p1, p2):
-        p1_mm_coords = self.ac_series.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords((p1.x(), p1.y()))
-        p2_mm_coords = self.ac_series.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords((p2.x(), p2.y()))
+        p1_mm_coords = self.ac_series.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords(
+            (p1.x(), p1.y())
+        )
+        p2_mm_coords = self.ac_series.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords(
+            (p2.x(), p2.y())
+        )
 
-        dist = math.sqrt((p2_mm_coords[0] - p1_mm_coords[0]) ** 2 + (p2_mm_coords[1] - p1_mm_coords[1]) ** 2)
+        dist = math.sqrt(
+            (p2_mm_coords[0] - p1_mm_coords[0]) ** 2
+            + (p2_mm_coords[1] - p1_mm_coords[1]) ** 2
+        )
         return dist
