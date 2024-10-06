@@ -590,6 +590,9 @@ class ScanVolume:
         geometry_parameters["origin_LPS"] = origin_slice_in_LPS_coords
         geometry_parameters["plane"] = self.scanPlane
         return ImageGeometry(geometry_parameters)
+    
+    def get_rotations(self) -> dict:
+        return {'RLAngle_rad': self.RLAngle_rad, 'APAngle_rad': self.APAngle_rad, 'FHAngle_rad': self.FHAngle_rad}
 
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
         # translate the scan volume by the translation vector (which is in LPS coordinates)
@@ -607,6 +610,8 @@ class ScanVolume:
         if top_down_plane not in valid_planes:
             raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
 
+        #print(checked)
+
         # Variable to keep track if the scale factors have been checked
         checked = False
         if self.APAngle_rad == 0 and origin_plane == 'Coronal':
@@ -618,8 +623,6 @@ class ScanVolume:
         if self.FHAngle_rad == 0 and origin_plane == 'Axial':
             print('Axial not roated')
             checked = True
-
-        #print(checked)
 
         # Logic to determine which axis to scale on it is done through creating quadrants from the middle point of the scan volume, since only one of scale handles are in one at any given moment
         if not checked:
