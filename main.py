@@ -54,13 +54,17 @@ class App(QApplication):
 
         self.menu_bar.add_section("Mode")
         self.menu_bar.add_action(
-            "Mode", "Scanning Mode", lambda: self.main_view._stackedLayout.setCurrentIndex(0)
+            "Mode",
+            "Scanning Mode",
+            lambda: self.main_view._stackedLayout.setCurrentIndex(0),
         )
-        #self.menu_bar.add_action(
+        # self.menu_bar.add_action(
         #    "Mode", "Viewing Mode", self.main_controller.handle_viewingButton_clicked
-        #)
+        # )
         self.menu_bar.add_action(
-            "Mode", "Viewing Mode", lambda: self.main_view._stackedLayout.setCurrentIndex(1)
+            "Mode",
+            "Viewing Mode",
+            lambda: self.main_view._stackedLayout.setCurrentIndex(1),
         )
 
         self.menu_bar.add_section("Tools")

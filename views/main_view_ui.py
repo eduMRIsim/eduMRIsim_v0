@@ -251,7 +251,7 @@ class Ui_MainWindow(QMainWindow):
     @property
     def GridCell(self):
         return self.GridCell
-   
+
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch=1)
@@ -320,7 +320,7 @@ class Ui_MainWindow(QMainWindow):
         rightLayout.addLayout(bottomLayout, stretch=1)
 
         return rightLayout
-    
+
     def _createRightViewLayout(self) -> QVBoxLayout:
 
         rightlayout = QVBoxLayout()
@@ -1555,28 +1555,28 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.update_buttons_visibility()
 
         self.scene.installEventFilter(self)
-    
+
         # zoom controls
         self.mouse_pressed = False
         self.last_mouse_pos = None
-        self.zoom_sensitivity = 0.005 
+        self.zoom_sensitivity = 0.005
 
     # start zoom when pressed
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.mouse_pressed = True
-            self.last_mouse_pos = event.pos() 
+            self.last_mouse_pos = event.pos()
 
     # stop zoom when released
-    def mouseReleaseEvent(self,event):
+    def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.mouse_pressed = False
             self.last_mouse_pos = None
 
-    def mouseMoveEvent(self,event):
-        '''Handle zoom when the mouse is being dragged.'''
+    def mouseMoveEvent(self, event):
+        """Handle zoom when the mouse is being dragged."""
         if self.mouse_pressed and self.last_mouse_pos is not None:
-            
+
             max_zoom_out = 0.5
             max_zoom_in = 10
             current_pos = event.pos()
@@ -1596,13 +1596,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.last_mouse_pos = current_pos
 
     def zoom_in(self, center_point):
-        if self.transform().m11() < self.max_zoom_in: 
-            self.scale(self.zoom_factor, self.zoom_factor) 
+        if self.transform().m11() < self.max_zoom_in:
+            self.scale(self.zoom_factor, self.zoom_factor)
 
     def zoom_out(self, center_point):
-         if self.transform().m11() > self.max_zoom_out: 
-            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor) 
-            self.centerOn(center_point) 
+        if self.transform().m11() > self.max_zoom_out:
+            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
+            self.centerOn(center_point)
 
     def update_buttons_visibility(self):
         if self.acquired_series is None:
@@ -2020,24 +2020,24 @@ class GridCell(QGraphicsView):
         # zoom controls
         self.mouse_pressed = False
         self.last_mouse_pos = None
-        self.zoom_sensitivity = 0.005 
+        self.zoom_sensitivity = 0.005
 
     # start zoom when pressed
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.mouse_pressed = True
-            self.last_mouse_pos = event.pos() 
+            self.last_mouse_pos = event.pos()
 
     # stop zoom when released
-    def mouseReleaseEvent(self,event):
+    def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.mouse_pressed = False
             self.last_mouse_pos = None
 
-    def mouseMoveEvent(self,event):
-        '''Handle zoom when the mouse is being dragged.'''
+    def mouseMoveEvent(self, event):
+        """Handle zoom when the mouse is being dragged."""
         if self.mouse_pressed and self.last_mouse_pos is not None:
-            
+
             max_zoom_out = 0.1
             max_zoom_in = 10
             current_pos = event.pos()
@@ -2051,20 +2051,20 @@ class GridCell(QGraphicsView):
 
             new_zoom = current_zoom * zoom_factor
             if max_zoom_out <= new_zoom <= max_zoom_in:
-               self.scale(zoom_factor, zoom_factor)
+                self.scale(zoom_factor, zoom_factor)
 
             self.scale(zoom_factor, zoom_factor)
             self.centerOn(self.mapToScene(current_pos))
             self.last_mouse_pos = current_pos
 
     def zoom_in(self, center_point):
-        if self.transform().m11() < self.max_zoom_in: 
-            self.scale(self.zoom_factor, self.zoom_factor) 
+        if self.transform().m11() < self.max_zoom_in:
+            self.scale(self.zoom_factor, self.zoom_factor)
 
     def zoom_out(self, center_point):
-        if self.transform().m11() > self.max_zoom_out: 
-            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor) 
-            self.centerOn(center_point) 
+        if self.transform().m11() > self.max_zoom_out:
+            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
+            self.centerOn(center_point)
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized.
@@ -2136,7 +2136,7 @@ class GridCell(QGraphicsView):
             self.array = None
 
         self._displayArray()
-    
+
     def dropEvent(self, event: QDropEvent) -> None:
         source_widget = event.source()
         selected_index = source_widget.selectedIndexes()[0].row()
@@ -2156,7 +2156,6 @@ class GridCell(QGraphicsView):
 
     def dragMoveEvent(self, event):
         event.accept()
-
 
 
 class ImageLabel(QGraphicsView):
