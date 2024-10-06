@@ -1124,17 +1124,17 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         rotations = self.scan_volume.get_rotations()
         plane = self.get_plane_axis() #FH = Axial, RL = Sagittal, AP = Coronal
         print(rotations, plane, self.previous_handle_position, self.scene_center)
-        
+
         if plane == 'FH' and rotations['FHAngle_rad'] != 0:
             self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Axial', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
         elif plane == 'RL' and rotations['RLAngle_rad'] != 0:
             self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Sagittal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
         elif plane == 'AP' and rotations['APAngle_rad'] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad']) 
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
 
         # The logic for determining which axis the user is scaling on TBD
         print(self.on_x_axis, self.on_y_axis)
-    
+
     def determine_axis_to_scale(self, origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad):
         print(origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad)
         if origin_plane == 'Sagittal': #around RL axis
@@ -1157,7 +1157,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     return False, True
                 if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
                     return True, False
-            # Rotation to negative direction        
+            # Rotation to negative direction
             elif RLAngle_rad * 2 % 2 < 0 and RLAngle_rad * 2 % 2 > -1:
                 if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
                     return True, False
@@ -1175,7 +1175,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                 if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
                     return True, False
                 if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True    
+                    return False, True
         elif origin_plane == 'Coronal': #around AP axis
             # Rotation to positive direction
             if APAngle_rad * 2 % 2 < 1 and APAngle_rad * 2 % 2 > 0:
@@ -1196,7 +1196,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     return True, False
                 if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
                     return False, True
-            # Rotation to negative direction        
+            # Rotation to negative direction
             elif APAngle_rad * 2 % 2 < 0 and APAngle_rad * 2 % 2 > -1:
                 if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
                     return True, False
@@ -1235,7 +1235,145 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     return True, False
                 if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
                     return False, True
-            # Rotation to negative direction        
+            # Rotation to negative direction
+            elif FHAngle_rad * 2 % 2 < 0 and FHAngle_rad * 2 % 2 > -1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif FHAngle_rad * 2 % 2 <= -1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+        return False, False
+
+        #print(self.scene_center)
+        #print(self.scan_volume.get_rotations())
+        #print(self.scan_volume)
+        rotations = self.scan_volume.get_rotations()
+        plane = self.get_plane_axis() #FH = Axial, RL = Sagittal, AP = Coronal
+        print(rotations, plane, self.previous_handle_position, self.scene_center)
+
+        if plane == 'FH' and rotations['FHAngle_rad'] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Axial', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+        elif plane == 'RL' and rotations['RLAngle_rad'] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Sagittal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+        elif plane == 'AP' and rotations['APAngle_rad'] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+
+        # The logic for determining which axis the user is scaling on TBD
+        print(self.on_x_axis, self.on_y_axis)
+
+    def determine_axis_to_scale(self, origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad):
+        print(origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad)
+        if origin_plane == 'Sagittal': #around RL axis
+            # Rotation to positive direction
+            if RLAngle_rad * 2 % 2 < 1 and RLAngle_rad * 2 % 2 > 0:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            elif RLAngle_rad * 2 % 2 >= 1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            # Rotation to negative direction
+            elif RLAngle_rad * 2 % 2 < 0 and RLAngle_rad * 2 % 2 > -1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif RLAngle_rad * 2 % 2 <= -1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+        elif origin_plane == 'Coronal': #around AP axis
+            # Rotation to positive direction
+            if APAngle_rad * 2 % 2 < 1 and APAngle_rad * 2 % 2 > 0:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif APAngle_rad * 2 % 2 >= 1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            # Rotation to negative direction
+            elif APAngle_rad * 2 % 2 < 0 and APAngle_rad * 2 % 2 > -1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif APAngle_rad * 2 % 2 <= -1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+        elif origin_plane == 'Axial': #around FH axis
+            # Rotation to positive direction
+            if FHAngle_rad * 2 % 2 < 1 and FHAngle_rad * 2 % 2 > 0:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif FHAngle_rad * 2 % 2 >= 1:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            # Rotation to negative direction
             elif FHAngle_rad * 2 % 2 < 0 and FHAngle_rad * 2 % 2 > -1:
                 if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
                     return True, False
@@ -1926,7 +2064,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             scale_factor_y = kwargs["scale_factor_y"]
             origin_plane = kwargs["origin_plane"]
             handle_pos = kwargs["handle_pos"]
-            center_pos = kwargs["center_pos"]
+            center_pos = kwargs['center_pos']
 
             # self.scan_volume.remove_observer(self)
             self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos)

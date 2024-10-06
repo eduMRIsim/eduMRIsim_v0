@@ -590,7 +590,7 @@ class ScanVolume:
         geometry_parameters["origin_LPS"] = origin_slice_in_LPS_coords
         geometry_parameters["plane"] = self.scanPlane
         return ImageGeometry(geometry_parameters)
-    
+
     def get_rotations(self) -> dict:
         return {'RLAngle_rad': self.RLAngle_rad, 'APAngle_rad': self.APAngle_rad, 'FHAngle_rad': self.FHAngle_rad}
 
@@ -807,6 +807,7 @@ class ScanVolume:
 
         print('Scale factors:', scale_factor_x, scale_factor_y)
 
+        # Scaling logic
         # Scaling logic
         if top_down_plane == origin_plane:
             self.extentX_mm *= scale_factor_x
