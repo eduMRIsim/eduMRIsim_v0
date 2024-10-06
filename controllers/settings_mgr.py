@@ -18,7 +18,7 @@ class SettingsManager:
             self.main_controller = main_ctrl
             self.file_name = file_name
             self.main_view = main_view
-            self.settings = None
+            self.settings = QSettings(file_name, QSettings.IniFormat)
             self.initialized = True
 
     def setup_settings(self, settings_file: str = None) -> None:
@@ -28,6 +28,7 @@ class SettingsManager:
             settings_file = "./settings.ini"
 
         self.settings = QSettings(settings_file, QSettings.IniFormat)
+
         state_name = self.settings.value(
             "currentState", defaultValue="IdleState", type=str
         )

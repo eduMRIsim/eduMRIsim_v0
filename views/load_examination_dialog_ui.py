@@ -8,15 +8,6 @@ class LoadExaminationDialog(QDialog):
         super().__init__()
         self.setWindowTitle("Load examination")
 
-        # # Create a button to open the file picker
-        # self.open_file_button = QPushButton("Choose INI File", self)
-        # self.open_file_button.clicked.connect(self.open_file_dialog)
-        #
-        # # Set up the layout
-        # layout = QVBoxLayout()
-        # layout.addWidget(self.open_file_button)
-        # self.setLayout(layout)
-
     def open_file_dialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly

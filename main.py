@@ -21,20 +21,25 @@ class App(QApplication):
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
 
+        self.scanner = Scanner()
+        self.main_view = Ui_MainWindow(self.scanner)
+
+        self.setup_scan_parameter_form()
+        self.main_view.update_UI()
+
+        self.main_controller = MainController(self.scanner, self.main_view)
+
+        # Initialize the settings manager
+        self.settings_manager = SettingsManager(scanner=self.scanner, main_ctrl=self.main_controller, main_view=self.main_view, file_name="settings.ini")
+
         # Show the starting screen
         self.starting_window = StartingWindow(self.start_new_examination, self.load_examination)
         self.starting_window.show()
 
     def start_main_app(self, settings_file=None):
         """Start the main application."""
-        self.scanner = Scanner()
-
-        self.main_view = Ui_MainWindow(self.scanner)
-        self.setup_scan_parameter_form()
         self.main_view.update_UI()
         self.main_view.show()
-
-        self.main_controller = MainController(self.scanner, self.main_view)
 
         self.menu_bar = MenuBar(self.main_view)
         self.setup_menu_bar()
