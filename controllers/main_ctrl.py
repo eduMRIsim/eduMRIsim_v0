@@ -86,7 +86,6 @@ class MainController:
         )
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
-
         )
         self.ui.scanPlanningWindow3.dropEventSignal.connect(
             self.handle_scanPlanningWindow3_dropped
@@ -256,6 +255,7 @@ class MainController:
         # view model for the view model dialogue
         view_model_dialog = ViewModelDialog(self.scanner.model)
         view_model_dialog.exec()
+
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
         grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
