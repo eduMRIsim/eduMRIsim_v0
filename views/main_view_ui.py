@@ -54,6 +54,7 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
+from views.MeasurementTool import MeasurementTool
 from views.UI_MainWindowState import (
     IdleState,
     BeingModifiedState,
@@ -329,7 +330,8 @@ class Ui_MainWindow(QMainWindow):
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
 
         self._scannedImageFrame = AcquiredSeriesViewer2D()
-        self._scannedImageFrame.zooming_enabled = True
+        self._scannedImageFrame.zooming_enabled = False
+        # TODO change back to true
         self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
         bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
 
@@ -1719,12 +1721,30 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
 
+        # Measurement tool
+        self.measuring_enabled = False
+
+        self.line_item = QGraphicsLineItem()
+        self.line_item.setPen(QPen(QColor(255, 0,0 ), 2))
+        self.scene.addItem(self.line_item)
+
+        self.text_item = QGraphicsTextItem()
+        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.scene.addItem(self.text_item)
+
+        self.measure = MeasurementTool(self.line_item, self.text_item)
+
+
     # start zoom when pressed
     def mousePressEvent(self, event):
+        # TODO the user should not be able to zoom in and out when the measuring tool is active
         if self.zooming_enabled:
             if event.button() == Qt.LeftButton:
                 self.mouse_pressed = True
                 self.last_mouse_pos = event.pos()
+        if self.measuring_enabled:
+            self.measure.start_measurement(self.mapToScene(event.pos()))
+            self.measure.show_items()
         else:
             super().mousePressEvent(event)
 
@@ -1734,6 +1754,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             if event.button() == Qt.LeftButton:
                 self.mouse_pressed = False
                 self.last_mouse_pos = None
+        if self.measuring_enabled:
+            self.measure.end_measurement()
         else:
             super().mouseReleaseEvent(event)
 
@@ -1759,6 +1781,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
                 # update the last mouse position
                 self.last_mouse_pos = current_pos
+        elif self.measuring_enabled and self.measure.is_measuring:
+            self.measure.update_measurement(self.mapToScene(event.pos()))
         else:
             super().mouseMoveEvent(event)
 
