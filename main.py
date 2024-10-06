@@ -72,7 +72,6 @@ class App(QApplication):
         self.menu_bar.add_action("Tools", "Measure Area", self.test_action)
 
     def test_action(self):
-        # print("Action test")
         pass
 
     def setup_scan_parameter_form(self):

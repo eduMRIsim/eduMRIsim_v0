@@ -762,26 +762,26 @@ class ScanVolume:
         geometry_parameters["plane"] = self.scanPlane
         return ImageGeometry(geometry_parameters)
 
+    def get_rotations(self) -> dict:
+        return {'RLAngle_rad': self.RLAngle_rad, 'APAngle_rad': self.APAngle_rad, 'FHAngle_rad': self.FHAngle_rad}
+
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
         # translate the scan volume by the translation vector (which is in LPS coordinates)
         self.origin_LPS += translation_vector_LPS
         self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
-    def scale_scan_volume(
-        self,
-        scale_factor_x: float,
-        scale_factor_y: float,
-        origin_plane: str,
-        handle_pos: QPointF,
-    ):
-        valid_planes = ("Axial", "Sagittal", "Coronal")
+    def scale_scan_volume(self, scale_factor_x: float, scale_factor_y: float, origin_plane: str, handle_pos: QPointF, center_pos: QPointF):
+
+        # Parameter validation
+        valid_planes = ('Axial', 'Sagittal', 'Coronal')
         if origin_plane not in valid_planes:
             raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
         top_down_plane = self.scanPlane
         if top_down_plane not in valid_planes:
             raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
 
+        # Scaling logic
         if top_down_plane == origin_plane:
             self.extentX_mm *= scale_factor_x
             self.extentY_mm *= scale_factor_y
