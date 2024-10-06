@@ -1,5 +1,8 @@
 name: Reformat on push
-on: push
+on: 
+  push:
+    branches:
+      - 'main'
 jobs:
   python-code-format:
     runs-on: ubuntu-22.04
