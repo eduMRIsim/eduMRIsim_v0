@@ -11,10 +11,10 @@ from simulator.scanlist import AcquiredImage
 
 class ExportImageDialog(QDialog):
     """
-    This class represents a dialog to export (acquired) images to image files.
+    This class represents a dialog to export acquired images to image files.
     """
 
-    def __init__(self):
+    def __init__(self, button_index: int | None):
         super().__init__()
         self.setWindowTitle("Choose a file location")
 

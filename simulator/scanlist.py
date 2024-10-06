@@ -46,7 +46,6 @@ class ImageGeometry:
             "origin_LPS": self.origin_LPS,
             "plane": self.plane,
         }
-
     def image_mm_coords_to_pixmap_coords(self, image_mm_coords: tuple) -> tuple:
         """Convert image coordinates to pixmap coordinates. The image coordinates are in millimeters, and the pixmap coordinates are in pixels. The origin of the pixmap coordinate system is at the top left corner of the image. The image coordinate origin is at the center of the image."""
         x, y, z = image_mm_coords
@@ -261,6 +260,13 @@ class ScanItem:
             self
         )  # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not respond to events that they themselves initiated.
         self.scan_volume.set_scan_volume_geometry(self.scan_parameters)
+
+        # Update with clamped values
+        params = self.scan_volume.get_parameters()
+
+        for key, value in params.items():
+            self._scan_parameters[key] = value
+
         self.scan_volume.add_observer(
             self
         )  # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed.
@@ -295,6 +301,7 @@ class ScanItem:
         self.valid = True
         self.messages = {}
         self.scan_parameters = scan_parameters
+
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
 
@@ -348,6 +355,137 @@ class ScanItem:
         # else:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
+    #Rotation check for Plane changing according to rotation. Only gets called when the save button is pressed
+    def perform_rotation_check(self, scan_parameters):
+        scanPlane = scan_parameters['ScanPlane']
+        RLAngle_deg = float(scan_parameters['RLAngle_deg'])
+        APAngle_deg = float(scan_parameters['APAngle_deg'])
+        FHAngle_deg = float(scan_parameters['FHAngle_deg'])
+
+        THRESHOLD_ANGLE = 45  # degrees. Keep at 45 for expected behaviour
+
+        changed = False  # Flag to indicate if a plane change occurred
+
+        # Check for Axial plane
+        if scanPlane == 'Axial':
+            if abs(APAngle_deg) > THRESHOLD_ANGLE and abs(RLAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Sagittal plane
+                scan_parameters['ScanPlane'] = 'Sagittal'
+
+                # Adjust APAngle_deg
+                if APAngle_deg > 0:
+                    #FHAngle_deg += 90
+                    APAngle_deg -= 90
+                else:
+                    #FHAngle_deg -= 90
+                    APAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+            elif abs(RLAngle_deg) > THRESHOLD_ANGLE and abs(APAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Coronal plane
+                scan_parameters['ScanPlane'] = 'Coronal'
+
+                # Adjust RLAngle_deg
+                if RLAngle_deg > 0:
+                    #FHAngle_deg -= 90
+                    RLAngle_deg -= 90
+                else:
+                    #FHAngle_deg += 90
+                    RLAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+        elif scanPlane == 'Sagittal':
+            if abs(APAngle_deg) > THRESHOLD_ANGLE and abs(FHAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Axial plane
+                scan_parameters['ScanPlane'] = 'Axial'
+
+                # Adjust APAngle_deg
+                if APAngle_deg > 0:
+                    APAngle_deg -= 90
+                    #RLAngle_deg -= 90
+                else:
+                    APAngle_deg += 90
+                    #RLAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+            elif abs(FHAngle_deg) > THRESHOLD_ANGLE and abs(APAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Coronal plane
+                scan_parameters['ScanPlane'] = 'Coronal'
+
+                # Adjust FHAngle_deg
+                if FHAngle_deg > 0:
+                    #APAngle_deg += 90
+                    FHAngle_deg -= 90
+                else:
+                    #APAngle_deg -= 90
+                    FHAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+        elif scanPlane == 'Coronal':
+            if abs(RLAngle_deg) > THRESHOLD_ANGLE and abs(FHAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Axial plane
+                scan_parameters['ScanPlane'] = 'Axial'
+
+                # Adjust RLAngle_deg
+                if RLAngle_deg > 0:
+                    RLAngle_deg += 90
+                    #APAngle_deg -= 90
+                else:
+                    RLAngle_deg -= 90
+                    #APAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+            elif abs(FHAngle_deg) > THRESHOLD_ANGLE and abs(RLAngle_deg) <= THRESHOLD_ANGLE:
+                # Change to Sagittal plane
+                scan_parameters['ScanPlane'] = 'Sagittal'
+
+                # Adjust FHAngle_deg
+                if FHAngle_deg > 0:
+                    #RLAngle_deg -= 90
+                    FHAngle_deg -= 90
+                else:
+                    #RLAngle_deg += 90
+                    FHAngle_deg += 90
+
+                # Set parameters
+                scan_parameters['RLAngle_deg'] = str(RLAngle_deg)
+                scan_parameters['APAngle_deg'] = str(APAngle_deg)
+                scan_parameters['FHAngle_deg'] = str(FHAngle_deg)
+                changed = True
+
+        if changed:
+            # Update the scan volume geometry
+            self.scan_volume.set_scan_volume_geometry(scan_parameters)
+            self.scan_volume.update_axis_vectors()
+
+            # Notify observers
+        self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
     def update(self, event):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
             parameters = self.scan_volume.get_parameters()
@@ -395,6 +533,11 @@ class ScanVolume:
         self.Rotation_lock = "None"
         self.scanPlane = "None"
         self.observers = []
+
+        # Default scanner dimensions in mm
+        self.scanner_AP_mm = 700.0
+        self.scanner_RL_mm = 700.0
+        self.scanner_FH_mm = 2000.0
 
     @property
     def extentZ_mm(self):
@@ -470,40 +613,45 @@ class ScanVolume:
         # Commented this out since upadte_axis_vectors() does the same job. Can be deleted if not being used by anywhere else
         # rotate the axes according to the angle parameters
 
-        # # first rotate around RL axis
-        # angleRL_deg = scan_parameters.get('RLAngle_deg', 0)
-        # # make sure angleRL is type float
-        # angleRL_deg = float(angleRL_deg)
-        # # rotate the LPS axes by the angleRL
-        # angleRL_rad = np.deg2rad(angleRL_deg)
-        # rotation_matrix_RL = np.array([[1, 0, 0], [0, np.cos(angleRL_rad), -np.sin(angleRL_rad)], [0, np.sin(angleRL_rad), np.cos(angleRL_rad)]])
-        # self.axisX_LPS = np.dot(rotation_matrix_RL, self.axisX_LPS)
-        # self.axisY_LPS = np.dot(rotation_matrix_RL, self.axisY_LPS)
-        # self.axisZ_LPS = np.dot(rotation_matrix_RL, self.axisZ_LPS)
-
-        # # then rotate around AP axis
-        # angleAP_deg = scan_parameters.get('APAngle_deg', 0)
-        # # make sure angleAP is type float
-        # angleAP_deg = float(angleAP_deg)
-        # # rotate the LPS axes by the angleAP
-        # angleAP_rad = np.deg2rad(angleAP_deg)
-        # rotation_matrix_AP = np.array([[np.cos(angleAP_rad), 0, np.sin(angleAP_rad)], [0, 1, 0], [-np.sin(angleAP_rad), 0, np.cos(angleAP_rad)]])
-        # self.axisX_LPS = np.dot(rotation_matrix_AP, self.axisX_LPS)
-        # self.axisY_LPS = np.dot(rotation_matrix_AP, self.axisY_LPS)
-        # self.axisZ_LPS = np.dot(rotation_matrix_AP, self.axisZ_LPS)
-
-        # # finally rotate around FH axis
-        # angleFH_deg = scan_parameters.get('FHAngle_deg', 0)
-        # # make sure angleFH is type float
-        # angleFH_deg = float(angleFH_deg)
-        # # rotate the LPS axes by the angleFH
-        # angleFH_rad = np.deg2rad(angleFH_deg)
-        # rotation_matrix_FH = np.array([[np.cos(angleFH_rad), -np.sin(angleFH_rad), 0], [np.sin(angleFH_rad), np.cos(angleFH_rad), 0], [0, 0, 1]])
-        # self.axisX_LPS = np.dot(rotation_matrix_FH, self.axisX_LPS)
-        # self.axisY_LPS = np.dot(rotation_matrix_FH, self.axisY_LPS)
-        # self.axisZ_LPS = np.dot(rotation_matrix_FH, self.axisZ_LPS)
+        self.clamp_to_scanner_dimensions()
 
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
+
+    def clamp_to_scanner_dimensions(self):
+
+        # Clamp extent in all planes
+        if self.scanPlane == "Axial":
+            self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_RL_mm)
+            self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_AP_mm)
+        elif self.scanPlane == "Sagittal":
+            self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_AP_mm)
+            self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_FH_mm)
+        elif self.scanPlane == "Coronal":
+            self.extentX_mm = np.clip(self.extentX_mm, 0, self.scanner_RL_mm)
+            self.extentY_mm = np.clip(self.extentY_mm, 0, self.scanner_FH_mm)
+
+        half_extentX = self.extentX_mm / 2
+        half_extentY = self.extentY_mm / 2
+        half_extentZ = self.extentZ_mm / 2
+
+        # Clamp origin and extent in RL direction
+        self.origin_LPS[0] = np.clip(
+            self.origin_LPS[0],
+            -self.scanner_RL_mm / 2 + half_extentX,
+            self.scanner_RL_mm / 2 - half_extentX,
+        )
+        # AP direction
+        self.origin_LPS[1] = np.clip(
+            self.origin_LPS[1],
+            -self.scanner_AP_mm / 2 + half_extentY,
+            self.scanner_AP_mm / 2 - half_extentY,
+        )
+        #  FH direction
+        self.origin_LPS[2] = np.clip(
+            self.origin_LPS[2],
+            -self.scanner_FH_mm / 2 + half_extentZ,
+            self.scanner_FH_mm / 2 - half_extentZ,
+        )
 
     def calculate_from_edges_intersection_points_pixamp(
         self, edges: list[tuple], acquired_image: AcquiredImage
@@ -598,6 +746,7 @@ class ScanVolume:
     def translate_scan_volume(self, translation_vector_LPS: np.ndarray):
         # translate the scan volume by the translation vector (which is in LPS coordinates)
         self.origin_LPS += translation_vector_LPS
+        self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def scale_scan_volume(
@@ -639,6 +788,7 @@ class ScanVolume:
                 self.extentY_mm *= scale_factor_y
                 self.slice_gap_mm *= scale_factor_x
 
+        self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     # Event reciever for rotation using rotation handlers
@@ -668,6 +818,7 @@ class ScanVolume:
 
         # Update the axis vectors based on the new rotation angles
         self.update_axis_vectors()
+        self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
 
     def update_axis_vectors(self):
@@ -826,12 +977,6 @@ class ScanVolume:
             (bottom_right, bottom_left),
             (bottom_left, top_left),
         ]
-
-        test_distance = 10
-        point_1 = front_bottom_left + test_distance * v_hat1
-        point_2 = front_bottom_right + test_distance * v_hat2
-        point_3 = back_bottom_right + test_distance * v_hat3
-        point_4 = back_bottom_left + test_distance * v_hat4
 
         slice_center_distances = []
         for i in range(self.N_slices):

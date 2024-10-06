@@ -22,6 +22,7 @@ from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import NoItemsToViewDialog
 from views.main_view_ui import Ui_MainWindow
 from views.export_image_dialog_ui import ExportImageDialog
+from views.view_model_dialog_ui import ViewModelDialog
 
 
 class MainController:
@@ -85,10 +86,12 @@ class MainController:
         )
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
+
         )
         self.ui.scanPlanningWindow3.dropEventSignal.connect(
             self.handle_scanPlanningWindow3_dropped
         )
+        self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(
@@ -102,7 +105,7 @@ class MainController:
         )
 
         # Signals and UIs related to exporting images
-        self.export_image_dialog_ui = ExportImageDialog()
+        self.export_image_dialog_ui = ExportImageDialog(None)
 
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
             lambda: self.handle_viewingPortExport_triggered(0)
@@ -250,38 +253,19 @@ class MainController:
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
 
     def handle_viewModelButton_clicked(self):
-        rightlayout = self.ui.layout
-        self.ui.clearLayout(rightlayout)
-        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
-        if not scanlist:
-            dialog = NoItemsToViewDialog()
-            dialog.show_dialog()
-            self.ui._createMainWindow()
-            self.ui.state = UI_state.ReadyToScanAgainState()
-            self.ui_signals()
-        else:
-            self.ui._createViewWindow()
-            self.restore_complete_scanlist_items()
-            self.ui.state = UI_state.ViewState()
-            self.ui.update_UI()
-            # handle drops
-            self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
-
-    def handle_scanningButton_clicked(self):
-        rightlayout = self.ui.layout
-        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
-        self.ui.clearLayout(rightlayout)
-        self.ui._createMainWindow()
-        self.ui.state = UI_state.ReadyToScanAgainState()
-        self.restore_complete_scanlist_items()
-        self.ui_signals()
-
+        # view model for the view model dialogue
+        view_model_dialog = ViewModelDialog(self.scanner.model)
+        view_model_dialog.exec()
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
         grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
         scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
         acquired_series = scanlist_element.acquired_data
         grid_cell.setAcquiredSeries(acquired_series)
         self.update_scanlistListWidget(self.scanner.scanlist)
+
+    def connect_drop_signals(self):
+        # Connect the drop event signals from the grid cells to the handle_dropped_cells method
+        self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
@@ -293,6 +277,7 @@ class MainController:
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
@@ -478,4 +463,6 @@ class MainController:
             self.update_scanlistListWidget(self.scanner.scanlist)
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
+            # self._scan_vo
+            self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
