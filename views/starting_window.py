@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
 from PyQt5.QtCore import Qt
 
 class StartingWindow(QWidget):
-    def __init__(self, start_callback):
+    def __init__(self, start_new_examination_callback):
         super(StartingWindow, self).__init__()
         layout = QVBoxLayout()
 
@@ -24,7 +24,7 @@ class StartingWindow(QWidget):
         # Create buttons
         self.new_examination_button = QPushButton("New Examination")
         self.new_examination_button.setCursor(Qt.PointingHandCursor)
-        self.new_examination_button.clicked.connect(start_callback) # temporarily set to start_callback
+        self.new_examination_button.clicked.connect(start_new_examination_callback)
 
         self.load_examination_button = QPushButton("Load from .ini file")
         self.load_examination_button.setCursor(Qt.PointingHandCursor)
@@ -34,7 +34,6 @@ class StartingWindow(QWidget):
 
         # Add widgets to layout
         layout.addWidget(welcome_label)
-
         layout.addWidget(new_session_header)
         layout.addWidget(self.new_examination_button, alignment=Qt.AlignCenter)
 

@@ -21,36 +21,31 @@ class App(QApplication):
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
 
-        # Show the starting screen
-        self.starting_window = StartingWindow(self.start_application)
+        self.starting_window = StartingWindow(self.start_new_examination)
         self.starting_window.show()
 
-    def start_application(self):
-        """Start the main application after clicking 'Start'."""
-        # Close the starting window
+    def start_new_examination(self):
+        """Start a new examination when 'New Examination' is clicked."""
         self.starting_window.close()
 
-        # Create a Scanner object
         self.scanner = Scanner()
 
-        # Setup UI
         self.main_view = Ui_MainWindow(self.scanner)
         self.setup_scan_parameter_form()
         self.main_view.update_UI()
         self.main_view.show()
 
-        # Create a MainController object
         self.main_controller = MainController(self.scanner, self.main_view)
 
-        # Create a SettingsManager object
         self.settings_manager = SettingsManager(
             self.scanner, self.main_controller, self.main_view, "settings.ini"
         )
         self.settings_manager.setup_settings(None)
 
-        # Create menu bar
         self.menu_bar = MenuBar(self.main_view)
         self.setup_menu_bar()
+
+        self.main_controller.handle_newExaminationButton_clicked()
 
     def setup_menu_bar(self):
         # Create the menu bar and sections
@@ -63,7 +58,7 @@ class App(QApplication):
 
         # Mode section
         mode_section = menu_bar.add_section('Mode')
-        mode_section.add_mode_action_group() 
+        mode_section.add_mode_action_group()
         mode_section.add_mode_action('Scanning Mode', self.main_controller.handle_scanningButton_clicked, checked=True)
         mode_section.add_mode_action('Viewing Mode', self.main_controller.handle_viewModelButton_clicked)
 
