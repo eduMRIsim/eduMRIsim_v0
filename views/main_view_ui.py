@@ -117,20 +117,22 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralWidget)
         self.setWindowTitle("eduMRIsim")
 
-        # Planning View
         self.scanner = scanner
+
+        # stacked layout for the right side
+        self._stackedLayout = QStackedLayout()
+        self.layout.addLayout(self._stackedLayout)
+
         self._createMainWindow()
         self._state = IdleState()
         self.update_UI()
 
-        # delete Planning view and add the grid
-        # self.clearLayout(self.layout)
-        # self._createViewWindow()
-        # self._state = ViewState()
-        # self.update_UI()
-
     def update_UI(self):
         self.state.update_UI(self)
+
+    @property
+    def stackedLayout(self):
+        return self._stackedLayout
 
     @property
     def state(self):
@@ -249,41 +251,35 @@ class Ui_MainWindow(QMainWindow):
     @property
     def GridCell(self):
         return self.GridCell
-
+   
     def _createMainWindow(self):
         leftLayout = self._createLeftLayout()
         self.layout.addLayout(leftLayout, stretch=1)
 
+        # Create a stacked layout for the right section
+        self._stackedLayout = QStackedLayout()
+
+        # the scanning layout
+        rightWidget = QWidget()
         rightLayout = self._createRightLayout()
-        self.layout.addLayout(rightLayout, stretch=3)
+        rightWidget.setLayout(rightLayout)
 
-    def clearLayout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
+        # the view layout
+        viewWidget = QWidget()
+        rightViewLayout = self._createRightViewLayout()
+        viewWidget.setLayout(rightViewLayout)
 
-            if item.widget():
-                widget = item.widget()
-                # widget.deleteLater()
-                widget.setVisible(False)
-
-            if item.layout():
-                sub_layout = item.layout()
-                self.clearLayout(sub_layout)
-
-        layout.removeItem(item)
-
-    def _createViewWindow(self):
-        leftLayout = self._createLeftLayout()
-        self.layout.addLayout(leftLayout, stretch=1)
-
-        rightLayout = self._createRightViewLayout()
-        self.layout.addLayout(rightLayout, stretch=3)
+        # stacked layout with right side of view/scanning
+        self.stackedLayout.addWidget(rightWidget)
+        self.stackedLayout.addWidget(viewWidget)
+        rightLayoutContainer = QVBoxLayout()
+        rightLayoutContainer.addLayout(self.stackedLayout)
+        self.layout.addLayout(rightLayoutContainer, stretch=3)
 
     def _createLeftLayout(self) -> QHBoxLayout:
         leftLayout = QVBoxLayout()
 
         self._modeSwitchButtonsLayout = ModeSwitchButtonsLayout()
-        # leftLayout.addLayout(self._modeSwitchButtonsLayout, stretch=1)
 
         self._preExaminationInfoFrame = PreExaminationInfoFrame()
         self._examinationInfoFrame = InfoFrame("Examination", "Model")
@@ -324,7 +320,7 @@ class Ui_MainWindow(QMainWindow):
         rightLayout.addLayout(bottomLayout, stretch=1)
 
         return rightLayout
-
+    
     def _createRightViewLayout(self) -> QVBoxLayout:
 
         rightlayout = QVBoxLayout()
@@ -1559,6 +1555,54 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.update_buttons_visibility()
 
         self.scene.installEventFilter(self)
+    
+        # zoom controls
+        self.mouse_pressed = False
+        self.last_mouse_pos = None
+        self.zoom_sensitivity = 0.005 
+
+    # start zoom when pressed
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.mouse_pressed = True
+            self.last_mouse_pos = event.pos() 
+
+    # stop zoom when released
+    def mouseReleaseEvent(self,event):
+        if event.button() == Qt.LeftButton:
+            self.mouse_pressed = False
+            self.last_mouse_pos = None
+
+    def mouseMoveEvent(self,event):
+        '''Handle zoom when the mouse is being dragged.'''
+        if self.mouse_pressed and self.last_mouse_pos is not None:
+            
+            max_zoom_out = 0.5
+            max_zoom_in = 10
+            current_pos = event.pos()
+            delta_y = current_pos.y() - self.last_mouse_pos.y()
+
+            # cursor_pos = self.mapToScene(current_pos)
+            zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+
+            # get current zoom level (scaling factor)
+            current_zoom = self.transform().m11()
+
+            new_zoom = current_zoom * zoom_factor
+            if max_zoom_out <= new_zoom <= max_zoom_in:
+                self.scale(zoom_factor, zoom_factor)
+
+            # update the last mouse position
+            self.last_mouse_pos = current_pos
+
+    def zoom_in(self, center_point):
+        if self.transform().m11() < self.max_zoom_in: 
+            self.scale(self.zoom_factor, self.zoom_factor) 
+
+    def zoom_out(self, center_point):
+         if self.transform().m11() > self.max_zoom_out: 
+            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor) 
+            self.centerOn(center_point) 
 
     def update_buttons_visibility(self):
         if self.acquired_series is None:
@@ -1963,21 +2007,72 @@ class GridCell(QGraphicsView):
         # Set the background color to black
         self.setBackgroundBrush(QColor(0, 0, 0))
 
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
         self.displayed_image = None
         self.acquired_series = None
         self.array = None
 
         self.setAcceptDrops(True)
 
-    def resizeEvent(self, event: QResizeEvent):
-        """This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view."""
-        super().resizeEvent(event)
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        # zoom controls
+        self.mouse_pressed = False
+        self.last_mouse_pos = None
+        self.zoom_sensitivity = 0.005 
 
-        # I commented this out because it was throwing an error when switching to view mode but if
-        # it's necessary you can always uncomment and handle the error
-        # self.updateLabelPosition()
+    # start zoom when pressed
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.mouse_pressed = True
+            self.last_mouse_pos = event.pos() 
+
+    # stop zoom when released
+    def mouseReleaseEvent(self,event):
+        if event.button() == Qt.LeftButton:
+            self.mouse_pressed = False
+            self.last_mouse_pos = None
+
+    def mouseMoveEvent(self,event):
+        '''Handle zoom when the mouse is being dragged.'''
+        if self.mouse_pressed and self.last_mouse_pos is not None:
+            
+            max_zoom_out = 0.1
+            max_zoom_in = 10
+            current_pos = event.pos()
+            delta_y = current_pos.y() - self.last_mouse_pos.y()
+
+            # cursor_pos = self.mapToScene(current_pos)
+            zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+
+            # get current zoom level (scaling factor)
+            current_zoom = self.transform().m11()
+
+            new_zoom = current_zoom * zoom_factor
+            if max_zoom_out <= new_zoom <= max_zoom_in:
+               self.scale(zoom_factor, zoom_factor)
+
+            self.scale(zoom_factor, zoom_factor)
+            self.centerOn(self.mapToScene(current_pos))
+            self.last_mouse_pos = current_pos
+
+    def zoom_in(self, center_point):
+        if self.transform().m11() < self.max_zoom_in: 
+            self.scale(self.zoom_factor, self.zoom_factor) 
+
+    def zoom_out(self, center_point):
+        if self.transform().m11() > self.max_zoom_out: 
+            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor) 
+            self.centerOn(center_point) 
+
+    def resizeEvent(self, event: QResizeEvent):
+        """This method is called whenever the graphics view is resized.
+        It ensures that the image is always scaled to fit the view."""
+        super().resizeEvent(event)
+        self.resetTransform()
+        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.centerOn(self.pixmap_item)
 
     def _displayArray(self):
         width, height = 0, 0
@@ -2012,7 +2107,6 @@ class GridCell(QGraphicsView):
             self.scene.setSceneRect(0, 0, 1, 1)
 
         self.resetTransform()
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
 
@@ -2042,7 +2136,7 @@ class GridCell(QGraphicsView):
             self.array = None
 
         self._displayArray()
-
+    
     def dropEvent(self, event: QDropEvent) -> None:
         source_widget = event.source()
         selected_index = source_widget.selectedIndexes()[0].row()
@@ -2062,6 +2156,7 @@ class GridCell(QGraphicsView):
 
     def dragMoveEvent(self, event):
         event.accept()
+
 
 
 class ImageLabel(QGraphicsView):
