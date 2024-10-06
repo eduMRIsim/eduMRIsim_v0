@@ -359,6 +359,16 @@ class MainController:
             parameters = self._return_parameters_from_image_in_scanlist(image)
         self.export_image_dialog_ui.export_file_dialog(image, parameters)
 
+    def handle_measureDistanceButtonClicked(self):
+        if not self.ui._scannedImageFrame.measuring_enabled:
+            self.ui._scannedImageFrame.measuring_enabled = True
+            log.warn("Measuring enabled")
+        else:
+            self.ui._scannedImageFrame.measuring_enabled = False
+            self.ui._scannedImageFrame.measure.hide_items()
+            log.warn("Measuring disabled")
+
+
     def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
         """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.
 

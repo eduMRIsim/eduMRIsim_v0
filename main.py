@@ -44,6 +44,7 @@ class App(QApplication):
         self.menu_bar = MenuBar(self.main_view)
         self.setup_menu_bar()
 
+    # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
     def setup_menu_bar(self):
         self.menu_bar.add_section("Session")
@@ -68,11 +69,14 @@ class App(QApplication):
         )
 
         self.menu_bar.add_section("Tools")
-        self.menu_bar.add_action("Tools", "Measure Distance", self.test_action)
+        self.menu_bar.add_action("Tools", "Measure Distance", self.measure_distance)
         self.menu_bar.add_action("Tools", "Measure Area", self.test_action)
 
     def test_action(self):
         pass
+
+    def measure_distance(self):
+        self.main_controller.handle_measureDistanceButtonClicked()
 
     def setup_scan_parameter_form(self):
         # Load the scan parameters from the .json file. This file defines for each scan parameter which QWidget editor should be used to edit it. It also defines the default values for each parameter, the parameter's name, description and units.
