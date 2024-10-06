@@ -743,25 +743,22 @@ class ScanVolume:
         if top_down_plane not in valid_planes:
             raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
 
-        #print(checked)
-
         # Variable to keep track if the scale factors have been checked
         checked = False
         if self.APAngle_rad == 0 and origin_plane == 'Coronal':
-            print('Coronal not roated')
+            log.debug('Coronal not roated')
             checked = True
         if self.RLAngle_rad == 0 and origin_plane == 'Sagittal':
-            print('Sagittal not roated')
+            log.debug('Sagittal not roated')
             checked = True
         if self.FHAngle_rad == 0 and origin_plane == 'Axial':
-            print('Axial not roated')
+            log.debug('Axial not roated')
             checked = True
 
         # Logic to determine which axis to scale on it is done through creating quadrants from the middle point of the scan volume, since only one of scale handles are in one at any given moment
         if not checked:
-            #print('not checked', self.RLAngle_rad, self.APAngle_rad, self.FHAngle_rad)
             if origin_plane == 'Sagittal': #around RL axis
-                print('Grabbed Sagittal')
+                log.debug('Grabbed Sagittal')
                 # Rotation to positive direction
                 if self.RLAngle_rad * 2 % 2 <= 1 and self.RLAngle_rad * 2 % 2 > 0:
                     if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
@@ -817,7 +814,7 @@ class ScanVolume:
                         scale_factor_y = 1
                         checked = True
             elif origin_plane == 'Coronal': #around AP axis
-                print('Grabbed Coronal')
+                log.debug('Grabbed Coronal')
                 # Rotation to positive direction
                 if self.APAngle_rad * 2 % 2 <= 1 and self.APAngle_rad * 2 % 2 > 0:
                     if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
@@ -873,7 +870,7 @@ class ScanVolume:
                         scale_factor_y = 1
                         checked = True
             elif origin_plane == 'Axial': #around FH axis
-                print('Grabbed Axial')
+                log.debug('Grabbed Axial')
                 # Rotation to positive direction
                 if self.FHAngle_rad * 2 % 2 <= 1 and self.FHAngle_rad * 2 % 2 > 0:
                     if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
@@ -931,16 +928,15 @@ class ScanVolume:
 
         # If the scale factors have not been checked, then the scale factors are set to 1 since the decision tree didn't result in changes
         if not checked:
-            print('Have not changed any of the scale factors')
+            log.debug('Have not changed any of the scale factors')
             scale_factor_x = 1
             scale_factor_y = 1
 
         if scale_factor_x != 1 and scale_factor_y != 1:
-            print(checked, scale_factor_x, scale_factor_y)
+            log.debug(checked, scale_factor_x, scale_factor_y)
 
-        print('Scale factors:', scale_factor_x, scale_factor_y)
+        log.debug('Scale factors:', scale_factor_x, scale_factor_y)
 
-        # Scaling logic
         # Scaling logic
         if top_down_plane == origin_plane:
             self.extentX_mm *= scale_factor_x

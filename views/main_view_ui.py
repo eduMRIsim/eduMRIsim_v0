@@ -1136,12 +1136,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
         )
 
-        #print(self.scene_center)
-        #print(self.scan_volume.get_rotations())
-        #print(self.scan_volume)
         rotations = self.scan_volume.get_rotations()
         plane = self.get_plane_axis() #FH = Axial, RL = Sagittal, AP = Coronal
-        print(rotations, plane, self.previous_handle_position, self.scene_center)
+        log.debug(rotations, plane, self.previous_handle_position, self.scene_center)
 
         if plane == 'FH' and rotations['FHAngle_rad'] != 0:
             self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Axial', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
@@ -1151,10 +1148,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
 
         # The logic for determining which axis the user is scaling on TBD
-        print(self.on_x_axis, self.on_y_axis)
+        log.debug(self.on_x_axis, self.on_y_axis)
 
     def determine_axis_to_scale(self, origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad):
-        print(origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad)
+        log.debug(origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad)
         if origin_plane == 'Sagittal': #around RL axis
             # Rotation to positive direction
             if RLAngle_rad * 2 % 2 < 1 and RLAngle_rad * 2 % 2 > 0:
@@ -1274,12 +1271,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     return False, True
         return False, False
 
-        #print(self.scene_center)
-        #print(self.scan_volume.get_rotations())
-        #print(self.scan_volume)
         rotations = self.scan_volume.get_rotations()
         plane = self.get_plane_axis() #FH = Axial, RL = Sagittal, AP = Coronal
-        print(rotations, plane, self.previous_handle_position, self.scene_center)
+        log.debug(rotations, plane, self.previous_handle_position, self.scene_center)
 
         if plane == 'FH' and rotations['FHAngle_rad'] != 0:
             self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Axial', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
@@ -1289,10 +1283,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
 
         # The logic for determining which axis the user is scaling on TBD
-        print(self.on_x_axis, self.on_y_axis)
+        log.debug(self.on_x_axis, self.on_y_axis)
 
     def determine_axis_to_scale(self, origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad):
-        print(origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad)
+        log.debug(origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad)
         if origin_plane == 'Sagittal': #around RL axis
             # Rotation to positive direction
             if RLAngle_rad * 2 % 2 < 1 and RLAngle_rad * 2 % 2 > 0:
