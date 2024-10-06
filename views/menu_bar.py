@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QAction, QActionGroup
 
+
 class MenuBar:
     def __init__(self, main_view):
         """Initialises the menu bar and stores sections."""
