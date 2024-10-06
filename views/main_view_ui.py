@@ -261,7 +261,7 @@ class Ui_MainWindow(QMainWindow):
 
         # the scanning layout
         rightWidget = QWidget()
-        rightLayout = self._createRightLayout()  # This will be the default layout
+        rightLayout = self._createRightLayout()
         rightWidget.setLayout(rightLayout)
 
         # the view layout
@@ -280,7 +280,6 @@ class Ui_MainWindow(QMainWindow):
         leftLayout = QVBoxLayout()
 
         self._modeSwitchButtonsLayout = ModeSwitchButtonsLayout()
-        # leftLayout.addLayout(self._modeSwitchButtonsLayout, stretch=1)
 
         self._preExaminationInfoFrame = PreExaminationInfoFrame()
         self._examinationInfoFrame = InfoFrame("Examination", "Model")
@@ -321,6 +320,7 @@ class Ui_MainWindow(QMainWindow):
         rightLayout.addLayout(bottomLayout, stretch=1)
 
         return rightLayout
+    
     def _createRightViewLayout(self) -> QVBoxLayout:
 
         rightlayout = QVBoxLayout()
@@ -2007,6 +2007,10 @@ class GridCell(QGraphicsView):
         # Set the background color to black
         self.setBackgroundBrush(QColor(0, 0, 0))
 
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
         self.displayed_image = None
         self.acquired_series = None
         self.array = None
@@ -2034,7 +2038,7 @@ class GridCell(QGraphicsView):
         '''Handle zoom when the mouse is being dragged.'''
         if self.mouse_pressed and self.last_mouse_pos is not None:
             
-            max_zoom_out = 0.5
+            max_zoom_out = 0.1
             max_zoom_in = 10
             current_pos = event.pos()
             delta_y = current_pos.y() - self.last_mouse_pos.y()
@@ -2066,7 +2070,9 @@ class GridCell(QGraphicsView):
         """This method is called whenever the graphics view is resized.
         It ensures that the image is always scaled to fit the view."""
         super().resizeEvent(event)
+        self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.centerOn(self.pixmap_item)
 
     def _displayArray(self):
         width, height = 0, 0
