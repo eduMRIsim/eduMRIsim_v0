@@ -1,7 +1,7 @@
 import argparse
 import sys
 from rich.traceback import install
-from PyQt5.QtCore import QSettings, qInstallMessageHandler
+from PyQt5.QtCore import qInstallMessageHandler
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
 from utils.logger import log, qt_message_handler, numpy_handler
@@ -11,8 +11,8 @@ from events import EventEnum
 from simulator.load import load_json
 from simulator.scanner import Scanner
 from views.main_view_ui import Ui_MainWindow
-from PyQt5.QtCore import QSettings
 from views.menu_bar import MenuBar
+from views.starting_window import StartingWindow  # Import the StartingWindow
 
 
 class App(QApplication):
@@ -21,20 +21,28 @@ class App(QApplication):
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
 
-        # Create a Scanner object. The Scanner object is responsible for scanning anatomical model data with the given scan parameters and returning an acquired image series. The scanner keeps track of the current active examination, scanlist, active scan item and holds a reference to the anatomical model.
+        # Show the starting screen
+        self.starting_window = StartingWindow(self.start_application)
+        self.starting_window.show()
+
+    def start_application(self):
+        """Start the main application after clicking 'Start'."""
+        # Close the starting window
+        self.starting_window.close()
+
+        # Create a Scanner object
         self.scanner = Scanner()
 
         # Setup UI
         self.main_view = Ui_MainWindow(self.scanner)
-
         self.setup_scan_parameter_form()
         self.main_view.update_UI()
         self.main_view.show()
 
-        # Create a MainController object. The MainController object is responsible for connecting the UI with the scanner functionalities.
+        # Create a MainController object
         self.main_controller = MainController(self.scanner, self.main_view)
 
-        # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
+        # Create a SettingsManager object
         self.settings_manager = SettingsManager(
             self.scanner, self.main_controller, self.main_view, "settings.ini"
         )
@@ -44,7 +52,6 @@ class App(QApplication):
         self.menu_bar = MenuBar(self.main_view)
         self.setup_menu_bar()
 
-    # Set up the menu bar
     def setup_menu_bar(self):
         # Create the menu bar and sections
         menu_bar = self.menu_bar
@@ -70,14 +77,13 @@ class App(QApplication):
         pass
 
     def setup_scan_parameter_form(self):
-        # Load the scan parameters from the .json file. This file defines for each scan parameter which QWidget editor should be used to edit it. It also defines the default values for each parameter, the parameter's name, description and units.
+        """Load and set up the scan parameter form."""
         parameters = load_json("scan_parameters/scan_parameters.json")
-
-        # Scan parameters are passed to the parameter form layout so that it can create the appropriate QWidget editors for each scan parameter.
         self.main_view.parameterFormLayout.createForm(parameters)
 
 
 def main():
+    """Main entry point for the application."""
     # Enable rich traceback
     install(show_locals=True)
 
