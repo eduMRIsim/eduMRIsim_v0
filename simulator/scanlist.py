@@ -933,9 +933,9 @@ class ScanVolume:
             scale_factor_y = 1
 
         if scale_factor_x != 1 and scale_factor_y != 1:
-            log.debug(checked, scale_factor_x, scale_factor_y)
+            log.debug(f"{checked}, {scale_factor_x}, {scale_factor_y}")
 
-        log.debug('Scale factors:', scale_factor_x, scale_factor_y)
+        log.debug(f'Scale factors:, {scale_factor_x}, {scale_factor_y}')
 
         # Scaling logic
         if top_down_plane == origin_plane:
