@@ -87,9 +87,7 @@ class MainController:
         self.ui.scanPlanningWindow3.dropEventSignal.connect(
             self.handle_scanPlanningWindow3_dropped
         )
-        self.ui.gridViewingWindow.connect_drop_signals(
-            self.handle_dropped_cells
-        )
+        self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(
