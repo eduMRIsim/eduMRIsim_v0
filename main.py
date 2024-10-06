@@ -57,16 +57,8 @@ class App(QApplication):
         # Mode section
         mode_section = menu_bar.add_section('Mode')
         mode_section.add_mode_action_group() 
-
-        mode_section.add_mode_action(
-            'Scanning Mode',
-            self.main_controller.handle_scanningButton_clicked
-        )
-
-        mode_section.add_mode_action(
-            'Viewing Mode',
-            self.main_controller.handle_viewModelButton_clicked
-        )
+        mode_section.add_mode_action('Scanning Mode', self.main_controller.handle_scanningButton_clicked, checked=True)
+        mode_section.add_mode_action('Viewing Mode', self.main_controller.handle_viewModelButton_clicked)
 
         # Tools section
         tools_section = menu_bar.add_section('Tools')

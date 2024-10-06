@@ -31,25 +31,24 @@ class Section:
         self.menu.addAction(action)
 
     def add_mode_action_group(self):
-        """Creates a manual action group."""
-        self.action_group = {}  # Dictionary to store mode actions
+        """Creates an action group for mutually exclusive mode actions."""
+        self.action_group = QActionGroup(self.menu)
+        self.action_group.setExclusive(True)  # Ensure only one action can be checked at a time
 
-    def add_mode_action(self, action_name, triggered_function, condition=None):
+    def add_mode_action(self, action_name, triggered_function, checked=False):
         """Adds an action to the manual mode group without any checked state."""
         if self.action_group is None:
             raise Exception("Call add_mode_action_group before adding mode actions.")
         
-        # Create the action
         action = QAction(action_name, self.menu)
-        action.triggered.connect(lambda: self._switch_mode(action_name, triggered_function, condition))
-        self.action_group[action_name] = action
+        action.setCheckable(True)
+        action.triggered.connect(triggered_function)
+
+        self.action_group.addAction(action)
         self.menu.addAction(action)
 
         self.actions[action_name] = action
 
-    def _switch_mode(self, action_name, triggered_function, condition):
-        """Switches the mode if the condition is met."""
-        if condition is None or condition(): 
-            triggered_function() 
-        else:
-            print(f"Condition for {action_name} not met.")
+        if checked:
+            action.setChecked(True)
+
