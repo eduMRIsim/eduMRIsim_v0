@@ -13,7 +13,7 @@ from simulator.scanner import Scanner
 from views.main_view_ui import Ui_MainWindow
 from views.menu_bar import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
-
+from views.load_examination_dialog_ui import LoadExaminationDialog  # Import the LoadExaminationDialog
 
 class App(QApplication):
     """Main application class."""
@@ -21,13 +21,12 @@ class App(QApplication):
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
 
-        self.starting_window = StartingWindow(self.start_new_examination)
+        # Show the starting screen
+        self.starting_window = StartingWindow(self.start_new_examination, self.load_examination)
         self.starting_window.show()
 
-    def start_new_examination(self):
-        """Start a new examination when 'New Examination' is clicked."""
-        self.starting_window.close()
-
+    def start_main_app(self, settings_file=None):
+        """Start the main application."""
         self.scanner = Scanner()
 
         self.main_view = Ui_MainWindow(self.scanner)
@@ -37,15 +36,21 @@ class App(QApplication):
 
         self.main_controller = MainController(self.scanner, self.main_view)
 
-        self.settings_manager = SettingsManager(
-            self.scanner, self.main_controller, self.main_view, "settings.ini"
-        )
-        self.settings_manager.setup_settings(None)
-
         self.menu_bar = MenuBar(self.main_view)
         self.setup_menu_bar()
 
+    def start_new_examination(self):
+        """Start a new examination."""
+        self.starting_window.close()
+        self.start_main_app() 
         self.main_controller.handle_newExaminationButton_clicked()
+
+    def load_examination(self):
+        """Load an existing examination from a file."""
+        self.starting_window.close()
+        self.start_main_app()
+        self.load_dialog = LoadExaminationDialog()
+        self.load_dialog.open_file_dialog()
 
     def setup_menu_bar(self):
         # Create the menu bar and sections
@@ -54,7 +59,7 @@ class App(QApplication):
         # Session section
         session_section = menu_bar.add_section('Session')
         session_section.add_action('Save session', self.main_controller.export_examination)
-        session_section.add_action('Load session', self.test_action)
+        session_section.add_action('Load session', self.load_examination)
 
         # Mode section
         mode_section = menu_bar.add_section('Mode')
