@@ -446,9 +446,7 @@ class MainController:
 
         if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.ui.editingStackedLayout.setCurrentIndex(
-                0
-            )  # Switch to scan parameter editor view
+            self.ui.editingStackedLayout.setCurrentIndex(0)  # Switch to scan parameter editor view
             self.ui.scannedImageFrame.setAcquiredSeries(
                 self.scanner.active_scanlist_element.acquired_data
             )  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
@@ -458,15 +456,23 @@ class MainController:
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
             self.scanner.active_scan_item.add_observer(self)
-            self.ui.scanPlanningWindow1.setScanVolume(
-                self.scanner.active_scan_item.scan_volume
-            )
-            self.ui.scanPlanningWindow2.setScanVolume(
-                self.scanner.active_scan_item.scan_volume
-            )
-            self.ui.scanPlanningWindow3.setScanVolume(
-                self.scanner.active_scan_item.scan_volume
-            )
+
+            # Set scan volume on planning windows only if the active scan item is not completed
+            if self.scanner.active_scan_item.status != ScanItemStatusEnum.COMPLETE:
+                self.ui.scanPlanningWindow1.setScanVolume(
+                    self.scanner.active_scan_item.scan_volume
+                )
+                self.ui.scanPlanningWindow2.setScanVolume(
+                    self.scanner.active_scan_item.scan_volume
+                )
+                self.ui.scanPlanningWindow3.setScanVolume(
+                    self.scanner.active_scan_item.scan_volume
+                )
+            else:
+                # Clear the scan volume if the scan is completed
+                self.ui.scanPlanningWindow1.setScanVolume(None)
+                self.ui.scanPlanningWindow2.setScanVolume(None)
+                self.ui.scanPlanningWindow3.setScanVolume(None)
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)

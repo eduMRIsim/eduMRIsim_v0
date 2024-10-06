@@ -2076,9 +2076,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume.remove_observer(self)
         # set the new scan volume and observe it
         self.scan_volume = scan_volume
-        self.scan_volume.add_observer(self)
-        # update the intersection polygon
-        self.scan_volume_display.set_scan_volume(scan_volume)
+        if self.scan_volume is not None:
+            self.scan_volume.add_observer(self)
+            self.scan_volume_display.set_scan_volume(scan_volume)
+        else: 
+            self.scan_volume_display.set_scan_volume(None)
         self._update_scan_volume_display()
 
     def _update_scan_volume_display(self):
