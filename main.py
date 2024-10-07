@@ -50,8 +50,8 @@ class App(QApplication):
     def start_new_examination(self):
         """Start a new examination."""
         self.starting_window.close()
-        self.start_main_app()
         self.main_controller.handle_newExaminationButton_clicked()
+        self.start_main_app()
 
     def load_examination(self):
         """Load an existing examination from a file."""
