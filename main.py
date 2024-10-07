@@ -1,21 +1,19 @@
 import argparse
 import sys
+
+from PyQt6.QtCore import qInstallMessageHandler
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QApplication
 from rich.traceback import install
-from PyQt5.QtCore import qInstallMessageHandler
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication
-from utils.logger import log, qt_message_handler, numpy_handler
+
 from controllers.main_ctrl import MainController
 from controllers.settings_mgr import SettingsManager
-from events import EventEnum
 from simulator.load import load_json
 from simulator.scanner import Scanner
+from utils.logger import log, qt_message_handler, numpy_handler
 from views.main_view_ui import Ui_MainWindow
 from views.menu_bar import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
-from views.load_examination_dialog_ui import (
-    LoadExaminationDialog,
-)  # Import the LoadExaminationDialog
 
 
 class App(QApplication):
@@ -133,7 +131,7 @@ def main():
     default_font.setWeight(55)
     app.setFont(default_font)
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
