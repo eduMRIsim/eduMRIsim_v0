@@ -24,7 +24,16 @@ from PyQt5.QtWidgets import (
     QFrame,
     QWidget,
 )
-from PyQt5.QtGui import QMouseEvent, QPixmap, QImage
+from PyQt5.QtGui import (
+    QMouseEvent,
+    QPixmap,
+    QImage,
+    QDragMoveEvent,
+    QDropEvent,
+    QPainter,
+    QColor,
+    QDragEnterEvent,
+)
 import numpy as np
 from views.main_view_ui import ImageLabel
 from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel

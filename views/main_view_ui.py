@@ -2,7 +2,7 @@ import math
 from contextlib import contextmanager
 from utils.logger import log
 import numpy as np
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
+from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray, QSize
 from PyQt5.QtGui import (
     QPainter,
     QPixmap,
@@ -46,12 +46,15 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
     QPushButton,
     QGraphicsOpacityEffect,
+    QMenu,
+    QAction,
 )
 
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
+from views.MeasurementTool import MeasurementTool
 from views.UI_MainWindowState import (
     IdleState,
     BeingModifiedState,
@@ -59,6 +62,7 @@ from views.UI_MainWindowState import (
     ScanCompleteState,
     ViewState,
 )
+from views.export_image_dialog_ui import ExportImageDialog
 from views.styled_widgets import (
     PrimaryActionButton,
     SecondaryActionButton,
@@ -245,6 +249,18 @@ class Ui_MainWindow(QMainWindow):
         return self.scanPlanningWindow.ImageLabelTuple[2]
 
     @property
+    def scanPlanningWindow1ExportButton(self):
+        return self.scanPlanningWindow.viewingPortExportButtonTuple[0]
+
+    @property
+    def scanPlanningWindow2ExportButton(self):
+        return self.scanPlanningWindow.viewingPortExportButtonTuple[1]
+
+    @property
+    def scanPlanningWindow3ExportButton(self):
+        return self.scanPlanningWindow.viewingPortExportButtonTuple[2]
+
+    @property
     def gridViewingWindowLayout(self):
         return self.gridViewingWindowLayout
 
@@ -299,7 +315,7 @@ class Ui_MainWindow(QMainWindow):
     def _createRightLayout(self) -> QVBoxLayout:
         rightLayout = QVBoxLayout()
 
-        self.scanPlanningWindow = ScanPlanningWindow()
+        self.scanPlanningWindow = ScanPlanningWindow(self)
         rightLayout.addWidget(self.scanPlanningWindow, stretch=1)
 
         bottomLayout = QHBoxLayout()
@@ -314,6 +330,8 @@ class Ui_MainWindow(QMainWindow):
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
 
         self._scannedImageFrame = AcquiredSeriesViewer2D()
+        self._scannedImageFrame.zooming_enabled = False
+        # TODO change back to true
         self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
         bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
 
@@ -673,14 +691,21 @@ class ScanProgressInfoFrame(QFrame):
 
 
 class ScanPlanningWindow(QFrame):
-    def __init__(self):
+    def __init__(self, ui: Ui_MainWindow):
         super().__init__()
-        layout = QHBoxLayout()
-        layout.setSpacing(0)
+        layout = QGridLayout()
+        layout.setHorizontalSpacing(0)
+        layout.setVerticalSpacing(7)
         self.setLayout(layout)
-        self.ImageLabelTuple = tuple(DropAcquiredSeriesViewer2D() for i in range(3))
-        for label in self.ImageLabelTuple:
-            layout.addWidget(label, stretch=1)
+        self.ui = ui
+        self.ImageLabelTuple = tuple(DropAcquiredSeriesViewer2D(ui) for i in range(3))
+        for i, label in enumerate(self.ImageLabelTuple):
+            layout.addWidget(label, 0, i)
+        self.viewingPortExportButtonTuple = tuple(
+            PrimaryActionButton(f"Export this viewing port to file") for i in range(3)
+        )
+        for i, button in enumerate(self.viewingPortExportButtonTuple):
+            layout.addWidget(button, 1, i)
 
 
 class EditingStackedLayout(QStackedLayout):
@@ -915,9 +940,9 @@ class ParameterFormLayout(QVBoxLayout):
 
 
 class ScannedImageWidget(QWidget):
-    def __init__(self, scannedImageFrame: QGraphicsView) -> None:
+    def __init__(self, scannedImageFrame: QGraphicsView):
         super().__init__()
-        self._layout: QVBoxLayout = QVBoxLayout()
+        self._layout = QVBoxLayout()
         self.setLayout(self._layout)
         self._layout.addWidget(scannedImageFrame)
         self._acquiredImageExportButton: QPushButton = PrimaryActionButton(
@@ -926,7 +951,7 @@ class ScannedImageWidget(QWidget):
         self._layout.addWidget(self.acquiredImageExportButton)
 
     @property
-    def acquiredImageExportButton(self) -> QPushButton:
+    def acquiredImageExportButton(self):
         return self._acquiredImageExportButton
 
 
@@ -1118,6 +1143,142 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             abs(self.previous_scale_handle_position.y() - self.scene_center.y()) <= 5.5
         )
 
+        rotations = self.scan_volume.get_rotations()
+        plane = self.get_plane_axis() #FH = Axial, RL = Sagittal, AP = Coronal
+        log.debug(f"{rotations} {plane}, {self.previous_handle_position}, {self.scene_center}")
+
+        if plane == 'FH' and rotations['FHAngle_rad'] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Axial', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+        elif plane == 'RL' and rotations['RLAngle_rad'] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Sagittal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+        elif plane == 'AP' and rotations['APAngle_rad'] != 0:
+            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale('Coronal', self.previous_scale_handle_position, self.scene_center, rotations['RLAngle_rad'], rotations['APAngle_rad'], rotations['FHAngle_rad'])
+
+        # The logic for determining which axis the user is scaling on TBD
+        log.debug(f"{self.on_x_axis}, {self.on_y_axis}")
+
+    def determine_axis_to_scale(self, origin_plane, handle_pos, center_pos, RLAngle_rad, APAngle_rad, FHAngle_rad):
+        log.debug(f"{origin_plane}, {handle_pos}, {center_pos}, {RLAngle_rad}, {APAngle_rad}, {FHAngle_rad}")
+        converter = 180 / math.pi
+        if origin_plane == 'Sagittal': #around RL axis
+            # Rotation to positive direction
+            if RLAngle_rad * converter < 90 and RLAngle_rad * converter > 0:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif RLAngle_rad * converter >= 90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            # Rotation to negative direction
+            elif RLAngle_rad * converter < 0 and RLAngle_rad * converter > -90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            elif RLAngle_rad * converter <= -90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+        elif origin_plane == 'Coronal': #around AP axis
+            # Rotation to positive direction
+            if APAngle_rad * converter <= 90 and APAngle_rad * converter > 0:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            elif APAngle_rad * converter > 90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            # Rotation to negative direction
+            elif APAngle_rad * converter < 0 and APAngle_rad * converter > -90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif APAngle_rad * converter <= -90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+        elif origin_plane == 'Axial': #around FH axis
+            # Rotation to positive direction
+            if FHAngle_rad * converter < 90 and FHAngle_rad * converter > 0:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+            elif FHAngle_rad * converter >= 90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            # Rotation to negative direction
+            elif FHAngle_rad * converter < 0 and FHAngle_rad * converter > -90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+            elif FHAngle_rad * converter <= -90:
+                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
+                    return False, True
+                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
+                    return True, False
+                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
+                    return False, True
+        return False, False
+
     def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
         """
         This function is called whenever a scale handle is moved,
@@ -1131,34 +1292,28 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Calculate the scale factors in the x and y directions.
         # Also, avoid division by zero, which would happen if the previous scale handle position's x or y is equal to
         # the scene center's x or y respectively; in that case, set the respective scale factor to 1.0.
-        if self.on_x_axis:
+        if self.on_x_axis or abs(self.previous_scale_handle_position.x() - self.scene_center.x()) == 0:
             scale_factor_x = 1.0
         else:
             scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(
                 self.previous_scale_handle_position.x() - self.scene_center.x()
             )
-            if scale_factor_x <= 0.96 or scale_factor_x >= 1.04:
+            if scale_factor_x <= 0.92 or scale_factor_x >= 1.08:
                 scale_factor_x = 1.0
-        if self.on_y_axis:
+        if self.on_y_axis or abs(self.previous_scale_handle_position.y() - self.scene_center.y()) == 0:
             scale_factor_y = 1.0
         else:
             scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(
                 self.previous_scale_handle_position.y() - self.scene_center.y()
             )
-            if scale_factor_y <= 0.96 or scale_factor_y >= 1.04:
+            if scale_factor_y <= 0.92 or scale_factor_y >= 1.08:
                 scale_factor_y = 1.0
 
         # Set the previous handle position equal to the new handle position.
         self.previous_scale_handle_position = new_position
 
         # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
-        self.notify_observers(
-            EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
-            scale_factor_x=scale_factor_x,
-            scale_factor_y=scale_factor_y,
-            origin_plane=self.viewer.displayed_image.image_geometry.plane,
-            handle_pos=self.active_scale_handle.pos(),
-        )
+        self.notify_observers(EventEnum.SCAN_VOLUME_DISPLAY_SCALED, scale_factor_x=scale_factor_x, scale_factor_y=scale_factor_y, origin_plane=self.viewer.displayed_image.image_geometry.plane, handle_pos=self.active_scale_handle.pos(), center_pos=self.scene_center)
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
@@ -1226,10 +1381,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Update rotation handles positions
         self.update_rotation_handle_positions()
 
-        local_center = QPointF(
-            sum(point.x() for point in polygon_in_polygon_coords) / n_points,
-            sum(point.y() for point in polygon_in_polygon_coords) / n_points,
-        )
+        # Calculate offset and update position for scale handles
+        local_center = QPointF(sum(point.x() for point in polygon_in_polygon_coords) / n_points, sum(point.y() for point in polygon_in_polygon_coords) / n_points)
 
         self.scale_handle_offsets = []
         for i in range(n_points):
@@ -1554,46 +1707,84 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.setLayout(button_layout)
         self.update_buttons_visibility()
 
+        # Right-click context menu
+        # The trigger for export_action is set in main_ctrl.py, ui_signals() and handle_viewingPortExport_triggered()
+        self.right_click_menu = QMenu(self)
+        self.export_action = QAction("Export...")
+        self.right_click_menu.addAction(self.export_action)
+
         self.scene.installEventFilter(self)
 
         # zoom controls
+        self.zooming_enabled = False
         self.mouse_pressed = False
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
 
+        # Measurement tool
+        self.measuring_enabled = False
+
+        self.line_item = QGraphicsLineItem()
+        self.line_item.setPen(QPen(QColor(255, 0,0 ), 2))
+        self.scene.addItem(self.line_item)
+
+        self.text_item = QGraphicsTextItem()
+        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.scene.addItem(self.text_item)
+
+        self.measure = MeasurementTool(self.line_item, self.text_item, self)
+
+
     # start zoom when pressed
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.mouse_pressed = True
-            self.last_mouse_pos = event.pos()
+        # TODO the user should not be able to zoom in and out when the measuring tool is active
+        if self.zooming_enabled:
+            if event.button() == Qt.LeftButton:
+                self.mouse_pressed = True
+                self.last_mouse_pos = event.pos()
+        if self.measuring_enabled:
+            self.measure.start_measurement(self.mapToScene(event.pos()))
+            self.measure.show_items()
+        else:
+            super().mousePressEvent(event)
 
     # stop zoom when released
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.mouse_pressed = False
-            self.last_mouse_pos = None
+        if self.zooming_enabled:
+            if event.button() == Qt.LeftButton:
+                self.mouse_pressed = False
+                self.last_mouse_pos = None
+        if self.measuring_enabled:
+            self.measure.end_measurement()
+        else:
+            super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
-        """Handle zoom when the mouse is being dragged."""
-        if self.mouse_pressed and self.last_mouse_pos is not None:
+        if self.zooming_enabled:
+            """Handle zoom when the mouse is being dragged."""
+            if self.mouse_pressed and self.last_mouse_pos is not None:
 
-            max_zoom_out = 0.5
-            max_zoom_in = 10
-            current_pos = event.pos()
-            delta_y = current_pos.y() - self.last_mouse_pos.y()
+                max_zoom_out = 0.5
+                max_zoom_in = 10
+                current_pos = event.pos()
+                delta_y = current_pos.y() - self.last_mouse_pos.y()
 
-            # cursor_pos = self.mapToScene(current_pos)
-            zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+                # cursor_pos = self.mapToScene(current_pos)
+                zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
 
-            # get current zoom level (scaling factor)
-            current_zoom = self.transform().m11()
+                # get current zoom level (scaling factor)
+                current_zoom = self.transform().m11()
 
-            new_zoom = current_zoom * zoom_factor
-            if max_zoom_out <= new_zoom <= max_zoom_in:
-                self.scale(zoom_factor, zoom_factor)
+                new_zoom = current_zoom * zoom_factor
+                if max_zoom_out <= new_zoom <= max_zoom_in:
+                    self.scale(zoom_factor, zoom_factor)
 
-            # update the last mouse position
-            self.last_mouse_pos = current_pos
+                # update the last mouse position
+                self.last_mouse_pos = current_pos
+        elif self.measuring_enabled and self.measure.is_measuring:
+            self.measure.update_measurement(self.mapToScene(event.pos()))
+        else:
+            super().mouseMoveEvent(event)
 
     def zoom_in(self, center_point):
         if self.transform().m11() < self.max_zoom_in:
@@ -1796,11 +1987,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             scale_factor_y = kwargs["scale_factor_y"]
             origin_plane = kwargs["origin_plane"]
             handle_pos = kwargs["handle_pos"]
+            center_pos = kwargs['center_pos']
 
             # self.scan_volume.remove_observer(self)
-            self.scan_volume.scale_scan_volume(
-                scale_factor_x, scale_factor_y, origin_plane, handle_pos
-            )
+            self.scan_volume.scale_scan_volume(scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos)
             self._update_scan_volume_display()
             # self.scan_volume.add_observer(self)
 
@@ -1886,9 +2076,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume.remove_observer(self)
         # set the new scan volume and observe it
         self.scan_volume = scan_volume
-        self.scan_volume.add_observer(self)
-        # update the intersection polygon
-        self.scan_volume_display.set_scan_volume(scan_volume)
+        if self.scan_volume is not None:
+            self.scan_volume.add_observer(self)
+            self.scan_volume_display.set_scan_volume(scan_volume)
+        else: 
+            self.scan_volume_display.set_scan_volume(None)
         self._update_scan_volume_display()
 
     def _update_scan_volume_display(self):
@@ -1924,15 +2116,41 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.stacks_displays = []
         # self.scan_volume_display.update_slice_lines()
 
+    def contextMenuEvent(self, event):
+        """Event handler for if the user requests to open the right-click context menu."""
+
+        super().contextMenuEvent(event)
+
+        # Enable the export button only if we have a displayed image that can be exported.
+        if self.displayed_image is not None:
+            self.export_action.setEnabled(True)
+        else:
+            self.export_action.setEnabled(False)
+
+        # Execute and open the menu.
+        action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
+
+        # If action_performed is None, the user didn't click on any action,
+        # but instead they clicked outside the menu to close it.
+        if action_performed is not None:
+            log.info(f"{repr(action_performed.text())} action performed")
+        else:
+            log.info("No action performed")
+
 
 class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
     """Subclass of AcquiredSeriesViewer2D that can accept drops from scanlistListWidget. The dropEventSignal is emitted when a drop event occurs."""
 
     dropEventSignal = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, ui: Ui_MainWindow):
         super().__init__()
         self.setAcceptDrops(True)
+        self.zooming_enabled = False
+
+        # This class requires a reference to the UI, since it needs to enable the viewport export buttons
+        # when a scan item is dropped into it, so that the user can export it to a file.
+        self.ui = ui
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         source_widget = event.source()
@@ -1952,6 +2170,27 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
         source_widget = event.source()
         selected_index = source_widget.selectedIndexes()[0].row()
         self.dropEventSignal.emit(selected_index)
+
+        # Enable a viewing port export button only if the viewing port contains at least one image.
+        if (
+            self.ui.scanPlanningWindow1.acquired_series is not None
+            and self.ui.scanPlanningWindow1.acquired_series.list_acquired_images
+            is not None
+        ):
+            self.ui.scanPlanningWindow1ExportButton.setEnabled(True)
+        if (
+            self.ui.scanPlanningWindow2.acquired_series is not None
+            and self.ui.scanPlanningWindow2.acquired_series.list_acquired_images
+            is not None
+        ):
+            self.ui.scanPlanningWindow2ExportButton.setEnabled(True)
+        if (
+            self.ui.scanPlanningWindow3.acquired_series is not None
+            and self.ui.scanPlanningWindow3.acquired_series.list_acquired_images
+            is not None
+        ):
+            self.ui.scanPlanningWindow3ExportButton.setEnabled(True)
+
         event.accept()
 
 

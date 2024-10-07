@@ -9,14 +9,19 @@ from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
-from simulator.scanlist import ScanItemStatusEnum, AcquiredImage, Scanlist
+from simulator.scanlist import (
+    ScanItemStatusEnum,
+    AcquiredImage,
+    Scanlist,
+    AcquiredSeries,
+)
 from simulator.scanner import Scanner
 from views.load_examination_dialog_ui import LoadExaminationDialog
 from views.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 from views.view_model_dialog_ui import NoItemsToViewDialog
 from views.main_view_ui import Ui_MainWindow
-from views.export_acquired_image_dialog_ui import ExportAcquiredImageDialog
+from views.export_image_dialog_ui import ExportImageDialog
 from views.view_model_dialog_ui import ViewModelDialog
 
 
@@ -33,8 +38,6 @@ class MainController:
     def ui_signals(self):
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
-
-        self.export_acquired_image_dialog_ui = ExportAcquiredImageDialog()
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
@@ -100,9 +103,32 @@ class MainController:
             )
         )
 
-        # Signals related to exporting acquired images
+        # Signals and UIs related to exporting images
+        self.export_image_dialog_ui = ExportImageDialog(None)
+
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
-            self.handle_acquiredImageExportButton_clicked
+            lambda: self.handle_viewingPortExport_triggered(0)
+        )
+        self.ui.scannedImageFrame.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(0)
+        )
+        self.ui.scanPlanningWindow1ExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExport_triggered(1)
+        )
+        self.ui.scanPlanningWindow1.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(1)
+        )
+        self.ui.scanPlanningWindow2ExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExport_triggered(2)
+        )
+        self.ui.scanPlanningWindow2.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(2)
+        )
+        self.ui.scanPlanningWindow3ExportButton.clicked.connect(
+            lambda: self.handle_viewingPortExport_triggered(3)
+        )
+        self.ui.scanPlanningWindow3.export_action.triggered.connect(
+            lambda: self.handle_viewingPortExport_triggered(3)
         )
 
     def prepare_model_data(self):
@@ -186,6 +212,38 @@ class MainController:
         progress = scanlist.get_progress()
         self.ui.scanProgressBar.setValue(int(progress * 100))
 
+    def save_complete_scanlist_items(self, scanlist):
+        # saves scanlist elements that were scanned
+        complete_items = []
+        for item in scanlist.scanlist_elements:
+            if item.scan_item.status == ScanItemStatusEnum.COMPLETE:
+                complete_items.append({"name": item.name, "status": "COMPLETE"})
+
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+        settings.setValue("completeItems", complete_items)
+        settings.endGroup()
+
+        return complete_items
+
+    def restore_complete_scanlist_items(self):
+        # restores complete scanlist elements
+        settings = SettingsManager.get_instance().settings
+        settings.beginGroup("CompleteScanlistState")
+
+        complete_items = settings.value("completeItems", [])
+        self.ui.scanlistListWidget.clear()
+
+        for item_data in complete_items:
+            list_item = QListWidgetItem(item_data["name"])
+            list_item.setIcon(
+                QIcon("resources/icons/checkmark-circle-2-outline.png")
+            )  # COMPLETE icon
+            self.ui.scanlistListWidget.addItem(list_item)
+            self.scanner.scanlist.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
+
+        settings.endGroup()
+
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
@@ -242,6 +300,7 @@ class MainController:
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
         self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
@@ -303,9 +362,103 @@ class MainController:
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
 
-    def handle_acquiredImageExportButton_clicked(self):
-        image: AcquiredImage = self.ui.scannedImageFrame.displayed_image
-        self.export_acquired_image_dialog_ui.export_file_dialog(image)
+    def handle_viewingPortExport_triggered(self, index: int):
+        if index not in range(0, 4):
+            raise ValueError(
+                f"Index {index} does not refer to a valid image viewing port"
+            )
+
+        if index == 0:
+            image = self.ui.scannedImageFrame.displayed_image
+            parameters = self.ui.parameterFormLayout.get_parameters()
+        elif index == 1:
+            image = self.ui.scanPlanningWindow1.displayed_image
+            parameters = self._return_parameters_from_image_in_scanlist(image)
+        elif index == 2:
+            image = self.ui.scanPlanningWindow2.displayed_image
+            parameters = self._return_parameters_from_image_in_scanlist(image)
+        else:
+            image = self.ui.scanPlanningWindow3.displayed_image
+            parameters = self._return_parameters_from_image_in_scanlist(image)
+        self.export_image_dialog_ui.export_file_dialog(image, parameters)
+
+    def handle_measureDistanceButtonClicked(self):
+        if not self.ui._scannedImageFrame.measuring_enabled:
+            self.ui._scannedImageFrame.measuring_enabled = True
+            log.warn("Measuring enabled")
+        else:
+            self.ui._scannedImageFrame.measuring_enabled = False
+            self.ui._scannedImageFrame.measure.hide_items()
+            log.warn("Measuring disabled")
+
+
+    def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
+        """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.
+
+        Args:
+            image (AcquiredImage): the image that is to be found in the scan list.
+
+        Returns:
+            The parameters from the scan list element that is associated with the image argument of this method.
+
+        Raises:
+             ValueError: If the image argument of this method was not found in the scan list.
+        """
+
+        parameters: dict | None = None  # Return variable
+        found = False  # Flag to check if the image was found
+
+        # Loop over all scan list elements
+        for scanlist_element in self.scanner.scanlist.scanlist_elements:
+            # For each scan list element, loop over all (acquired) images
+            acquired_series: AcquiredSeries = scanlist_element.acquired_data
+            acquired_image: AcquiredImage
+            for acquired_image in acquired_series.list_acquired_images:
+                # If the image data does not match, continue to the next image
+                if not np.array_equal(acquired_image.image_data, image.image_data):
+                    continue
+
+                geometry_parameters_correct = (
+                    True  # Flag to check if the geometry parameters match
+                )
+
+                # Loop over the key-value pairs in the geometry parameters dictionary of this acquired image
+                for (
+                    key,
+                    value,
+                ) in acquired_image.image_geometry.geometry_parameters.items():
+                    # This isinstance check is for (in)equality in case the current value is of type np.ndarray
+                    if isinstance(value, np.ndarray):
+                        if not np.array_equal(
+                            value, image.image_geometry.geometry_parameters[key]
+                        ):
+                            geometry_parameters_correct = False
+                    # If we don't have an np.ndarray as our value, just check for (in)equality
+                    elif value != image.image_geometry.geometry_parameters[key]:
+                        geometry_parameters_correct = False
+
+                    # If any of the geometry parameters don't match, stop checking this dictionary
+                    if not geometry_parameters_correct:
+                        break
+                # If any of the geometry parameters don't match, continue to the next image
+                if not geometry_parameters_correct:
+                    continue
+
+                # If both the image data and all the geometry parameters match, we have found (acquired) image that we were looking for
+                found = True
+                parameters = scanlist_element.scan_item.scan_parameters
+                break
+
+            # If we found the image that we were looking for, break out of the scan list element loop
+            if found:
+                break
+
+        # If the parameters variable is still None after checking all possible options, raise an error
+        if parameters is None:
+            raise ValueError("Image not found in scan list")
+
+        # Return the parameters dictionary
+        return parameters
 
     def update(self, event):
         """
@@ -316,9 +469,7 @@ class MainController:
 
         if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.ui.editingStackedLayout.setCurrentIndex(
-                0
-            )  # Switch to scan parameter editor view
+            self.ui.editingStackedLayout.setCurrentIndex(0)  # Switch to scan parameter editor view
             self.ui.scannedImageFrame.setAcquiredSeries(
                 self.scanner.active_scanlist_element.acquired_data
             )  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
@@ -328,15 +479,23 @@ class MainController:
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
             self.scanner.active_scan_item.add_observer(self)
-            self.ui.scanPlanningWindow1.setScanVolume(
-                self.scanner.active_scan_item.scan_volume
-            )
-            self.ui.scanPlanningWindow2.setScanVolume(
-                self.scanner.active_scan_item.scan_volume
-            )
-            self.ui.scanPlanningWindow3.setScanVolume(
-                self.scanner.active_scan_item.scan_volume
-            )
+
+            # Set scan volume on planning windows only if the active scan item is not completed
+            if self.scanner.active_scan_item.status != ScanItemStatusEnum.COMPLETE:
+                self.ui.scanPlanningWindow1.setScanVolume(
+                    self.scanner.active_scan_item.scan_volume
+                )
+                self.ui.scanPlanningWindow2.setScanVolume(
+                    self.scanner.active_scan_item.scan_volume
+                )
+                self.ui.scanPlanningWindow3.setScanVolume(
+                    self.scanner.active_scan_item.scan_volume
+                )
+            else:
+                # Clear the scan volume if the scan is completed
+                self.ui.scanPlanningWindow1.setScanVolume(None)
+                self.ui.scanPlanningWindow2.setScanVolume(None)
+                self.ui.scanPlanningWindow3.setScanVolume(None)
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)

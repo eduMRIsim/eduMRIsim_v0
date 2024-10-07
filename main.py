@@ -50,7 +50,7 @@ class App(QApplication):
     def start_new_examination(self):
         """Start a new examination."""
         self.starting_window.close()
-        self.start_main_app() 
+        self.start_main_app()
         self.main_controller.handle_newExaminationButton_clicked()
 
     def load_examination(self):
@@ -60,6 +60,8 @@ class App(QApplication):
         self.load_dialog = LoadExaminationDialog()
         self.load_dialog.open_file_dialog()
 
+    # TODO all menu bar actions should be moved to the MenuBar class
+    # Set up the menu bar
     def setup_menu_bar(self):
         # Create the menu bar and sections
         menu_bar = self.menu_bar
@@ -81,8 +83,10 @@ class App(QApplication):
         tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
-        print("Action test")
         pass
+
+    def measure_distance(self):
+        self.main_controller.handle_measureDistanceButtonClicked()
 
     def setup_scan_parameter_form(self):
         """Load and set up the scan parameter form."""
