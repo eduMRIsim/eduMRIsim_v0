@@ -1,7 +1,7 @@
 import argparse
 import sys
 from rich.traceback import install
-from PyQt5.QtCore import QSettings, qInstallMessageHandler
+from PyQt5.QtCore import qInstallMessageHandler
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
 from utils.logger import log, qt_message_handler, numpy_handler
@@ -11,9 +11,9 @@ from events import EventEnum
 from simulator.load import load_json
 from simulator.scanner import Scanner
 from views.main_view_ui import Ui_MainWindow
-from PyQt5.QtCore import QSettings
 from views.menu_bar import MenuBar
-
+from views.starting_window import StartingWindow  # Import the StartingWindow
+from views.load_examination_dialog_ui import LoadExaminationDialog  # Import the LoadExaminationDialog
 
 class App(QApplication):
     """Main application class."""
@@ -21,56 +21,66 @@ class App(QApplication):
     def __init__(self, sys_argv):
         super(App, self).__init__(sys_argv)
 
-        # Create a Scanner object. The Scanner object is responsible for scanning anatomical model data with the given scan parameters and returning an acquired image series. The scanner keeps track of the current active examination, scanlist, active scan item and holds a reference to the anatomical model.
         self.scanner = Scanner()
-
-        # Setup UI
         self.main_view = Ui_MainWindow(self.scanner)
 
         self.setup_scan_parameter_form()
         self.main_view.update_UI()
-        self.main_view.show()
 
-        # Create a MainController object. The MainController object is responsible for connecting the UI with the scanner functionalities.
         self.main_controller = MainController(self.scanner, self.main_view)
 
-        # Create a SettingsManager object. The SettingsManager object is responsible for saving and loading the application state.
-        self.settings_manager = SettingsManager(
-            self.scanner, self.main_controller, self.main_view, "settings.ini"
-        )
-        self.settings_manager.setup_settings(None)
+        # Initialize the settings manager
+        self.settings_manager = SettingsManager(scanner=self.scanner, main_ctrl=self.main_controller, main_view=self.main_view, file_name="settings.ini")
 
-        # Create menu bar
+        # Show the starting screen
+        self.starting_window = StartingWindow(self.start_new_examination, self.load_examination)
+
+        if not self.settings_manager.is_previous_session():
+            self.starting_window.load_previous_examination_button.setDisabled(True)
+        self.starting_window.show()
+
+    def start_main_app(self, settings_file=None):
+        """Start the main application."""
+        self.main_view.update_UI()
+        self.main_view.show()
+
         self.menu_bar = MenuBar(self.main_view)
         self.setup_menu_bar()
+
+    def start_new_examination(self):
+        """Start a new examination."""
+        self.starting_window.close()
+        self.main_controller.handle_newExaminationButton_clicked()
+        self.start_main_app()
+
+    def load_examination(self):
+        """Load an existing examination from a file."""
+        self.starting_window.close()
+        self.start_main_app()
+        self.load_dialog = LoadExaminationDialog()
+        self.load_dialog.open_file_dialog()
 
     # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
     def setup_menu_bar(self):
-        self.menu_bar.add_section("Session")
-        self.menu_bar.add_action(
-            "Session", "Save session", self.main_controller.export_examination
-        )
-        self.menu_bar.add_action("Session", "Load session", self.test_action)
+        # Create the menu bar and sections
+        menu_bar = self.menu_bar
 
-        self.menu_bar.add_section("Mode")
-        self.menu_bar.add_action(
-            "Mode",
-            "Scanning Mode",
-            lambda: self.main_view._stackedLayout.setCurrentIndex(0),
-        )
-        # self.menu_bar.add_action(
-        #    "Mode", "Viewing Mode", self.main_controller.handle_viewingButton_clicked
-        # )
-        self.menu_bar.add_action(
-            "Mode",
-            "Viewing Mode",
-            lambda: self.main_view._stackedLayout.setCurrentIndex(1),
-        )
+        # Session section
+        session_section = menu_bar.add_section('Session')
+        session_section.add_action('Save session', self.main_controller.export_examination)
+        session_section.add_action('Load session', self.load_examination)
 
-        self.menu_bar.add_section("Tools")
-        self.menu_bar.add_action("Tools", "Measure Distance", self.measure_distance)
-        self.menu_bar.add_action("Tools", "Measure Area", self.test_action)
+        # Mode section
+        mode_section = menu_bar.add_section('Mode')
+        mode_section.add_mode_action_group()
+        mode_section.add_mode_action('Scanning Mode', self.main_controller.handle_scanningButton_clicked, checked=True)
+        mode_section.add_mode_action('Viewing Mode', self.main_controller.handle_viewModelButton_clicked)
+
+        # Tools section
+        tools_section = menu_bar.add_section('Tools')
+        tools_section.add_action('Measure Distance', self.test_action)
+        tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
         pass
@@ -79,14 +89,13 @@ class App(QApplication):
         self.main_controller.handle_measureDistanceButtonClicked()
 
     def setup_scan_parameter_form(self):
-        # Load the scan parameters from the .json file. This file defines for each scan parameter which QWidget editor should be used to edit it. It also defines the default values for each parameter, the parameter's name, description and units.
+        """Load and set up the scan parameter form."""
         parameters = load_json("scan_parameters/scan_parameters.json")
-
-        # Scan parameters are passed to the parameter form layout so that it can create the appropriate QWidget editors for each scan parameter.
         self.main_view.parameterFormLayout.createForm(parameters)
 
 
 def main():
+    """Main entry point for the application."""
     # Enable rich traceback
     install(show_locals=True)
 

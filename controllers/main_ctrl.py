@@ -250,6 +250,29 @@ class MainController:
 
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+             
+    def handle_viewModelButton_clicked(self): 
+        rightlayout = self.ui.layout
+        self.ui.clearLayout(rightlayout)
+        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
+        if not scanlist:
+            return
+        else:
+            self.ui._createViewWindow()
+            self.restore_complete_scanlist_items()
+            self.ui.state = UI_state.ViewState()
+            self.ui.update_UI()
+            # handle drops
+            self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+    
+    def handle_scanningButton_clicked(self): 
+        rightlayout = self.ui.layout
+        scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
+        self.ui.clearLayout(rightlayout)
+        self.ui._createMainWindow()
+        self.ui.state = UI_state.ReadyToScanAgainState()
+        self.restore_complete_scanlist_items()
+        self.ui_signals()
 
     def handle_viewModelButton_clicked(self):
         # view model for the view model dialogue
