@@ -368,7 +368,6 @@ class MainController:
             self.ui._scannedImageFrame.measure.hide_items()
             log.warn("Measuring disabled")
 
-
     def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
         """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.
 
@@ -446,7 +445,9 @@ class MainController:
 
         if event == EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
-            self.ui.editingStackedLayout.setCurrentIndex(0)  # Switch to scan parameter editor view
+            self.ui.editingStackedLayout.setCurrentIndex(
+                0
+            )  # Switch to scan parameter editor view
             self.ui.scannedImageFrame.setAcquiredSeries(
                 self.scanner.active_scanlist_element.acquired_data
             )  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
