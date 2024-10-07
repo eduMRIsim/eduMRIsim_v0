@@ -17,12 +17,12 @@ from simulator.scanlist import (
 )
 from simulator.scanner import Scanner
 from utils.logger import log
-from views.export_image_dialog_ui import ExportImageDialog
-from views.load_examination_dialog_ui import LoadExaminationDialog
+from views.ui.export_image_dialog_ui import ExportImageDialog
+from views.ui.load_examination_dialog_ui import LoadExaminationDialog
 from views.main_view_ui import Ui_MainWindow
-from views.new_examination_dialog_ui import NewExaminationDialog
+from views.ui.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
-from views.view_model_dialog_ui import ViewModelDialog
+from views.ui.view_model_dialog_ui import ViewModelDialog
 
 
 class MainController:

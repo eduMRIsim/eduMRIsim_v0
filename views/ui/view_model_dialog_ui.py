@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtWidgets import QMessageBox
 
-from views.main_view_ui import ImageLabel
+from views.ui.image_label_ui import ImageLabel
 from views.styled_widgets import PrimaryActionButton, HeaderLabel
 
 
