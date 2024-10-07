@@ -10,14 +10,11 @@ class LoadExaminationDialog(QDialog):
         self.setWindowTitle("Load examination")
 
     def open_file_dialog(self):
-        options = QFileDialog.Option.Options()
-        options |= QFileDialog.Option.ReadOnly
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             "Choose INI File",
             "",
             "INI Files (*.ini);;All Files (*)",
-            options=options,
         )
         if file_name:
             log.info(f"Selected file: {file_name}")
