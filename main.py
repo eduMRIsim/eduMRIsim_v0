@@ -49,7 +49,7 @@ class App(QApplication):
             self.starting_window.load_previous_examination_button.setDisabled(True)
         self.starting_window.show()
 
-    def start_main_app(self, settings_file=None):
+    def start_main_app(self):
         """Start the main application."""
         self.main_view.update_UI()
         self.main_view.show()
@@ -67,8 +67,7 @@ class App(QApplication):
         """Load an existing examination from a file."""
         self.starting_window.close()
         self.start_main_app()
-        self.load_dialog = LoadExaminationDialog()
-        self.load_dialog.open_file_dialog()
+        self.main_controller.load_examination_dialog_ui.open_file_dialog()
 
     # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
