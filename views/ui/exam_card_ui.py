@@ -14,7 +14,9 @@ class ExamCardTab(QWidget):
         self.setLayout(self.layout)
         self._examCardListView = QListView()
         self._examCardListView.setDragDropMode(QListView.DragDropMode.DragOnly)
-        self._examCardListView.setSelectionMode(QListView.SelectionMode.ExtendedSelection)
+        self._examCardListView.setSelectionMode(
+            QListView.SelectionMode.ExtendedSelection
+        )
         self._examCardListView.setEditTriggers(
             QListView.EditTrigger.NoEditTriggers
         )  # This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.

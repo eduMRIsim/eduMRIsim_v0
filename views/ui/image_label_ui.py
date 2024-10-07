@@ -1,8 +1,23 @@
 import numpy as np
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QPainter, QColor, QFont, QResizeEvent, QImage, QPixmap, QDragEnterEvent, QDragMoveEvent, \
-    QDropEvent
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QSizePolicy, QGraphicsTextItem
+from PyQt6.QtGui import (
+    QPainter,
+    QColor,
+    QFont,
+    QResizeEvent,
+    QImage,
+    QPixmap,
+    QDragEnterEvent,
+    QDragMoveEvent,
+    QDropEvent,
+)
+from PyQt6.QtWidgets import (
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsPixmapItem,
+    QSizePolicy,
+    QGraphicsTextItem,
+)
 
 from utils.logger import log
 from views.ui.scanlist_ui import ScanlistListWidget
@@ -144,7 +159,9 @@ class ImageLabel(QGraphicsView):
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
+            qimage = QImage(
+                image.data, width, height, width, QImage.Format.Format_Grayscale8
+            )
 
             # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)

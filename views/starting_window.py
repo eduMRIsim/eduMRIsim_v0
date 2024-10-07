@@ -3,7 +3,12 @@ from PyQt6.QtCore import Qt
 
 
 class StartingWindow(QWidget):
-    def __init__(self, start_new_examination_callback, load_examination_callback, load_prev_examination_callback):
+    def __init__(
+        self,
+        start_new_examination_callback,
+        load_examination_callback,
+        load_prev_examination_callback,
+    ):
         super(StartingWindow, self).__init__()
         layout = QVBoxLayout()
 
@@ -38,18 +43,27 @@ class StartingWindow(QWidget):
         )  # Connect to load examination
 
         self.load_previous_examination_button = QPushButton("Load previous session")
-        self.load_previous_examination_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.load_previous_examination_button.clicked.connect(load_prev_examination_callback)
+        self.load_previous_examination_button.setCursor(
+            Qt.CursorShape.PointingHandCursor
+        )
+        self.load_previous_examination_button.clicked.connect(
+            load_prev_examination_callback
+        )
 
         # Add widgets to layout
         layout.addWidget(welcome_label)
         layout.addWidget(new_session_header)
-        layout.addWidget(self.new_examination_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(
+            self.new_examination_button, alignment=Qt.AlignmentFlag.AlignCenter
+        )
 
         layout.addWidget(load_session_header)
-        layout.addWidget(self.load_examination_button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(
-            self.load_previous_examination_button, alignment=Qt.AlignmentFlag.AlignCenter
+            self.load_examination_button, alignment=Qt.AlignmentFlag.AlignCenter
+        )
+        layout.addWidget(
+            self.load_previous_examination_button,
+            alignment=Qt.AlignmentFlag.AlignCenter,
         )
 
         layout.addStretch(1)

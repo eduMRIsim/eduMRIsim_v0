@@ -1,9 +1,25 @@
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QTabWidget, QScrollArea, \
-    QGridLayout, QLineEdit, QLabel, QComboBox
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QSpacerItem,
+    QSizePolicy,
+    QTabWidget,
+    QScrollArea,
+    QGridLayout,
+    QLineEdit,
+    QLabel,
+    QComboBox,
+)
 
 from utils.block_signals import block_signals
-from views.styled_widgets import PrimaryActionButton, SecondaryActionButton, DestructiveActionButton, HeaderLabel
+from views.styled_widgets import (
+    PrimaryActionButton,
+    SecondaryActionButton,
+    DestructiveActionButton,
+    HeaderLabel,
+)
 
 
 class ScanParametersWidget(QWidget):
@@ -120,15 +136,21 @@ class ParameterFormLayout(QVBoxLayout):
             if editor_type == "QLineEdit":
                 editor = QLineEdit()
                 editor.setText(default_value)
-                parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft)
+                parameter_layout.addWidget(
+                    QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft
+                )
                 parameter_layout.addWidget(editor, 1, 0, Qt.AlignmentFlag.AlignLeft)
-                parameter_layout.addWidget(HeaderLabel(unit), 1, 1, Qt.AlignmentFlag.AlignLeft)
+                parameter_layout.addWidget(
+                    HeaderLabel(unit), 1, 1, Qt.AlignmentFlag.AlignLeft
+                )
                 editor.textChanged.connect(lambda: self.formActivatedSignal.emit())
             elif editor_type == "QComboBox":
                 editor = QComboBox()
                 editor.addItems(default_value)
                 editor.setCurrentIndex(0)
-                parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft)
+                parameter_layout.addWidget(
+                    QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft
+                )
                 parameter_layout.addWidget(editor, 1, 0, Qt.AlignmentFlag.AlignLeft)
                 editor.currentIndexChanged.connect(
                     lambda: self.formActivatedSignal.emit()
@@ -147,7 +169,9 @@ class ParameterFormLayout(QVBoxLayout):
             self.addLayout(parameter_layout)
 
             # Add a vertical spacer (with expandable space)
-            spacer = QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+            spacer = QSpacerItem(
+                20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+            )
             self.addSpacerItem(spacer)
 
             # Store the editor widget in the dictionary for later access.
