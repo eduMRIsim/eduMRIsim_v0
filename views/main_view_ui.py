@@ -14,7 +14,10 @@ from PyQt6.QtWidgets import (
 from controllers.settings_mgr import SettingsManager
 from utils.logger import log
 
-from views.items.acquired_series_viewer_2d import AcquiredSeriesViewer2D, DropAcquiredSeriesViewer2D
+from views.items.acquired_series_viewer_2d import (
+    AcquiredSeriesViewer2D,
+    DropAcquiredSeriesViewer2D,
+)
 from views.UI_MainWindowState import (
     ExamState,
 )
@@ -25,7 +28,10 @@ from views.UI_MainWindowState import (
     IdleState,
 )
 from views.ui.exam_card_ui import ExamCardTabWidget, ExamCardTab
-from views.ui.examination_info_ui import ExaminationInfoStackedLayout, PreExaminationInfoFrame
+from views.ui.examination_info_ui import (
+    ExaminationInfoStackedLayout,
+    PreExaminationInfoFrame,
+)
 from views.ui.scan_parameters_ui import ScanParametersWidget
 from views.ui.scan_progress_ui import ScanProgressInfoFrame
 from views.ui.scanlist_ui import ScanlistInfoFrame
@@ -302,11 +308,17 @@ class Ui_MainWindow(QMainWindow):
         settings.setValue("acquiredSeries3", self.scanPlanningWindow3.acquired_series)
 
         if self.scanPlanningWindow1.acquired_series is not None:
-            settings.setValue("acquiredSeriesIDX1", self.scanPlanningWindow1.displayed_image_index)
+            settings.setValue(
+                "acquiredSeriesIDX1", self.scanPlanningWindow1.displayed_image_index
+            )
         if self.scanPlanningWindow2.acquired_series is not None:
-            settings.setValue("acquiredSeriesIDX2", self.scanPlanningWindow2.displayed_image_index)
+            settings.setValue(
+                "acquiredSeriesIDX2", self.scanPlanningWindow2.displayed_image_index
+            )
         if self.scanPlanningWindow3.acquired_series is not None:
-            settings.setValue("acquiredSeriesIDX3", self.scanPlanningWindow3.displayed_image_index)
+            settings.setValue(
+                "acquiredSeriesIDX3", self.scanPlanningWindow3.displayed_image_index
+            )
 
         settings.endGroup()
 
@@ -448,5 +460,3 @@ class ScannedImageWidget(QWidget):
     @property
     def acquiredImageExportButton(self):
         return self._acquiredImageExportButton
-
-

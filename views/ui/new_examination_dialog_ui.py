@@ -33,7 +33,9 @@ class NewExaminationDialog(QDialog):
         self.setLayout(self.layout)
 
         # remove help button hint from dialog
-        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint)  # Qt::WindowContextHelpButtonHint = 0x00040000
+        self.setWindowFlag(
+            Qt.WindowType.WindowContextHelpButtonHint
+        )  # Qt::WindowContextHelpButtonHint = 0x00040000
 
     @property
     def newExaminationOkButton(self):

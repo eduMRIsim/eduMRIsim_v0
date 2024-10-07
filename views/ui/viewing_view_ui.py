@@ -1,8 +1,15 @@
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QGridLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, \
-    QSizePolicy
+from PyQt6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QGridLayout,
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsPixmapItem,
+    QSizePolicy,
+)
 
 from simulator.scanlist import AcquiredSeries
 from views.ui.scanlist_ui import ScanlistListWidget
@@ -140,7 +147,9 @@ class GridCell(QGraphicsView):
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
+            qimage = QImage(
+                image.data, width, height, width, QImage.Format.Format_Grayscale8
+            )
 
             # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)

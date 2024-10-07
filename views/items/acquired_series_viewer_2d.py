@@ -1,9 +1,31 @@
 import numpy as np
 from PyQt6.QtCore import Qt, QEvent, QPointF, pyqtSignal
-from PyQt6.QtGui import QPainter, QColor, QAction, QPen, QResizeEvent, QImage, QPixmap, QPolygonF, QDragEnterEvent, \
-    QDragMoveEvent, QDropEvent
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QSizePolicy, QLabel, QPushButton, \
-    QVBoxLayout, QMenu, QGraphicsLineItem, QGraphicsTextItem, QGraphicsOpacityEffect
+from PyQt6.QtGui import (
+    QPainter,
+    QColor,
+    QAction,
+    QPen,
+    QResizeEvent,
+    QImage,
+    QPixmap,
+    QPolygonF,
+    QDragEnterEvent,
+    QDragMoveEvent,
+    QDropEvent,
+)
+from PyQt6.QtWidgets import (
+    QGraphicsView,
+    QGraphicsScene,
+    QGraphicsPixmapItem,
+    QSizePolicy,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QMenu,
+    QGraphicsLineItem,
+    QGraphicsTextItem,
+    QGraphicsOpacityEffect,
+)
 
 from events import EventEnum
 from keys import Keys
@@ -74,7 +96,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.scan_plane_label.setStyleSheet("padding: 5px;")
         self.scan_plane_label.resize(100, 100)
-        self.scan_plane_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.scan_plane_label.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents, True
+        )
         self.updateLabelPosition()
 
         # Display scan name
@@ -84,7 +108,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             "color: white; font-size: 14px; padding: 5px;"
         )
         self.series_name_label.resize(200, 50)
-        self.series_name_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.series_name_label.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents, True
+        )
         self.series_name_label.move(0, 0)
 
         # Up and down buttons
@@ -98,7 +124,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         button_layout.addWidget(self.up_button)
         button_layout.addWidget(self.down_button)
         button_layout.setSpacing(8)
-        button_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
+        button_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
+        )
         self.up_button.clicked.connect(self.go_up)
         self.down_button.clicked.connect(self.go_down)
         self.setLayout(button_layout)
@@ -312,7 +340,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
+            qimage = QImage(
+                image.data, width, height, width, QImage.Format.Format_Grayscale8
+            )
 
             # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)
@@ -450,7 +480,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
             pixmap = QPixmap(icon_path)
             scaled_pixmap = pixmap.scaled(
-                100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+                100,
+                100,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
             self.scan_plane_label.setPixmap(scaled_pixmap)
             self.scan_plane_label.resize(scaled_pixmap.width(), scaled_pixmap.height())

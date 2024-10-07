@@ -3,8 +3,15 @@ import math
 import numpy as np
 from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QPolygonF, QPen
-from PyQt6.QtWidgets import QGraphicsPolygonItem, QGraphicsPixmapItem, QGraphicsItem, QGraphicsEllipseItem, \
-    QGraphicsSceneMouseEvent, QApplication, QGraphicsLineItem
+from PyQt6.QtWidgets import (
+    QGraphicsPolygonItem,
+    QGraphicsPixmapItem,
+    QGraphicsItem,
+    QGraphicsEllipseItem,
+    QGraphicsSceneMouseEvent,
+    QApplication,
+    QGraphicsLineItem,
+)
 
 from events import EventEnum
 from utils.logger import log

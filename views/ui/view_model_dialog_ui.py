@@ -126,7 +126,9 @@ class ViewModelDialog(QDialog):
         self.createInformationLabels()
 
         self.setLayout(self.layout)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+        )
 
         self.tissue_property_label.setText("T1 relaxation time")
         self.unit_label.setText("milliseconds")

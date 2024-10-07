@@ -1,5 +1,12 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QStackedLayout, QFrame, QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy
+from PyQt6.QtWidgets import (
+    QStackedLayout,
+    QFrame,
+    QVBoxLayout,
+    QLabel,
+    QHBoxLayout,
+    QSizePolicy,
+)
 
 from views.styled_widgets import PrimaryActionButton
 
