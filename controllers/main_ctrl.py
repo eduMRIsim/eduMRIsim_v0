@@ -104,7 +104,7 @@ class MainController:
         )
 
         # Signals and UIs related to exporting images
-        self.export_image_dialog_ui = ExportImageDialog(None)
+        self.export_image_dialog_ui = ExportImageDialog()
 
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
             lambda: self.handle_viewingPortExport_triggered(0)
