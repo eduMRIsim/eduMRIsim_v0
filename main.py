@@ -88,14 +88,11 @@ class App(QApplication):
 
         # Tools section
         tools_section = menu_bar.add_section('Tools')
-        tools_section.add_action('Measure Distance', lambda: self.measure_distance())
+        tools_section.add_action('Measure Distance', lambda: self.main_controller.handle_measureDistanceButtonClicked())
         tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
         pass
-
-    def measure_distance(self):
-        self.main_controller.handle_measureDistanceButtonClicked()
 
     def setup_scan_parameter_form(self):
         """Load and set up the scan parameter form."""
