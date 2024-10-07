@@ -2,7 +2,6 @@ import math
 from contextlib import contextmanager
 
 import numpy as np
-from PyQt5.QtWidgets import QAction
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
 from PyQt6.QtGui import (
     QPainter,
@@ -16,6 +15,7 @@ from PyQt6.QtGui import (
     QFont,
     QPolygonF,
     QPen,
+    QAction,
 )
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -1718,7 +1718,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.scan_plane_label.setStyleSheet("padding: 5px;")
         self.scan_plane_label.resize(100, 100)
-        self.scan_plane_label.setAttribute(Qt.MouseEventFlag.WA_TransparentForMouseEvents, True)
+        self.scan_plane_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.updateLabelPosition()
 
         # Display scan name
@@ -1728,7 +1728,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             "color: white; font-size: 14px; padding: 5px;"
         )
         self.series_name_label.resize(200, 50)
-        self.series_name_label.setAttribute(Qt.MouseEventFlag.WA_TransparentForMouseEvents, True)
+        self.series_name_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.series_name_label.move(0, 0)
 
         # Up and down buttons

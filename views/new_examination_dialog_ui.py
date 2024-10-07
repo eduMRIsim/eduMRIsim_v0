@@ -8,6 +8,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from PyQt6.QtCore import Qt
+
 
 class NewExaminationDialog(QDialog):
     def __init__(self):
@@ -31,7 +33,7 @@ class NewExaminationDialog(QDialog):
         self.setLayout(self.layout)
 
         # remove help button hint from dialog
-        self.setWindowFlag(0x00040000)  # Qt::WindowContextHelpButtonHint = 0x00040000
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint)  # Qt::WindowContextHelpButtonHint = 0x00040000
 
     @property
     def newExaminationOkButton(self):
