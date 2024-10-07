@@ -1,9 +1,10 @@
 import math
 from contextlib import contextmanager
-from utils.logger import log
+
 import numpy as np
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray, QSize
-from PyQt5.QtGui import (
+from PyQt5.QtWidgets import QAction
+from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QEvent, QByteArray
+from PyQt6.QtGui import (
     QPainter,
     QPixmap,
     QImage,
@@ -16,7 +17,7 @@ from PyQt5.QtGui import (
     QPolygonF,
     QPen,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
     QGraphicsScene,
@@ -47,22 +48,23 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QGraphicsOpacityEffect,
     QMenu,
-    QAction,
 )
 
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
+from utils.logger import log
 from views.MeasurementTool import MeasurementTool
 from views.UI_MainWindowState import (
-    IdleState,
-    BeingModifiedState,
-    ReadyToScanState,
-    ScanCompleteState,
-    ViewState, ExamState,
+    ExamState,
 )
-from views.export_image_dialog_ui import ExportImageDialog
+from views.UI_MainWindowState import (
+    ReadyToScanState,
+    BeingModifiedState,
+    ScanCompleteState,
+    IdleState,
+)
 from views.styled_widgets import (
     PrimaryActionButton,
     SecondaryActionButton,
@@ -71,18 +73,6 @@ from views.styled_widgets import (
     InfoFrame,
     HeaderLabel,
 )
-
-from simulator.scanlist import AcquiredSeries, ScanVolume
-
-from views.UI_MainWindowState import (
-    ReadyToScanState,
-    BeingModifiedState,
-    InvalidParametersState,
-    ScanCompleteState,
-    IdleState,
-    MRIfortheBrainState,
-)
-from events import EventEnum
 
 """Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
 naming convention used in Python. Most of the PyQt related code in eduRMIsim uses the PyQt naming convention. 
@@ -514,7 +504,7 @@ class PreExaminationInfoFrame(QFrame):
     def _createNewExaminationButton(self):
         self._newExaminationButton = PrimaryActionButton("New Examination")
         self._newExaminationButton.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         self.horizontalLayout.addWidget(
             self._newExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter
@@ -523,7 +513,7 @@ class PreExaminationInfoFrame(QFrame):
     def _createLoadExaminationButton(self):
         self._loadExaminationButton = PrimaryActionButton("Load Examination")
         self._loadExaminationButton.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         self.horizontalLayout.addWidget(
             self._loadExaminationButton, alignment=Qt.AlignmentFlag.AlignCenter
@@ -571,8 +561,8 @@ class ScanlistListWidget(QListWidget):
     def __init__(self):
         super().__init__()
         self.setStyleSheet("border: none;")
-        self.setDragDropMode(self.DragDrop)
-        self.setSelectionMode(self.SingleSelection)
+        self.setDragDropMode(self.DragDropMode.DragDrop)
+        self.setSelectionMode(self.SelectionMode.SingleSelection)
         self.setAcceptDrops(True)
 
     def mouseDoubleClickEvent(self, event):
@@ -756,8 +746,8 @@ class ScanParametersWidget(QWidget):
             QSpacerItem(
                 self._scanParametersSaveChangesButton.sizeHint().width(),
                 self._scanParametersSaveChangesButton.sizeHint().height(),
-                QSizePolicy.Expanding,
-                QSizePolicy.Minimum,
+                QSizePolicy.Policy.Expanding,
+                QSizePolicy.Policy.Minimum,
             )
         )
         buttonsLayout.addWidget(self._scanParametersResetButton, 1)
@@ -776,10 +766,10 @@ class ExamCardTab(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._examCardListView = QListView()
-        self._examCardListView.setDragDropMode(QListView.DragOnly)
-        self._examCardListView.setSelectionMode(QListView.ExtendedSelection)
+        self._examCardListView.setDragDropMode(QListView.DragDropMode.DragOnly)
+        self._examCardListView.setSelectionMode(QListView.SelectionMode.ExtendedSelection)
         self._examCardListView.setEditTriggers(
-            QListView.NoEditTriggers
+            QListView.EditTrigger.NoEditTriggers
         )  # This is a flag provided by PyQt, which is used to specify that no editing actions should trigger item editing in the list view. It essentially disables editing for the list view, preventing users from directly editing the items displayed in the list.
         self.layout.addWidget(self._examCardListView)
 
@@ -811,16 +801,16 @@ class ParameterTab(QScrollArea):
         self.layout = QVBoxLayout()
         self._parameterFormLayout = ParameterFormLayout()
         self.layout.addItem(
-            QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         )
         self.layout.addLayout(self.parameterFormLayout)
         self.layout.addItem(
-            QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         )
         # self.horizontalLayout.addItem(QSpacerItem(10, 0,  QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.horizontalLayout.addLayout(self.layout)
         self.horizontalLayout.addItem(
-            QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         )
         self.setStyleSheet("QLineEdit { border: 1px solid  #BFBFBF; }")
         containerWidget = QWidget()
@@ -855,16 +845,16 @@ class ParameterFormLayout(QVBoxLayout):
             if editor_type == "QLineEdit":
                 editor = QLineEdit()
                 editor.setText(default_value)
-                parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignLeft)
-                parameter_layout.addWidget(editor, 1, 0, Qt.AlignLeft)
-                parameter_layout.addWidget(HeaderLabel(unit), 1, 1, Qt.AlignLeft)
+                parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft)
+                parameter_layout.addWidget(editor, 1, 0, Qt.AlignmentFlag.AlignLeft)
+                parameter_layout.addWidget(HeaderLabel(unit), 1, 1, Qt.AlignmentFlag.AlignLeft)
                 editor.textChanged.connect(lambda: self.formActivatedSignal.emit())
             elif editor_type == "QComboBox":
                 editor = QComboBox()
                 editor.addItems(default_value)
                 editor.setCurrentIndex(0)
-                parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignLeft)
-                parameter_layout.addWidget(editor, 1, 0, Qt.AlignLeft)
+                parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft)
+                parameter_layout.addWidget(editor, 1, 0, Qt.AlignmentFlag.AlignLeft)
                 editor.currentIndexChanged.connect(
                     lambda: self.formActivatedSignal.emit()
                 )
@@ -875,14 +865,14 @@ class ParameterFormLayout(QVBoxLayout):
 
             editor.setFixedHeight(30)
             editor.setFixedWidth(300)
-            editor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            editor.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
             # Add the editor widget to the layout.
 
             self.addLayout(parameter_layout)
 
             # Add a vertical spacer (with expandable space)
-            spacer = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            spacer = QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
             self.addSpacerItem(spacer)
 
             # Store the editor widget in the dictionary for later access.
@@ -924,13 +914,13 @@ class ParameterFormLayout(QVBoxLayout):
                         if index != -1:
                             editor.setCurrentIndex(index)
 
-    def setReadOnly(self, bool: bool):
+    def setReadOnly(self, read_only: bool):
         for editor in self.editors.values():
             if isinstance(editor, QLineEdit):
-                editor.setReadOnly(bool)
-            if isinstance(editor, (QComboBox)):
-                editor.setEnabled(not bool)
-        self.isReadOnly = bool
+                editor.setReadOnly(read_only)
+            if isinstance(editor, QComboBox):
+                editor.setEnabled(not read_only)
+        self.isReadOnly = read_only
 
     def clearForm(self):
         with block_signals(self.editors.values()):
@@ -962,9 +952,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def __init__(self, parent: QGraphicsPixmapItem, viewer: "AcquiredSeriesViewer2D"):
         super().__init__(parent)
-        self.setPen(Qt.yellow)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setPen(Qt.GlobalColor.yellow)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.setAcceptHoverEvents(True)
         self.observers = []
         self.previous_position_in_pixmap_coords = None
@@ -987,11 +977,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.rotation_handles = []
         for i in range(8):
             handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
-            handle.setBrush(Qt.yellow)
-            handle.setFlag(QGraphicsItem.ItemIsMovable, False)
-            handle.setAcceptedMouseButtons(Qt.LeftButton)
+            handle.setBrush(Qt.GlobalColor.yellow)
+            handle.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+            handle.setAcceptedMouseButtons(Qt.MouseButton.LeftButton)
             handle.setAcceptHoverEvents(True)
-            handle.setCursor(Qt.OpenHandCursor)
+            handle.setCursor(Qt.CursorShape.OpenHandCursor)
             # Assign event handler to each handle
             handle.mousePressEvent = (
                 lambda event, h=handle: self.handle_rotation_handle_press(event, h)
@@ -1006,11 +996,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.scale_handles = []
         for i in range(8):
             handle = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
-            handle.setPen(Qt.yellow)
-            handle.setFlag(QGraphicsItem.ItemIsMovable, enabled=False)
-            handle.setAcceptedMouseButtons(Qt.LeftButton)
+            handle.setPen(Qt.GlobalColor.yellow)
+            handle.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, enabled=False)
+            handle.setAcceptedMouseButtons(Qt.MouseButton.LeftButton)
             handle.setAcceptHoverEvents(True)
-            handle.setCursor(Qt.PointingHandCursor)
+            handle.setCursor(Qt.CursorShape.PointingHandCursor)
             handle.mousePressEvent = (
                 lambda event, hdl=handle: self.scale_handle_press_event_handler(
                     event, hdl
@@ -1121,7 +1111,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.is_being_scaled = True
         self.active_scale_handle = handle  # Keep track of which handle is active.
         self.previous_scale_handle_position = event.scenePos()
-        handle.setCursor(Qt.ClosedHandCursor)
+        handle.setCursor(Qt.CursorShape.ClosedHandCursor)
 
         # Get the current polygon (points), and the number of points in the current polygon.
         polygon = self.polygon()
@@ -1378,7 +1368,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         # Reset the active scale handle if it was set previously.
         if self.active_scale_handle is not None:
-            self.active_scale_handle.setCursor(Qt.PointingHandCursor)
+            self.active_scale_handle.setCursor(Qt.CursorShape.PointingHandCursor)
             self.active_scale_handle = None
 
     def get_plane_axis(self):
@@ -1465,7 +1455,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseMoveEvent(event)
-        self.setCursor(Qt.SizeAllCursor)
+        self.setCursor(Qt.CursorShape.SizeAllCursor)
         direction_vector_in_pixmap_coords = QPointF(
             self.pos().x() - self.previous_position_in_pixmap_coords.x(),
             self.pos().y() - self.previous_position_in_pixmap_coords.y(),
@@ -1487,17 +1477,17 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     # on press show "size all" cursor
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         super().mousePressEvent(event)
-        self.setCursor(Qt.SizeAllCursor)
+        self.setCursor(Qt.CursorShape.SizeAllCursor)
 
     # on release show "pointing hand" cursor
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
         super().mouseReleaseEvent(event)
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     # on hover show "pointing hand" cursor
     def hoverEnterEvent(self, event):
         super().hoverEnterEvent(event)
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     # on leave change cursor to default
     def hoverLeaveEvent(self, event):
@@ -1510,7 +1500,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.is_rotating = True
         self.active_handle = handle  # Keep track of which handle is active
         self.previous_handle_position = event.scenePos()
-        handle.setCursor(Qt.ClosedHandCursor)
+        handle.setCursor(Qt.CursorShape.ClosedHandCursor)
 
         # Calculate centroid in scene coordinates
         polygon = self.polygon()
@@ -1561,7 +1551,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def handle_scene_mouse_release(self, event: QGraphicsSceneMouseEvent):
         self.is_rotating = False
         if hasattr(self, "active_handle") and self.active_handle:
-            self.active_handle.setCursor(Qt.OpenHandCursor)
+            self.active_handle.setCursor(Qt.CursorShape.OpenHandCursor)
             self.active_handle = None
 
     def get_rotation_axis(self):
@@ -1616,7 +1606,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             end = self._interpolate_point(polygon[1], polygon[2], relative_pos)
 
             line = QGraphicsLineItem(start.x(), start.y(), end.x(), end.y(), self)
-            line.setPen(QPen(Qt.red, 1))
+            line.setPen(QPen(Qt.GlobalColor.red, 1))
             self.slice_lines.append(line)
 
     def _are_slices_visible(self):
@@ -1637,7 +1627,7 @@ class MiddleLineItem(QGraphicsPolygonItem):
 
     def __init__(self, parent: QGraphicsPixmapItem):
         super().__init__(parent)
-        self.setPen(Qt.red)
+        self.setPen(Qt.GlobalColor.red)
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         super().setPolygon(polygon_in_polygon_coords)
@@ -1656,7 +1646,7 @@ class StacksItem(QGraphicsPolygonItem):
 
     def __init__(self, parent: QGraphicsPixmapItem):
         super().__init__(parent)
-        self.setPen(Qt.yellow)
+        self.setPen(Qt.GlobalColor.yellow)
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         super().setPolygon(polygon_in_polygon_coords)
@@ -1687,14 +1677,14 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.setScene(self.scene)
 
         # Sets the render hint to enable antialiasing, which makes the image look smoother. Aliasings occur when a high-resolution image is displayed or rendered at a lower resolution, leading to the loss of information and the appearance of stair-stepped edges. Antialiasing techniques smooth out these jagged edges by introducing intermediate colors or shades along the edges of objects.
-        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         # Set the background color to black
         self.setBackgroundBrush(QColor(0, 0, 0))  # RGB values for black
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # Initialize displayed image to None
         self.displayed_image = None
@@ -1725,20 +1715,20 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         #  Display scan plane label
         self.scan_plane_label = QLabel(self)
-        self.scan_plane_label.setAlignment(Qt.AlignRight)
+        self.scan_plane_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.scan_plane_label.setStyleSheet("padding: 5px;")
         self.scan_plane_label.resize(100, 100)
-        self.scan_plane_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.scan_plane_label.setAttribute(Qt.MouseEventFlag.WA_TransparentForMouseEvents, True)
         self.updateLabelPosition()
 
         # Display scan name
         self.series_name_label = QLabel(self)
-        self.series_name_label.setAlignment(Qt.AlignLeft)
+        self.series_name_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.series_name_label.setStyleSheet(
             "color: white; font-size: 14px; padding: 5px;"
         )
         self.series_name_label.resize(200, 50)
-        self.series_name_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.series_name_label.setAttribute(Qt.MouseEventFlag.WA_TransparentForMouseEvents, True)
         self.series_name_label.move(0, 0)
 
         # Up and down buttons
@@ -1746,13 +1736,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.down_button = QPushButton("▼")
         self.up_button.setFixedSize(30, 30)
         self.down_button.setFixedSize(30, 30)
-        self.up_button.setCursor(Qt.PointingHandCursor)
-        self.down_button.setCursor(Qt.PointingHandCursor)
+        self.up_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.down_button.setCursor(Qt.CursorShape.PointingHandCursor)
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.up_button)
         button_layout.addWidget(self.down_button)
         button_layout.setSpacing(8)
-        button_layout.setAlignment(Qt.AlignTop | Qt.AlignRight)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
         self.up_button.clicked.connect(self.go_up)
         self.down_button.clicked.connect(self.go_down)
         self.setLayout(button_layout)
@@ -1789,7 +1779,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def mousePressEvent(self, event):
         # TODO the user should not be able to zoom in and out when the measuring tool is active
         if self.zooming_enabled:
-            if event.button() == Qt.LeftButton:
+            if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = True
                 self.last_mouse_pos = event.pos()
         if self.measuring_enabled:
@@ -1801,7 +1791,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     # stop zoom when released
     def mouseReleaseEvent(self, event):
         if self.zooming_enabled:
-            if event.button() == Qt.LeftButton:
+            if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = False
                 self.last_mouse_pos = None
         if self.measuring_enabled:
@@ -1908,7 +1898,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     def eventFilter(self, source, event):
-        if event.type() == QEvent.GraphicsSceneMouseMove:
+        if event.type() == QEvent.Type.GraphicsSceneMouseMove:
             if self.scan_volume_display and self.scan_volume_display.is_rotating:
                 self.scan_volume_display.handle_scene_mouse_move(event)
                 return True
@@ -1918,7 +1908,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             ):
                 self.scan_volume_display.scale_handle_move_event_handler(event)
                 return True
-        elif event.type() == QEvent.GraphicsSceneMouseRelease:
+        elif event.type() == QEvent.Type.GraphicsSceneMouseRelease:
             if self.scan_volume_display and self.scan_volume_display.is_rotating:
                 self.scan_volume_display.handle_scene_mouse_release(event)
             if (
@@ -1933,7 +1923,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         """This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view."""
         super().resizeEvent(event)
         # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.updateLabelPosition()
 
     def updateLabelPosition(self):
@@ -1950,7 +1940,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.move(x_pos, y_pos)
         self.scan_plane_label.adjustSize()
         self.scan_plane_label.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
     def _displayArray(self):
@@ -1966,7 +1956,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+            qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
 
             # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)
@@ -1979,15 +1969,15 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         else:
             # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format_Grayscale8)
-            black_image.fill(Qt.black)
+            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
+            black_image.fill(Qt.GlobalColor.black)
             pixmap = QPixmap.fromImage(black_image)
             self.pixmap_item.setPixmap(pixmap)
             self.scene.setSceneRect(0, 0, 1, 1)
 
         self.resetTransform()
         # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
 
         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
@@ -2104,7 +2094,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
             pixmap = QPixmap(icon_path)
             scaled_pixmap = pixmap.scaled(
-                100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
             )
             self.scan_plane_label.setPixmap(scaled_pixmap)
             self.scan_plane_label.resize(scaled_pixmap.width(), scaled_pixmap.height())
@@ -2180,7 +2170,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.export_action.setEnabled(False)
 
         # Execute and open the menu.
-        action_performed = self.right_click_menu.exec_(self.mapToGlobal(event.pos()))
+        action_performed = self.right_click_menu.exec(self.mapToGlobal(event.pos()))
 
         # If action_performed is None, the user didn't click on any action,
         # but instead they clicked outside the menu to close it.
@@ -2293,14 +2283,14 @@ class GridCell(QGraphicsView):
         self.pixmap_item = QGraphicsPixmapItem()
         self.scene.addItem(self.pixmap_item)
         self.setScene(self.scene)
-        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         # Set the background color to black
         self.setBackgroundBrush(QColor(0, 0, 0))
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.displayed_image = None
         self.acquired_series = None
@@ -2315,13 +2305,13 @@ class GridCell(QGraphicsView):
 
     # start zoom when pressed
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.mouse_pressed = True
             self.last_mouse_pos = event.pos()
 
     # stop zoom when released
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.mouse_pressed = False
             self.last_mouse_pos = None
 
@@ -2362,7 +2352,7 @@ class GridCell(QGraphicsView):
         It ensures that the image is always scaled to fit the view."""
         super().resizeEvent(event)
         self.resetTransform()
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
 
     def _displayArray(self):
@@ -2378,7 +2368,7 @@ class GridCell(QGraphicsView):
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+            qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
 
             # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)
@@ -2391,14 +2381,14 @@ class GridCell(QGraphicsView):
 
         else:
             # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format_Grayscale8)
-            black_image.fill(Qt.black)
+            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
+            black_image.fill(Qt.GlobalColor.black)
             pixmap = QPixmap.fromImage(black_image)
             self.pixmap_item.setPixmap(pixmap)
             self.scene.setSceneRect(0, 0, 1, 1)
 
         self.resetTransform()
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
@@ -2465,14 +2455,14 @@ class ImageLabel(QGraphicsView):
         self.setScene(self.scene)
 
         # Sets the render hint to enable antialiasing, which makes the image look smoother. Aliasings occur when a high-resolution image is displayed or rendered at a lower resolution, leading to the loss of information and the appearance of stair-stepped edges. Antialiasing techniques smooth out these jagged edges by introducing intermediate colors or shades along the edges of objects.
-        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         # Set the background color to black
         self.setBackgroundBrush(QColor(0, 0, 0))  # RGB values for black
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # Initialize array attribute to None
         self.array = None
@@ -2490,7 +2480,7 @@ class ImageLabel(QGraphicsView):
 
         self.text_item = QGraphicsTextItem(self.pixmap_item)
         # change text color to white
-        self.text_item.setDefaultTextColor(Qt.white)
+        self.text_item.setDefaultTextColor(Qt.GlobalColor.white)
         # set font size
         self.text_item.setFont(QFont("Arial", 5))
 
@@ -2542,7 +2532,7 @@ class ImageLabel(QGraphicsView):
     # This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view.
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
-        self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+        self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
 
     # overriden method from QGraphicsView. QGraphicsView has inherited QWidget's wheelEvent method. QGraphicsView is a child of QWidget.
     def wheelEvent(self, event):
@@ -2585,7 +2575,7 @@ class ImageLabel(QGraphicsView):
             # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
             image = np.ascontiguousarray(np.array(array_8bit))
             height, width = image.shape
-            qimage = QImage(image.data, width, height, width, QImage.Format_Grayscale8)
+            qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
 
             # Create a QPixmap - a pixmap which can be displayed in a GUI
             pixmap = QPixmap.fromImage(qimage)
@@ -2595,8 +2585,8 @@ class ImageLabel(QGraphicsView):
 
         else:
             # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format_Grayscale8)
-            black_image.fill(Qt.black)
+            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
+            black_image.fill(Qt.GlobalColor.black)
             pixmap = QPixmap.fromImage(black_image)
             self.pixmap_item.setPixmap(pixmap)
             #
@@ -2604,7 +2594,7 @@ class ImageLabel(QGraphicsView):
 
         # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
         self.resetTransform()
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
 
         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
@@ -2702,12 +2692,12 @@ class ImageLabel(QGraphicsView):
             observer.update(window_width, window_level)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MiddleButton:
+        if event.button() == Qt.MouseButton.MiddleButton:
             self.middle_mouse_button_pressed = True
             self.start_pos = event.pos()
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MiddleButton:
+        if event.button() == Qt.MouseButton.MiddleButton:
             self.middle_mouse_button_pressed = False
 
     def mouseMoveEvent(self, event):
