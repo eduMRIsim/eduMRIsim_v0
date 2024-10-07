@@ -141,7 +141,10 @@ def main():
     numpy_handler()
 
     # NOTE: set darkmode=2 to force the dark mode
-    app = App(sys.argv + ["--platform", "windows:darkmode=1"])
+    if os.name == "nt":
+        app = App(sys.argv + ["--platform", "windows:darkmode=1"])
+    else:
+        app = App(sys.argv)
 
     # Set the default font for the application
     default_font = QFont("Segoe UI", 11)
