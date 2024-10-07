@@ -77,28 +77,21 @@ class App(QApplication):
         menu_bar = self.menu_bar
 
         # Session section
-        session_section = menu_bar.add_section("Session")
-        session_section.add_action(
-            "Save session", self.main_controller.export_examination
-        )
-        session_section.add_action("Load session", self.load_examination)
+        session_section = menu_bar.add_section('Session')
+        session_section.add_action('Save session', self.main_controller.export_examination)
+        session_section.add_action('Load session', self.load_examination)
 
         # Mode section
-        mode_section = menu_bar.add_section("Mode")
+        mode_section = menu_bar.add_section('Mode')
         mode_section.add_mode_action_group()
-        mode_section.add_mode_action(
-            "Scanning Mode",
-            self.main_controller.handle_scanningButton_clicked,
-            checked=True,
-        )
-        mode_section.add_mode_action(
-            "Viewing Mode", self.main_controller.handle_viewModelButton_clicked
-        )
+        mode_section.add_mode_action('Scanning Mode', lambda: self.main_view._stackedLayout.setCurrentIndex(0),
+                                     checked=True)
+        mode_section.add_mode_action('Viewing Mode', lambda: self.main_view._stackedLayout.setCurrentIndex(1))
 
         # Tools section
-        tools_section = menu_bar.add_section("Tools")
-        tools_section.add_action("Measure Distance", self.test_action)
-        tools_section.add_action("Measure Area", self.test_action)
+        tools_section = menu_bar.add_section('Tools')
+        tools_section.add_action('Measure Distance', self.test_action)
+        tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
         pass
