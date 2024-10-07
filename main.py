@@ -125,7 +125,9 @@ def main():
     qInstallMessageHandler(qt_message_handler)
     numpy_handler()
 
-    app = App(sys.argv)
+    # NOTE: set darkmode=2 to force the dark mode
+    app = App(sys.argv + ["--platform", "windows:darkmode=1"])
+
 
     # Set the default font for the application
     default_font = QFont("Segoe UI", 11)

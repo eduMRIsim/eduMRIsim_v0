@@ -357,15 +357,12 @@ class Ui_MainWindow(QMainWindow):
         settings.setValue("acquiredSeries2", self.scanPlanningWindow2.acquired_series)
         settings.setValue("acquiredSeries3", self.scanPlanningWindow3.acquired_series)
 
-        settings.setValue(
-            "acquiredSeriesIDX1", self.scanPlanningWindow1.displayed_image_index
-        )
-        settings.setValue(
-            "acquiredSeriesIDX2", self.scanPlanningWindow2.displayed_image_index
-        )
-        settings.setValue(
-            "acquiredSeriesIDX3", self.scanPlanningWindow3.displayed_image_index
-        )
+        if self.scanPlanningWindow1.acquired_series is not None:
+            settings.setValue("acquiredSeriesIDX1", self.scanPlanningWindow1.displayed_image_index)
+        if self.scanPlanningWindow2.acquired_series is not None:
+            settings.setValue("acquiredSeriesIDX2", self.scanPlanningWindow2.displayed_image_index)
+        if self.scanPlanningWindow3.acquired_series is not None:
+            settings.setValue("acquiredSeriesIDX3", self.scanPlanningWindow3.displayed_image_index)
 
         settings.endGroup()
 
