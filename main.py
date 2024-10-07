@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 
 from PyQt6.QtCore import qInstallMessageHandler
@@ -130,6 +131,7 @@ def main():
     default_font = QFont("Segoe UI", 11)
     default_font.setWeight(55)
     app.setFont(default_font)
+    app.setStyle("Fusion")
 
     sys.exit(app.exec())
 
