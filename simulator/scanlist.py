@@ -1,9 +1,7 @@
 from enum import Enum, auto
 
-from PyQt5.QtCore import QPointF
-
-from events import EventEnum
 import numpy as np
+from PyQt6.QtCore import QPointF
 
 from events import EventEnum
 from utils.logger import log

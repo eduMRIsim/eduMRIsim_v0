@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image
-from PyQt5.QtWidgets import QDialog, QFileDialog
+from PyQt6.QtWidgets import QDialog, QFileDialog
 import pydicom
 from pydicom.dataset import FileDataset
 from pydicom.uid import ExplicitVRLittleEndian
@@ -42,7 +42,7 @@ class ExportImageDialog(QDialog):
         image_data_normalized = image_data_normalized.astype(np.uint8)
 
         # Open a save file dialog so that the user can save the image.
-        options = QFileDialog.Options()
+        options = QFileDialog.Option.Options()
         file_name: str
         selected_filter: str
         file_name, selected_filter = QFileDialog.getSaveFileName(
