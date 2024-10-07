@@ -250,8 +250,8 @@ class MainController:
 
     def populate_parameterFormLayout(self, scan_item):
         self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
-             
-    def handle_viewModelButton_clicked(self): 
+
+    def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
         self.ui.clearLayout(rightlayout)
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
@@ -264,8 +264,8 @@ class MainController:
             self.ui.update_UI()
             # handle drops
             self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
-    
-    def handle_scanningButton_clicked(self): 
+
+    def handle_scanningButton_clicked(self):
         rightlayout = self.ui.layout
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
         self.ui.clearLayout(rightlayout)

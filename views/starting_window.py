@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
 from PyQt5.QtCore import Qt
 
+
 class StartingWindow(QWidget):
     def __init__(self, start_new_examination_callback, load_examination_callback):
         super(StartingWindow, self).__init__()
@@ -14,12 +15,16 @@ class StartingWindow(QWidget):
         # New Session header
         new_session_header = QLabel("Create New Session")
         new_session_header.setAlignment(Qt.AlignCenter)
-        new_session_header.setStyleSheet("font-size: 24px; font-weight: semi-bold; margin-top: 20px;")
+        new_session_header.setStyleSheet(
+            "font-size: 24px; font-weight: semi-bold; margin-top: 20px;"
+        )
 
         # Load Session header
         load_session_header = QLabel("Load Session")
         load_session_header.setAlignment(Qt.AlignCenter)
-        load_session_header.setStyleSheet("font-size: 24px; font-weight: semi-bold; margin-top: 20px;")
+        load_session_header.setStyleSheet(
+            "font-size: 24px; font-weight: semi-bold; margin-top: 20px;"
+        )
 
         # Create buttons
         self.new_examination_button = QPushButton("New Examination")
@@ -28,7 +33,9 @@ class StartingWindow(QWidget):
 
         self.load_examination_button = QPushButton("Load from .ini file")
         self.load_examination_button.setCursor(Qt.PointingHandCursor)
-        self.load_examination_button.clicked.connect(load_examination_callback)  # Connect to load examination
+        self.load_examination_button.clicked.connect(
+            load_examination_callback
+        )  # Connect to load examination
 
         self.load_previous_examination_button = QPushButton("Load previous session")
         self.load_previous_examination_button.setCursor(Qt.PointingHandCursor)
@@ -40,7 +47,9 @@ class StartingWindow(QWidget):
 
         layout.addWidget(load_session_header)
         layout.addWidget(self.load_examination_button, alignment=Qt.AlignCenter)
-        layout.addWidget(self.load_previous_examination_button, alignment=Qt.AlignCenter)
+        layout.addWidget(
+            self.load_previous_examination_button, alignment=Qt.AlignCenter
+        )
 
         layout.addStretch(1)
 
