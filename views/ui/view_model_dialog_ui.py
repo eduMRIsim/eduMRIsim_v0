@@ -1,51 +1,29 @@
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
-    QDialog,
-    QHBoxLayout,
-    QPushButton,
-    QLabel,
-    QSlider,
-    QVBoxLayout,
-    QGridLayout,
-    QLineEdit,
-    QFrame,
-)
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtWidgets import (
-    QDialog,
-    QHBoxLayout,
-    QPushButton,
-    QLabel,
-    QSlider,
-    QVBoxLayout,
-    QGridLayout,
-    QLineEdit,
-    QFrame,
-    QWidget,
-)
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import (
     QMouseEvent,
-    QPixmap,
-    QImage,
-    QDragMoveEvent,
-    QDropEvent,
-    QPainter,
-    QColor,
-    QDragEnterEvent,
 )
-import numpy as np
-from views.main_view_ui import ImageLabel
-from views.styled_widgets import SecondaryActionButton, PrimaryActionButton, HeaderLabel
+from PyQt6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QSlider,
+    QVBoxLayout,
+    QGridLayout,
+    QLineEdit,
+)
+from PyQt6.QtWidgets import QMessageBox
+
+from views.ui.image_label_ui import ImageLabel
+from views.styled_widgets import PrimaryActionButton, HeaderLabel
 
 
 class NoItemsToViewDialog(QMessageBox):
     def __init__(self):
         super().__init__()
-        self.setIcon(QMessageBox.Information)
+        self.setIcon(QMessageBox.Option.Information)
         self.setWindowTitle("Viewing Mode")
         self.setText("No items to view.")
-        self.setStandardButtons(QMessageBox.Ok)
+        self.setStandardButtons(QMessageBox.Option.Ok)
 
     def show_dialog(self):
         self.exec_()
@@ -148,7 +126,7 @@ class ViewModelDialog(QDialog):
         self.createInformationLabels()
 
         self.setLayout(self.layout)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
         self.tissue_property_label.setText("T1 relaxation time")
         self.unit_label.setText("milliseconds")
@@ -185,7 +163,7 @@ class ViewModelDialog(QDialog):
         self.layout.addLayout(buttonsLayout)
 
     def createSlider(self):
-        slider = QSlider(Qt.Horizontal)
+        slider = QSlider(Qt.AlignmentFlag.Horizontal)
         slider.setMinimum(0)
         slider.setMaximum(self.map.shape[2] - 1)
         slider.setValue(self.slice)

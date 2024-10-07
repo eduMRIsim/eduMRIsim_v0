@@ -1,21 +1,20 @@
 import argparse
+import os
 import sys
+
+from PyQt6.QtCore import qInstallMessageHandler
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QApplication
 from rich.traceback import install
-from PyQt5.QtCore import qInstallMessageHandler
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication
-from utils.logger import log, qt_message_handler, numpy_handler
+
 from controllers.main_ctrl import MainController
 from controllers.settings_mgr import SettingsManager
-from events import EventEnum
 from simulator.load import load_json
 from simulator.scanner import Scanner
+from utils.logger import log, qt_message_handler, numpy_handler
 from views.main_view_ui import Ui_MainWindow
-from views.menu_bar import MenuBar
+from views.ui.menu_bar_ui import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
-from views.load_examination_dialog_ui import (
-    LoadExaminationDialog,
-)  # Import the LoadExaminationDialog
 
 
 class App(QApplication):
@@ -42,7 +41,7 @@ class App(QApplication):
 
         # Show the starting screen
         self.starting_window = StartingWindow(
-            self.start_new_examination, self.load_examination
+            self.start_new_examination, self.load_examination, self.load_prev_examination
         )
 
         if not self.settings_manager.is_previous_session():
@@ -69,6 +68,12 @@ class App(QApplication):
         self.start_main_app()
         self.main_controller.load_examination_dialog_ui.open_file_dialog()
 
+    def load_prev_examination(self):
+        """Load an existing examination from previous session."""
+        self.settings_manager.setup_settings("settings.ini")
+        self.starting_window.close()
+        self.start_main_app()
+
     # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
     def setup_menu_bar(self):
@@ -89,14 +94,11 @@ class App(QApplication):
 
         # Tools section
         tools_section = menu_bar.add_section('Tools')
-        tools_section.add_action('Measure Distance', lambda: self.measure_distance())
+        tools_section.add_action('Measure Distance', lambda: self.main_controller.handle_measureDistanceButtonClicked())
         tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
         pass
-
-    def measure_distance(self):
-        self.main_controller.handle_measureDistanceButtonClicked()
 
     def setup_scan_parameter_form(self):
         """Load and set up the scan parameter form."""
@@ -126,14 +128,17 @@ def main():
     qInstallMessageHandler(qt_message_handler)
     numpy_handler()
 
-    app = App(sys.argv)
+    # NOTE: set darkmode=2 to force the dark mode
+    app = App(sys.argv + ["--platform", "windows:darkmode=1"])
+
 
     # Set the default font for the application
     default_font = QFont("Segoe UI", 11)
     default_font.setWeight(55)
     app.setFont(default_font)
+    app.setStyle("Fusion")
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFormLayout,
@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QVBoxLayout,
 )
+
+from PyQt6.QtCore import Qt
 
 
 class NewExaminationDialog(QDialog):
@@ -31,7 +33,7 @@ class NewExaminationDialog(QDialog):
         self.setLayout(self.layout)
 
         # remove help button hint from dialog
-        self.setWindowFlag(0x00040000)  # Qt::WindowContextHelpButtonHint = 0x00040000
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint)  # Qt::WindowContextHelpButtonHint = 0x00040000
 
     @property
     def newExaminationOkButton(self):

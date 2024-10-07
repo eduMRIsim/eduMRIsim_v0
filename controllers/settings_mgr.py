@@ -1,5 +1,5 @@
 import glob
-from PyQt5.QtCore import QSettings
+from PyQt6.QtCore import QSettings
 from events import EventEnum
 from simulator.scanner import Scanner
 
@@ -19,7 +19,7 @@ class SettingsManager:
             self.main_controller = main_ctrl
             self.file_name = file_name
             self.main_view = main_view
-            self.settings = QSettings(file_name, QSettings.IniFormat)
+            self.settings = QSettings(file_name, QSettings.Format.IniFormat)
             self.initialized = True
 
     def setup_settings(self, settings_file: str = None) -> None:
@@ -28,7 +28,7 @@ class SettingsManager:
         if settings_file is None:
             settings_file = "./settings.ini"
 
-        self.settings = QSettings(settings_file, QSettings.IniFormat)
+        self.settings = QSettings(settings_file, QSettings.Format.IniFormat)
 
         state_name = self.settings.value(
             "currentState", defaultValue="IdleState", type=str
@@ -108,7 +108,7 @@ class SettingsManager:
         self.settings.sync()
         self.main_view.save_settings()
 
-        settings_tmp = QSettings(settings_file, QSettings.IniFormat)
+        settings_tmp = QSettings(settings_file, QSettings.Format.IniFormat)
         # settings_tmp.clear()
 
         for key in self.settings.allKeys():

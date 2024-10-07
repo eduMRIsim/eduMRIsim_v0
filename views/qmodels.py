@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
 
 
 class DictionaryModel(QStandardItemModel):

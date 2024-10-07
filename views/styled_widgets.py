@@ -1,16 +1,12 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QPushButton,
     QFrame,
     QHBoxLayout,
     QWidget,
     QLabel,
     QVBoxLayout,
-    QGridLayout,
-    QSpacerItem,
-    QSizePolicy,
-    QLineEdit,
 )
 
 
@@ -287,8 +283,8 @@ class InfoFrame(QFrame):
 
         # Add a horizontal line between sections
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(line)
 
         # Add labels for each section
@@ -307,8 +303,8 @@ class InfoFrame(QFrame):
         layout.addLayout(section2_layout)
 
         line2 = QFrame()
-        line2.setFrameShape(QFrame.HLine)
-        line2.setFrameShadow(QFrame.Sunken)
+        line2.setFrameShape(QFrame.Shape.HLine)
+        line2.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(line2)
 
 
@@ -369,4 +365,4 @@ class HeaderLabel(QLabel):
         font = QFont("Segoe UI", 11)
         self.setFont(font)
         self.setStyleSheet("color: #7F7F7F")
-        self.setAlignment(Qt.AlignLeft)
+        self.setAlignment(Qt.AlignmentFlag.AlignLeft)

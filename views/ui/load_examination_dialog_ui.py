@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QDialog, QPushButton, QFileDialog, QVBoxLayout
-from utils.logger import log
+from PyQt6.QtWidgets import QDialog, QFileDialog
+
 from controllers.settings_mgr import SettingsManager
+from utils.logger import log
 
 
 class LoadExaminationDialog(QDialog):
@@ -9,14 +10,11 @@ class LoadExaminationDialog(QDialog):
         self.setWindowTitle("Load examination")
 
     def open_file_dialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.ReadOnly
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             "Choose INI File",
             "",
             "INI Files (*.ini);;All Files (*)",
-            options=options,
         )
         if file_name:
             log.info(f"Selected file: {file_name}")

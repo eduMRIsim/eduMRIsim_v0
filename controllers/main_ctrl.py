@@ -1,9 +1,10 @@
 from datetime import datetime
+
 import numpy as np
-from PyQt5.QtWidgets import QListWidgetItem, QApplication, QFileDialog
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QListWidgetItem
-from utils.logger import log
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QListWidgetItem
+
 import views.UI_MainWindowState as UI_state
 from controllers.settings_mgr import SettingsManager
 from events import EventEnum
@@ -12,17 +13,16 @@ from simulator.model import Model
 from simulator.scanlist import (
     ScanItemStatusEnum,
     AcquiredImage,
-    Scanlist,
     AcquiredSeries,
 )
 from simulator.scanner import Scanner
-from views.load_examination_dialog_ui import LoadExaminationDialog
-from views.new_examination_dialog_ui import NewExaminationDialog
-from views.qmodels import DictionaryModel
-from views.view_model_dialog_ui import NoItemsToViewDialog
+from utils.logger import log
+from views.ui.export_image_dialog_ui import ExportImageDialog
+from views.ui.load_examination_dialog_ui import LoadExaminationDialog
 from views.main_view_ui import Ui_MainWindow
-from views.export_image_dialog_ui import ExportImageDialog
-from views.view_model_dialog_ui import ViewModelDialog
+from views.ui.new_examination_dialog_ui import NewExaminationDialog
+from views.qmodels import DictionaryModel
+from views.ui.view_model_dialog_ui import ViewModelDialog
 
 
 class MainController:
@@ -139,7 +139,7 @@ class MainController:
 
     def export_examination(self):
         default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
-        options = QFileDialog.Options()  # Use native dialog for a more modern look
+        options = QFileDialog.FileMode.Options()  # Use native dialog for a more modern look
         file_path, _ = QFileDialog.getSaveFileName(
             self.ui, "Save Session", default_filename, options=options
         )
@@ -253,7 +253,7 @@ class MainController:
 
     def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
-        self.ui.clearLayout(rightlayout)
+        self.ui.layout.clearLayout(rightlayout)
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
         if not scanlist:
             return
@@ -268,7 +268,7 @@ class MainController:
     def handle_scanningButton_clicked(self):
         rightlayout = self.ui.layout
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
-        self.ui.clearLayout(rightlayout)
+        self.ui.layout.clearLayout(rightlayout)
         self.ui._createMainWindow()
         self.ui.state = UI_state.ReadyToScanAgainState()
         self.restore_complete_scanlist_items()

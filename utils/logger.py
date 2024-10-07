@@ -1,6 +1,6 @@
 import logging
 from rich.logging import RichHandler
-from PyQt5 import QtCore
+from PyQt6 import QtCore
 import numpy as np
 
 # Set up logging
@@ -31,13 +31,13 @@ def qt_message_handler(mode, context, message):
     """
     Intercept Qt log messages and send them to Python's logging module.
     """
-    if mode == QtCore.QtInfoMsg:
+    if mode == QtCore.QtMsgType.QtInfoMsg:
         log.info(f"QtInfo: {message}")
-    elif mode == QtCore.QtWarningMsg:
+    elif mode == QtCore.QtMsgType.QtWarningMsg:
         log.warning(f"QtWarning: {message}")
-    elif mode == QtCore.QtCriticalMsg:
+    elif mode == QtCore.QtMsgType.QtCriticalMsg:
         log.error(f"QtCritical: {message}")
-    elif mode == QtCore.QtFatalMsg:
+    elif mode == QtCore.QtMsgType.QtFatalMsg:
         log.critical(f"QtFatal: {message}")
     else:
         log.debug(f"QtDebug: {message}")
