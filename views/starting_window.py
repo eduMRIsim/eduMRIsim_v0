@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 
 
 class StartingWindow(QWidget):
-    def __init__(self, start_new_examination_callback, load_examination_callback):
+    def __init__(self, start_new_examination_callback, load_examination_callback, load_prev_examination_callback):
         super(StartingWindow, self).__init__()
         layout = QVBoxLayout()
 
@@ -39,6 +39,7 @@ class StartingWindow(QWidget):
 
         self.load_previous_examination_button = QPushButton("Load previous session")
         self.load_previous_examination_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.load_previous_examination_button.clicked.connect(load_prev_examination_callback)
 
         # Add widgets to layout
         layout.addWidget(welcome_label)

@@ -41,7 +41,7 @@ class App(QApplication):
 
         # Show the starting screen
         self.starting_window = StartingWindow(
-            self.start_new_examination, self.load_examination
+            self.start_new_examination, self.load_examination, self.load_prev_examination
         )
 
         if not self.settings_manager.is_previous_session():
@@ -67,6 +67,12 @@ class App(QApplication):
         self.starting_window.close()
         self.start_main_app()
         self.main_controller.load_examination_dialog_ui.open_file_dialog()
+
+    def load_prev_examination(self):
+        """Load an existing examination from previous session."""
+        self.settings_manager.setup_settings("settings.ini")
+        self.starting_window.close()
+        self.start_main_app()
 
     # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
