@@ -90,7 +90,7 @@ class App(QApplication):
 
         # Tools section
         tools_section = menu_bar.add_section('Tools')
-        tools_section.add_action('Measure Distance', self.test_action)
+        tools_section.add_action('Measure Distance', lambda: self.measure_distance())
         tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
