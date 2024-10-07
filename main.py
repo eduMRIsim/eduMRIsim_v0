@@ -13,7 +13,10 @@ from simulator.scanner import Scanner
 from views.main_view_ui import Ui_MainWindow
 from views.menu_bar import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
-from views.load_examination_dialog_ui import LoadExaminationDialog  # Import the LoadExaminationDialog
+from views.load_examination_dialog_ui import (
+    LoadExaminationDialog,
+)  # Import the LoadExaminationDialog
+
 
 class App(QApplication):
     """Main application class."""
@@ -30,10 +33,17 @@ class App(QApplication):
         self.main_controller = MainController(self.scanner, self.main_view)
 
         # Initialize the settings manager
-        self.settings_manager = SettingsManager(scanner=self.scanner, main_ctrl=self.main_controller, main_view=self.main_view, file_name="settings.ini")
+        self.settings_manager = SettingsManager(
+            scanner=self.scanner,
+            main_ctrl=self.main_controller,
+            main_view=self.main_view,
+            file_name="settings.ini",
+        )
 
         # Show the starting screen
-        self.starting_window = StartingWindow(self.start_new_examination, self.load_examination)
+        self.starting_window = StartingWindow(
+            self.start_new_examination, self.load_examination
+        )
 
         if not self.settings_manager.is_previous_session():
             self.starting_window.load_previous_examination_button.setDisabled(True)
@@ -67,20 +77,28 @@ class App(QApplication):
         menu_bar = self.menu_bar
 
         # Session section
-        session_section = menu_bar.add_section('Session')
-        session_section.add_action('Save session', self.main_controller.export_examination)
-        session_section.add_action('Load session', self.load_examination)
+        session_section = menu_bar.add_section("Session")
+        session_section.add_action(
+            "Save session", self.main_controller.export_examination
+        )
+        session_section.add_action("Load session", self.load_examination)
 
         # Mode section
-        mode_section = menu_bar.add_section('Mode')
+        mode_section = menu_bar.add_section("Mode")
         mode_section.add_mode_action_group()
-        mode_section.add_mode_action('Scanning Mode', self.main_controller.handle_scanningButton_clicked, checked=True)
-        mode_section.add_mode_action('Viewing Mode', self.main_controller.handle_viewModelButton_clicked)
+        mode_section.add_mode_action(
+            "Scanning Mode",
+            self.main_controller.handle_scanningButton_clicked,
+            checked=True,
+        )
+        mode_section.add_mode_action(
+            "Viewing Mode", self.main_controller.handle_viewModelButton_clicked
+        )
 
         # Tools section
-        tools_section = menu_bar.add_section('Tools')
-        tools_section.add_action('Measure Distance', self.test_action)
-        tools_section.add_action('Measure Area', self.test_action)
+        tools_section = menu_bar.add_section("Tools")
+        tools_section.add_action("Measure Distance", self.test_action)
+        tools_section.add_action("Measure Area", self.test_action)
 
     def test_action(self):
         pass

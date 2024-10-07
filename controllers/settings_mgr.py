@@ -77,10 +77,11 @@ class SettingsManager:
         self.main_view.restore_settings()
 
     def is_previous_session(self) -> bool:
-    # Scan current working directory for settings files
+        # Scan current working directory for settings files
         settings_files = glob.glob("settings.ini")
 
         from utils.logger import log
+
         log.info(f"settings_files: {settings_files}")
 
         if len(settings_files) > 0:

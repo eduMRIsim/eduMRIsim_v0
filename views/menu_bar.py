@@ -14,6 +14,7 @@ class MenuBar:
         self.sections[section_name] = section
         return section
 
+
 class Section:
     def __init__(self, menu_bar, section_name):
         """Initialises a section and prepares to manage its actions."""
@@ -33,13 +34,15 @@ class Section:
     def add_mode_action_group(self):
         """Creates an action group for mutually exclusive mode actions."""
         self.action_group = QActionGroup(self.menu)
-        self.action_group.setExclusive(True)  # Ensure only one action can be checked at a time
+        self.action_group.setExclusive(
+            True
+        )  # Ensure only one action can be checked at a time
 
     def add_mode_action(self, action_name, triggered_function, checked=False):
         """Adds an action to the manual mode group without any checked state."""
         if self.action_group is None:
             raise Exception("Call add_mode_action_group before adding mode actions.")
-        
+
         action = QAction(action_name, self.menu)
         action.setCheckable(True)
         action.triggered.connect(triggered_function)
@@ -51,4 +54,3 @@ class Section:
 
         if checked:
             action.setChecked(True)
-
