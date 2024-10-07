@@ -60,7 +60,7 @@ from views.UI_MainWindowState import (
     BeingModifiedState,
     ReadyToScanState,
     ScanCompleteState,
-    ViewState,
+    ViewState, ExamState,
 )
 from views.export_image_dialog_ui import ExportImageDialog
 from views.styled_widgets import (
@@ -452,6 +452,8 @@ class Ui_MainWindow(QMainWindow):
             self.state = BeingModifiedState()
         elif state_name == "ReadyToScanState":
             self.state = ReadyToScanState()
+        elif state_name == "ExamState":
+            self.state = ExamState()
         else:
             log.warning(f"State '{state_name}' not found. Defaulting to IdleState.")
             self.state = IdleState()
@@ -924,7 +926,7 @@ class ParameterFormLayout(QVBoxLayout):
 
     def setReadOnly(self, bool: bool):
         for editor in self.editors.values():
-            if isinstance(editor, (QLineEdit)):
+            if isinstance(editor, QLineEdit):
                 editor.setReadOnly(bool)
             if isinstance(editor, (QComboBox)):
                 editor.setEnabled(not bool)
