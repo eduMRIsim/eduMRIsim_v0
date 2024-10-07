@@ -73,32 +73,48 @@ class App(QApplication):
     # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
     def setup_menu_bar(self):
+        # self.menu_bar.add_section("Session")
+        # self.menu_bar.sections.key("Session").add_action(
+        #     "Session", "Save session", self.main_controller.export_examination
+        # )
+        # self.menu_bar.sections.key("Session").add_action("Load session", self.test_action)
+        #
+        # self.menu_bar.add_section("Mode")
+        # self.menu_bar.sections.key("Mode").add_action(
+        #     "Scanning Mode",
+        #     lambda: self.main_view._stackedLayout.setCurrentIndex(0),
+        # )
+        # # self.menu_bar.add_action(
+        # #    "Mode", "Viewing Mode", self.main_controller.handle_viewingButton_clicked
+        # # )
+        # self.menu_bar.sections("Mode").add_action(
+        #     "Viewing Mode",
+        #     lambda: self.main_view._stackedLayout.setCurrentIndex(1),
+        # )
+        #
+        # self.menu_bar.add_section("Tools")
+        # self.menu_bar.sections["Tools"].add_action("Tools", "Measure Distance", self.measure_distance)
+        # self.menu_bar.add_action("Tools", "Measure Area", self.test_action)
+
         # Create the menu bar and sections
         menu_bar = self.menu_bar
 
         # Session section
-        session_section = menu_bar.add_section("Session")
-        session_section.add_action(
-            "Save session", self.main_controller.export_examination
-        )
-        session_section.add_action("Load session", self.load_examination)
+        session_section = menu_bar.add_section('Session')
+        session_section.add_action('Save session', self.main_controller.export_examination)
+        session_section.add_action('Load session', self.load_examination)
 
         # Mode section
-        mode_section = menu_bar.add_section("Mode")
+        mode_section = menu_bar.add_section('Mode')
         mode_section.add_mode_action_group()
-        mode_section.add_mode_action(
-            "Scanning Mode",
-            self.main_controller.handle_scanningButton_clicked,
-            checked=True,
-        )
-        mode_section.add_mode_action(
-            "Viewing Mode", self.main_controller.handle_viewModelButton_clicked
-        )
+        mode_section.add_mode_action('Scanning Mode', lambda: self.main_view._stackedLayout.setCurrentIndex(0),
+                                     checked=True)
+        mode_section.add_mode_action('Viewing Mode', lambda: self.main_view._stackedLayout.setCurrentIndex(1))
 
         # Tools section
-        tools_section = menu_bar.add_section("Tools")
-        tools_section.add_action("Measure Distance", self.test_action)
-        tools_section.add_action("Measure Area", self.test_action)
+        tools_section = menu_bar.add_section('Tools')
+        tools_section.add_action('Measure Distance', self.test_action)
+        tools_section.add_action('Measure Area', self.test_action)
 
     def test_action(self):
         pass
