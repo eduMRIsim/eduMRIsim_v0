@@ -42,14 +42,12 @@ class ExportImageDialog(QDialog):
         image_data_normalized = image_data_normalized.astype(np.uint8)
 
         # Open a save file dialog so that the user can save the image.
-        options = QFileDialog.Option.Options()
         file_name: str
         selected_filter: str
         file_name, selected_filter = QFileDialog.getSaveFileName(
             parent=self,
             caption="Export image to file",
             filter="JPEG Files (*.jpeg);;PNG Files (*.png);;DICOM Files (*.dcm);;NIfTI Files (*.nii);;Compressed (Zipped) NIfTI Files (*.nii.gz)",
-            options=options,
         )
 
         # If the user specified a file name, save the image in that file name and using the filter that they selected.
