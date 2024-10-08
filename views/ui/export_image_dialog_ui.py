@@ -6,7 +6,7 @@ from pydicom.dataset import FileDataset
 from pydicom.uid import ExplicitVRLittleEndian
 import nibabel as nib
 from utils.logger import log
-from simulator.scanlist import AcquiredImage
+from simulator.scanlist import AcquiredImage, ImageGeometry
 
 
 class ExportImageDialog(QDialog):
@@ -27,10 +27,15 @@ class ExportImageDialog(QDialog):
             raise ValueError("No image found to export")
 
         image_data: np.ndarray = image.image_data
+        image_geometry = image.image_geometry
 
         if image_data is None:
             raise ValueError(
                 "No image data found; at least one scan should be performed before attempting to export an image"
+            )
+        if image_geometry is None:
+            raise ValueError(
+                "No image geometry found; at least one scan should be performed before attempting to export an image"
             )
 
         # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
@@ -42,14 +47,12 @@ class ExportImageDialog(QDialog):
         image_data_normalized = image_data_normalized.astype(np.uint8)
 
         # Open a save file dialog so that the user can save the image.
-        # options = QFileDialog.Option.Options()
         file_name: str
         selected_filter: str
         file_name, selected_filter = QFileDialog.getSaveFileName(
             parent=self,
             caption="Export image to file",
             filter="JPEG Files (*.jpeg);;PNG Files (*.png);;DICOM Files (*.dcm);;NIfTI Files (*.nii);;Compressed (Zipped) NIfTI Files (*.nii.gz)",
-            # options=options,
         )
 
         # If the user specified a file name, save the image in that file name and using the filter that they selected.
@@ -72,7 +75,7 @@ class ExportImageDialog(QDialog):
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
                 ExportImageDialog.export_to_dicom_file(
-                    image_data_normalized, parameters, file_name
+                    image_data_normalized, image_geometry, parameters, file_name
                 )
                 log.info(f"DICOM file saved as {file_name}")
             elif (
@@ -98,7 +101,7 @@ class ExportImageDialog(QDialog):
 
     @staticmethod
     def export_to_dicom_file(
-        image_data: np.ndarray, parameters: dict, file_name: str
+        image_data: np.ndarray, image_geometry: ImageGeometry, parameters: dict, file_name: str
     ) -> None:
         """
         Static method to export image data to a DICOM file.
@@ -139,6 +142,9 @@ class ExportImageDialog(QDialog):
         ds.EchoTime = parameters["TE_ms"]
         ds.RepetitionTime = parameters["TR_ms"]
         ds.InversionTime = parameters["TI_ms"]
+        ds.ImagePositionPatient = list(image_geometry.origin_LPS)
+        ds.ImageOrientationPatient = image_geometry.axisX_LPS.tolist()
+        ds.ImageOrientationPatient.extend(image_geometry.axisY_LPS.tolist())
 
         # Save the DICOM file
         ds.save_as(file_name)
