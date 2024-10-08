@@ -13,7 +13,8 @@ from PyQt6.QtGui import (
     QDragMoveEvent,
     QDropEvent,
     QMouseEvent,
-    QKeyEvent
+    QKeyEvent,
+    QCursor
 )
 from PyQt6.QtWidgets import (
     QGraphicsView,
@@ -147,6 +148,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.mouse_pressed = False
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
+        self.max_zoom_out = 0.5
+        self.max_zoom_in = 10
+        self.zoom_factor = None
+
 
         # Key press controls
         self.zoom_key_pressed = False
@@ -167,70 +172,66 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
     # Mouse press for zooming/measuring
     def mousePressEvent(self, event: QMouseEvent):
-        # TODO the user should not be able to zoom in and out when the measuring tool is active
-        if self.zooming_enabled and self.measuring_enabled == False:
+        if self.zooming_enabled and not self.measuring_enabled:
             if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = True
                 self.last_mouse_pos = event.pos()
         if self.measuring_enabled:
             self.measure.start_measurement(self.mapToScene(event.pos()))
-            self.measure.show_items()
         else:
             super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.zooming_enabled and self.measuring_enabled == False:
+        if self.zooming_enabled and not self.measuring_enabled:
             if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = False
                 self.last_mouse_pos = None
-        if self.measuring_enabled:
+        elif self.measure.is_measuring:
             self.measure.end_measurement()
         else:
             super().mouseReleaseEvent(event)
 
     # Key press for zooming/measuring
     def keyPressEvent(self, event: QKeyEvent):
-        if self.zooming_enabled and self.measuring_enabled == False:
-            if event.key() == Qt.Key.Key_Z:
+        if self.zooming_enabled and not self.measuring_enabled and event.key() == Qt.Key.Key_Z:
                 self.zoom_key_pressed = True
-        if self.measuring_enabled:
-            if event.key() == Qt.Key.Key_A:
-                self.measuring_key_pressed = True
+        elif event.key() == Qt.Key.Key_M and self.measure.is_measuring:
+                self.measure.end_measurement()
+        elif event.key() == Qt.Key.Key_M and not self.measure.is_measuring:
+                cursor_pos = QCursor.pos()
+                scene_pos = self.mapToScene(self.mapFromGlobal(cursor_pos))
+                self.measure.start_measurement(scene_pos)
         else:
             super().keyPressEvent(event)
     
     def keyReleaseEvent(self, event: QKeyEvent):
-        if self.zooming_enabled and self.measuring_enabled == False:
-            if event.key() == Qt.Key.Key_Z:
+        if self.zooming_enabled and self.measuring_enabled == False and event.key() == Qt.Key.Key_Z:
                 self.zoom_key_pressed = False
-        if self.measuring_enabled:
-            if event.key() == Qt.Key.Key_A:
+        if event.key() == Qt.Key.Key_M:
                 self.measuring_key_pressed = False
         else:
             super().keyReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
         # handle zoom
-        if self.zooming_enabled and self.measuring_enabled == False and self.zoom_key_pressed :
+        if self.zooming_enabled and not self.measuring_enabled and self.zoom_key_pressed :
             if self.mouse_pressed and self.last_mouse_pos is not None:
-                max_zoom_out = 0.5
-                max_zoom_in = 10
                 current_pos = event.pos()
 
                 delta_y = current_pos.y() - self.last_mouse_pos.y()
 
-                zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+                self.zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
 
                 current_zoom = self.transform().m11()
 
-                new_zoom = current_zoom * zoom_factor
+                new_zoom = current_zoom * self.zoom_factor
 
-                if max_zoom_out <= new_zoom <= max_zoom_in:
-                    self.scale(zoom_factor, zoom_factor)
+                if self.max_zoom_out <= new_zoom <= self.max_zoom_in:
+                    self.scale(self.zoom_factor, self.zoom_factor)
 
                 self.last_mouse_pos = current_pos
         # handle measuring tool
-        elif self.measuring_enabled and self.measure.is_measuring and self.measuring_key_pressed:
+        elif self.measure.is_measuring:
             self.measure.update_measurement(self.mapToScene(event.pos()))
         else:
             super().mouseMoveEvent(event)
