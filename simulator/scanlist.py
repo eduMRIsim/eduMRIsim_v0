@@ -388,6 +388,8 @@ class ScanItem:
                 scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
                 changed = True
 
+                scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = scan_parameters["FOVPE_mm"], scan_parameters["FOVFE_mm"]
+
             elif (
                 abs(RLAngle_deg) > THRESHOLD_ANGLE
                 and abs(APAngle_deg) <= THRESHOLD_ANGLE
@@ -431,6 +433,8 @@ class ScanItem:
                 scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
                 changed = True
 
+                scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = scan_parameters["FOVPE_mm"], scan_parameters["FOVFE_mm"]
+                
             elif (
                 abs(FHAngle_deg) > THRESHOLD_ANGLE
                 and abs(APAngle_deg) <= THRESHOLD_ANGLE

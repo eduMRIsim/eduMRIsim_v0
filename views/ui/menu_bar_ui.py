@@ -24,9 +24,14 @@ class Section:
         self.actions = {}
         self.action_group = None
 
-    def add_action(self, action_name, triggered_function):
+    def add_action(self, action_name, triggered_function, checkable=False):
         """Adds a regular action to the section."""
         action = QAction(action_name, self.menu)
+
+        if checkable:
+            action.setCheckable(True)
+            action.setChecked(False)
+
         action.triggered.connect(triggered_function)
         self.actions[action_name] = action
         self.menu.addAction(action)
@@ -54,3 +59,5 @@ class Section:
 
         if checked:
             action.setChecked(True)
+        else:
+            action.setChecked(False)
