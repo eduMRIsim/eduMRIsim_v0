@@ -24,7 +24,6 @@ class MeasurementTool:
 
         self.hide_items()
 
-
     def hide_items(self):
         self.line_item.setVisible(False)
         self.text_item.setVisible(False)
@@ -66,7 +65,9 @@ class MeasurementTool:
             self.text_item.setPos(midpoint.x(), midpoint.y() - 10)
             self.text_item.setZValue(1)
 
-            self.start_dot.setRect(self.start_point.x() - 2, self.start_point.y() - 2, 4, 4)
+            self.start_dot.setRect(
+                self.start_point.x() - 2, self.start_point.y() - 2, 4, 4
+            )
             self.end_dot.setRect(self.end_point.x() - 2, self.end_point.y() - 2, 4, 4)
 
     def calculate_distance(self, p1, p2):
