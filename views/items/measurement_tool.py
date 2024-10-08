@@ -1,3 +1,4 @@
+from utils.logger import log
 import math
 
 from PyQt6.QtCore import Qt
@@ -62,13 +63,33 @@ class MeasurementTool:
 
             midpoint = (self.start_point + self.end_point) / 2
 
-            self.text_item.setPos(midpoint.x(), midpoint.y() - 10)
+            # Calculate the angle of the line
+            dx = self.end_point.x() - self.start_point.x()
+            dy = self.end_point.y() - self.start_point.y()
+            angle = math.degrees(math.atan2(dy, dx))
+
+            log.debug(f"MeasurementTool: angle {angle}")
+
+            # Rotate the text item if
+            if angle > 90 or angle < -90:
+                angle += 180
+
+            offset_base = 25
+            offset_x = offset_base * math.sin(math.radians(angle))
+            offset_y = -offset_base * math.cos(math.radians(angle))
+            self.text_item.setPos(midpoint.x() + offset_x, midpoint.y() + offset_y)
+
             self.text_item.setZValue(1)
 
+            # Rotate the text item to align with the line
+            self.text_item.setRotation(angle)
+
+            dot_size_px = 3
+
             self.start_dot.setRect(
-                self.start_point.x() - 2, self.start_point.y() - 2, 4, 4
+                self.start_point.x() - 2, self.start_point.y() - 2, dot_size_px, dot_size_px
             )
-            self.end_dot.setRect(self.end_point.x() - 2, self.end_point.y() - 2, 4, 4)
+            self.end_dot.setRect(self.end_point.x() - 2, self.end_point.y() - 2, dot_size_px, dot_size_px)
 
     def calculate_distance(self, p1, p2):
         p1_mm_coords = self.ac_series.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords(
