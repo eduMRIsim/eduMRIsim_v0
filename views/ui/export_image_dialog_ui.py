@@ -105,7 +105,7 @@ class ExportImageDialog(QDialog):
     ) -> None:
         """
         Static method to export image data to a DICOM file.
-        For reference, the following websites were used for the DICOM tags that are set within this method:
+        For reference, the following websites were used for the DICOM attributes that are set within this method:
             https://dicom.innolitics.com/ciods/mr-image
             http://dicomlookup.com/
         """
@@ -117,17 +117,17 @@ class ExportImageDialog(QDialog):
         file_meta.ImplementationClassUID = pydicom.uid.generate_uid()
         ds = FileDataset(file_name, {}, file_meta=file_meta, preamble=b"\0" * 128)
 
-        # Set required DICOM tags
+        # Set some required DICOM attributes
         ds.StudyInstanceUID = pydicom.uid.generate_uid()
         ds.SeriesInstanceUID = pydicom.uid.generate_uid()
         ds.SOPInstanceUID = pydicom.uid.generate_uid()
 
-        # Set DICOM tags either referring to image data, or referring to one of the scan parameters
+        # Set DICOM attributes either referring to image data, or referring to one of the scan parameters
         ds.Modality = "MR"
         ds.Rows, ds.Columns = image_data.shape
-        ds.BitsAllocated = 16  # This may be changed in the future
-        ds.BitsStored = 12  # This may be changed in the future
-        ds.HighBit = 11  # This may be changed in the future
+        ds.BitsAllocated = 8  # Should be correct now, but may still need to be changed in the future
+        ds.BitsStored = 8  # Should be correct now, but may still need to be changed in the future
+        ds.HighBit = 7  # Should be correct now, but may still need to be changed in the future
         ds.PixelRepresentation = 0
         ds.SamplesPerPixel = 1  # This may be changed in the future
         ds.PhotometricInterpretation = "MONOCHROME2"  # Set this to a different value if a different color scale is used
