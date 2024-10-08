@@ -39,9 +39,10 @@ from views.items.custom_polygon_item import CustomPolygonItem
 from views.items.stacks_item import StacksItem
 from views.ui.scanlist_ui import ScanlistListWidget
 from views.items.middle_line_item import MiddleLineItem
+from views.items.zoomin import ZoomableView
 
 
-class AcquiredSeriesViewer2D(QGraphicsView):
+class AcquiredSeriesViewer2D(ZoomableView):
     """Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved."""
 
     def __init__(self):
@@ -170,80 +171,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
-    # Mouse press for zooming/measuring
-    def mousePressEvent(self, event: QMouseEvent):
-        if self.zooming_enabled and not self.measuring_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.mouse_pressed = True
-                self.last_mouse_pos = event.pos()
-        if self.measuring_enabled:
-            self.measure.start_measurement(self.mapToScene(event.pos()))
-        else:
-            super().mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.zooming_enabled and not self.measuring_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.mouse_pressed = False
-                self.last_mouse_pos = None
-        elif self.measure.is_measuring:
-            self.measure.end_measurement()
-        else:
-            super().mouseReleaseEvent(event)
-
-    # Key press for zooming/measuring
-    def keyPressEvent(self, event: QKeyEvent):
-        if self.zooming_enabled and not self.measuring_enabled and event.key() == Qt.Key.Key_Z:
-                self.zoom_key_pressed = True
-        elif event.key() == Qt.Key.Key_M and self.measure.is_measuring:
-                self.measure.end_measurement()
-        elif event.key() == Qt.Key.Key_M and not self.measure.is_measuring:
-                cursor_pos = QCursor.pos()
-                scene_pos = self.mapToScene(self.mapFromGlobal(cursor_pos))
-                self.measure.start_measurement(scene_pos)
-        else:
-            super().keyPressEvent(event)
-    
-    def keyReleaseEvent(self, event: QKeyEvent):
-        if self.zooming_enabled and self.measuring_enabled == False and event.key() == Qt.Key.Key_Z:
-                self.zoom_key_pressed = False
-        if event.key() == Qt.Key.Key_M:
-                self.measuring_key_pressed = False
-        else:
-            super().keyReleaseEvent(event)
-
-    def mouseMoveEvent(self, event):
-        # handle zoom
-        if self.zooming_enabled and not self.measuring_enabled and self.zoom_key_pressed :
-            if self.mouse_pressed and self.last_mouse_pos is not None:
-                current_pos = event.pos()
-
-                delta_y = current_pos.y() - self.last_mouse_pos.y()
-
-                self.zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
-
-                current_zoom = self.transform().m11()
-
-                new_zoom = current_zoom * self.zoom_factor
-
-                if self.max_zoom_out <= new_zoom <= self.max_zoom_in:
-                    self.scale(self.zoom_factor, self.zoom_factor)
-
-                self.last_mouse_pos = current_pos
-        # handle measuring tool
-        elif self.measure.is_measuring:
-            self.measure.update_measurement(self.mapToScene(event.pos()))
-        else:
-            super().mouseMoveEvent(event)
-
-    def zoom_in(self, center_point):
-        if self.transform().m11() < self.max_zoom_in:
-            self.scale(self.zoom_factor, self.zoom_factor)
-
-    def zoom_out(self, center_point):
-        if self.transform().m11() > self.max_zoom_out:
-            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-            self.centerOn(center_point)
 
     def update_buttons_visibility(self):
         if self.acquired_series is None:
