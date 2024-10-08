@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent
+from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent, QKeyEvent, QMouseEvent
 from PyQt6.QtWidgets import (
     QFrame,
     QVBoxLayout,
@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (
     QGraphicsScene,
     QGraphicsPixmapItem,
     QSizePolicy,
+    QMenu,
+    QWidgetAction
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -46,6 +48,34 @@ class gridViewingWindowLayout(QFrame):
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
         return self.grid_cells[i][j]
+    
+    def add_row(self):
+        '''Adds a new column of GridCell instances into the grid. '''
+        row_index = len(self.grid_cells) 
+        new_row= []  
+
+        nr_columns = self.righ_layout.columnCount()  
+
+        for j in range(nr_columns): 
+            new_cell = GridCell(row_index, j)  
+            new_row.append(new_cell) 
+            self.right_layout.addWidget(new_cell, row_index, j) 
+
+        self.grid_cells.append(new_row) 
+
+    def add_column(self):
+        '''Adds a new column of GridCell instances into the grid. '''
+        col_index = len(self.grid_cells)
+        new_col = []
+
+        nr_rows = self.right_layout.rorCount()
+
+        for i in range(nr_rows):
+            new_cell = GridCell(i, col_index)
+            new_col.append(new_cell)
+            self.right_layout.addWidget(new_cell, i, col_index)
+
+        self.grid_cells.append(new_col)
 
 
 class GridCell(QGraphicsView):
@@ -79,24 +109,39 @@ class GridCell(QGraphicsView):
 
         # zoom controls
         self.mouse_pressed = False
+        self.zoom_key_pressed = False
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
 
+    def contextMenuEvent(self, event):
+        '''Context menu for adding a row or column. '''
+        super().contextMenuEvent(event)
+
+
     # start zoom when pressed
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.mouse_pressed = True
             self.last_mouse_pos = event.pos()
 
     # stop zoom when released
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.mouse_pressed = False
             self.last_mouse_pos = None
 
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Z:
+            self.zoom_key_pressed = True
+
+    def keyReleaseEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Z:
+            self.zoom_key_pressed = False
+
+
     def mouseMoveEvent(self, event):
         """Handle zoom when the mouse is being dragged."""
-        if self.mouse_pressed and self.last_mouse_pos is not None:
+        if self.mouse_pressed and self.zoom_key_pressed and self.last_mouse_pos is not None:
 
             max_zoom_out = 0.1
             max_zoom_in = 10

@@ -12,6 +12,8 @@ from PyQt6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
+    QMouseEvent,
+    QKeyEvent
 )
 from PyQt6.QtWidgets import (
     QGraphicsView,
@@ -140,11 +142,15 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.scene.installEventFilter(self)
 
-        # zoom controls
+        # Zoom controls
         self.zooming_enabled = False
         self.mouse_pressed = False
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
+
+        # Key press controls
+        self.zoom_key_pressed = False
+        self.measuring_key_pressed = False
 
         # Measurement tool
         self.measuring_enabled = False
@@ -159,10 +165,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
-    # start zoom when pressed
-    def mousePressEvent(self, event):
+    # Mouse press for zooming/measuring
+    def mousePressEvent(self, event: QMouseEvent):
         # TODO the user should not be able to zoom in and out when the measuring tool is active
-        if self.zooming_enabled:
+        if self.zooming_enabled and self.measuring_enabled == False:
             if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = True
                 self.last_mouse_pos = event.pos()
@@ -172,9 +178,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         else:
             super().mousePressEvent(event)
 
-    # stop zoom when released
-    def mouseReleaseEvent(self, event):
-        if self.zooming_enabled:
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if self.zooming_enabled and self.measuring_enabled == False:
             if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = False
                 self.last_mouse_pos = None
@@ -183,29 +188,49 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         else:
             super().mouseReleaseEvent(event)
 
-    def mouseMoveEvent(self, event):
-        if self.zooming_enabled:
-            """Handle zoom when the mouse is being dragged."""
-            if self.mouse_pressed and self.last_mouse_pos is not None:
+    # Key press for zooming/measuring
+    def keyPressEvent(self, event: QKeyEvent):
+        if self.zooming_enabled and self.measuring_enabled == False:
+            if event.key() == Qt.Key.Key_Z:
+                self.zoom_key_pressed = True
+        if self.measuring_enabled:
+            if event.key() == Qt.Key.Key_A:
+                self.measuring_key_pressed = True
+        else:
+            super().keyPressEvent(event)
+    
+    def keyReleaseEvent(self, event: QKeyEvent):
+        if self.zooming_enabled and self.measuring_enabled == False:
+            if event.key() == Qt.Key.Key_Z:
+                self.zoom_key_pressed = False
+        if self.measuring_enabled:
+            if event.key() == Qt.Key.Key_A:
+                self.measuring_key_pressed = False
+        else:
+            super().keyReleaseEvent(event)
 
+    def mouseMoveEvent(self, event):
+        # handle zoom
+        if self.zooming_enabled and self.measuring_enabled == False and self.zoom_key_pressed :
+            if self.mouse_pressed and self.last_mouse_pos is not None:
                 max_zoom_out = 0.5
                 max_zoom_in = 10
                 current_pos = event.pos()
+
                 delta_y = current_pos.y() - self.last_mouse_pos.y()
 
-                # cursor_pos = self.mapToScene(current_pos)
                 zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
 
-                # get current zoom level (scaling factor)
                 current_zoom = self.transform().m11()
 
                 new_zoom = current_zoom * zoom_factor
+
                 if max_zoom_out <= new_zoom <= max_zoom_in:
                     self.scale(zoom_factor, zoom_factor)
 
-                # update the last mouse position
                 self.last_mouse_pos = current_pos
-        elif self.measuring_enabled and self.measure.is_measuring:
+        # handle measuring tool
+        elif self.measuring_enabled and self.measure.is_measuring and self.measuring_key_pressed:
             self.measure.update_measurement(self.mapToScene(event.pos()))
         else:
             super().mouseMoveEvent(event)
@@ -306,7 +331,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view."""
         super().resizeEvent(event)
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.updateLabelPosition()
 
@@ -362,16 +387,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scene.setSceneRect(0, 0, 1, 1)
 
         self.resetTransform()
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
-
-        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        # self.scene.setSceneRect(0, 0, width, height)
-        # The centerOn method is used to center the view on a particular point within the scene.
-        # self.centerOn(width / 2, height / 2)
-
-        # calculate LPS direction vector from the moved direction vector
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
