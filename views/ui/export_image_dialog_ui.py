@@ -82,7 +82,7 @@ class ExportImageDialog(QDialog):
                 selected_filter == "NIfTI Files (*.nii)"
                 or selected_filter == "Compressed (Zipped) NIfTI Files (*.nii.gz)"
             ):
-                ExportImageDialog.export_to_nifti_file(image_data_normalized, file_name)
+                ExportImageDialog.export_to_nifti_file(image_data, file_name)
                 log.info(f"NIfTI file saved as {file_name}")
             else:
                 raise ValueError(
@@ -154,14 +154,15 @@ class ExportImageDialog(QDialog):
         """
         Static method to export image data to a (compressed) NIfTI file.
         """
-        # Create an affine transformation matrix.
+        # Create an affine transformation matrix
         # Currently, this is just the identity matrix, but this may be changed in the future.
         transformation_matrix: np.ndarray = np.eye(4)
 
         # if file_name.endswith(".nii"):
         image_data = np.rot90(image_data)
+        image_data = np.flip(image_data, axis=0)
 
-        # Create a NIfTI image.
+        # Create a NIfTI image
         nifti_img = nib.Nifti1Image(image_data, transformation_matrix)
 
         # Save the NIfTI image to a file.
