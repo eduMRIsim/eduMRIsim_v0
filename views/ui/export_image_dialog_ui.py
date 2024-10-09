@@ -143,6 +143,9 @@ class ExportImageDialog(QDialog):
         ds.PixelRepresentation = 0
         ds.SamplesPerPixel = 1  # This may be changed in the future
         ds.PhotometricInterpretation = "MONOCHROME2"  # Set this to a different value if a different color scale is used
+        ds.RescaleIntercept = 0
+        ds.RescaleSlope = 1
+        ds.RescaleType = "US"
         ds.PixelData = image_data_normalized.tobytes()
         ds.SliceThickness = parameters["SliceThickness_mm"]
         ds.SpacingBetweenSlices = parameters[
