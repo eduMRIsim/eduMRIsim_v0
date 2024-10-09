@@ -376,7 +376,7 @@ class ScanItem:
         return None
 
     # find item from list with specified stack index
-    def find_item_with_stack_index(items, search_stack_index):
+    def find_item_with_stack_index(self, items, search_stack_index):
         found_stack_indx = None
         for idx, item in enumerate(items):
             if item.stack_index == search_stack_index:
