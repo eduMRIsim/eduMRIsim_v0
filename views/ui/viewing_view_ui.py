@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent, QKeyEvent, QMouseEvent
+from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent, QKeyEvent, QMouseEvent, QAction
 from PyQt6.QtWidgets import (
     QFrame,
     QVBoxLayout,
@@ -9,8 +9,7 @@ from PyQt6.QtWidgets import (
     QGraphicsScene,
     QGraphicsPixmapItem,
     QSizePolicy,
-    QMenu,
-    QWidgetAction
+    QMenu
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -23,60 +22,85 @@ class gridViewingWindowLayout(QFrame):
 
         rightLayout = QVBoxLayout()
 
-        # store all GridCell cells
-        # useful for handling the drops
         self.grid_cells = []
 
         # creates default 2x2 grid
-        right_layout = QGridLayout()
+        self.right_layout = QGridLayout()
         for i in range(2):
             rows = []  # list of elements in each row
             for j in range(2):
                 empty_widget = GridCell(i, j)
                 rows.append(empty_widget)
-                right_layout.addWidget(empty_widget, i, j)
+                self.right_layout.addWidget(empty_widget, i, j)
             self.grid_cells.append(rows)
 
-        rightLayout.addLayout(right_layout)
+        rightLayout.addLayout(self.right_layout)
         self.setLayout(rightLayout)
-
+    
     def connect_drop_signals(self, drop_handler):
-        for i in range(2):
-            for j in range(2):
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
                 grid_cell = self.grid_cells[i][j]
                 grid_cell.dropEventSignal.connect(drop_handler)
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
-        return self.grid_cells[i][j]
+        if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
+            return self.grid_cells[i][j]
+        else:
+            print(f"Invalid cell access: row {i}, column {j}.")
+            return None
     
     def add_row(self):
-        '''Adds a new column of GridCell instances into the grid. '''
+        '''Adds a new row of GridCell instances into the grid. '''
         row_index = len(self.grid_cells) 
         new_row= []  
 
-        nr_columns = self.righ_layout.columnCount()  
+        if self.grid_cells:
+            nr_columns = len(self.grid_cells[0])
+        else: 
+            nr_columns = 0
 
-        for j in range(nr_columns): 
-            new_cell = GridCell(row_index, j)  
-            new_row.append(new_cell) 
-            self.right_layout.addWidget(new_cell, row_index, j) 
+        if row_index < 5:
+            for j in range(nr_columns): 
+                new_cell = GridCell(row_index, j)  
+                if row_index > 0:
+                    new_cell.dropEventSignal.connect(self.grid_cells[row_index-1][j].dropEventSignal)
+                    #self.grid_cells[row_index-1][j].dropEventSignal.connect(self.drop_handler)
+                new_row.append(new_cell) 
+                self.right_layout.addWidget(new_cell, row_index, j) 
 
-        self.grid_cells.append(new_row) 
+            # adds a list of GridCell instances to the list of rows
+            self.grid_cells.append(new_row)
+        else:
+            print("Row limit reached!")
 
     def add_column(self):
         '''Adds a new column of GridCell instances into the grid. '''
-        col_index = len(self.grid_cells)
+        if self.grid_cells:
+            col_index = len(self.grid_cells[0]) # number of element in the first row
+        else:
+            col_index = 0
         new_col = []
 
-        nr_rows = self.right_layout.rorCount()
+        nr_rows = len(self.grid_cells)
 
-        for i in range(nr_rows):
-            new_cell = GridCell(i, col_index)
-            new_col.append(new_cell)
-            self.right_layout.addWidget(new_cell, i, col_index)
+        if col_index < 5:
+            for i in range(nr_rows):
+                new_cell = GridCell(i, col_index)
+                if col_index > 0:
+                    new_cell.dropEventSignal.connect(self.grid_cells[i][col_index-1].dropEventSignal) 
+                new_col.append(new_cell)
+                self.right_layout.addWidget(new_cell, i, col_index)
 
-        self.grid_cells.append(new_col)
+            #self.grid_cells.append(new_col)
 
+            # appends one new cell in each list from the row list
+            for i in range(nr_rows):
+                if len(self.grid_cells) <= i:  
+                    self.grid_cells.append([]) 
+                self.grid_cells[i].append(new_col[i]) 
+        else:
+            print("Column limit reached!")
 
 class GridCell(QGraphicsView):
     dropEventSignal = pyqtSignal(int, int, int)
@@ -113,26 +137,21 @@ class GridCell(QGraphicsView):
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
 
-    def contextMenuEvent(self, event):
-        '''Context menu for adding a row or column. '''
-        super().contextMenuEvent(event)
-
-
-    # start zoom when pressed
+    # start zoom when leftButton and Z are pressed
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.mouse_pressed = True
             self.last_mouse_pos = event.pos()
 
-    # stop zoom when released
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Z:
+            self.zoom_key_pressed = True
+
+    # stop zoom when leftButton and Z are released
     def mouseReleaseEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.mouse_pressed = False
             self.last_mouse_pos = None
-
-    def keyPressEvent(self, event: QKeyEvent):
-        if event.key() == Qt.Key.Key_Z:
-            self.zoom_key_pressed = True
 
     def keyReleaseEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Z:
@@ -148,10 +167,8 @@ class GridCell(QGraphicsView):
             current_pos = event.pos()
             delta_y = current_pos.y() - self.last_mouse_pos.y()
 
-            # cursor_pos = self.mapToScene(current_pos)
             zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
 
-            # get current zoom level (scaling factor)
             current_zoom = self.transform().m11()
 
             new_zoom = current_zoom * zoom_factor
@@ -170,6 +187,33 @@ class GridCell(QGraphicsView):
         if self.transform().m11() > self.max_zoom_out:
             self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
             self.centerOn(center_point)
+
+    def add_row(self):
+        '''Trigger add_row method of the parent.'''
+        if self.parent():
+            self.parent().add_row() 
+
+    def add_column(self):
+        '''Trigger add_column method of the parent.'''
+        if self.parent():
+            self.parent().add_column() 
+
+    def contextMenuEvent(self, event):
+        '''Context menu for adding a row or column.'''
+        super().contextMenuEvent(event)
+
+        # Initialize add row/col actions in the context menu
+        self.add_rowcol_menu = QMenu(self)
+        self.add_row_action = QAction("Add row")
+        self.add_rowcol_menu.addAction(self.add_row_action)
+        self.add_col_action = QAction("Add column")
+        self.add_rowcol_menu.addAction(self.add_col_action)
+
+        # Actions trigger the methods from this class which trigger the methods in the parent
+        self.add_row_action.triggered.connect(lambda: self.add_row())
+        self.add_col_action.triggered.connect(lambda: self.add_column())
+
+        self.add_rowcol_menu.exec(event.globalPos())
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized.
