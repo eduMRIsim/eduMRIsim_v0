@@ -775,46 +775,23 @@ class ScanVolume:
 
     def scale_scan_volume(
         self,
-        scale_factor_x: float,
-        scale_factor_y: float,
-        origin_plane: str,
-        handle_pos: QPointF,
-        center_pos: QPointF,
+        x_vector: float,
+        y_vector: float,
+        z_vector: float,
     ):
 
         # Parameter validation
-        valid_planes = ("Axial", "Sagittal", "Coronal")
-        if origin_plane not in valid_planes:
-            raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
-        top_down_plane = self.scanPlane
-        if top_down_plane not in valid_planes:
-            raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
-
-        # Scaling logic
-        if top_down_plane == origin_plane:
-            self.extentX_mm *= scale_factor_x
-            self.extentY_mm *= scale_factor_y
-        elif top_down_plane == "Axial":
-            if origin_plane == "Sagittal":
-                self.extentY_mm *= scale_factor_x
-                self.slice_gap_mm *= scale_factor_y
-            elif origin_plane == "Coronal":
-                self.extentX_mm *= scale_factor_x
-                self.slice_gap_mm *= scale_factor_y
-        elif top_down_plane == "Sagittal":
-            if origin_plane == "Axial":
-                self.extentX_mm *= scale_factor_y
-                self.slice_gap_mm *= scale_factor_x
-            elif origin_plane == "Coronal":
-                self.extentY_mm *= scale_factor_y
-                self.slice_gap_mm *= scale_factor_x
-        elif top_down_plane == "Coronal":
-            if origin_plane == "Axial":
-                self.extentX_mm *= scale_factor_x
-                self.slice_gap_mm *= scale_factor_y
-            elif origin_plane == "Sagittal":
-                self.extentY_mm *= scale_factor_y
-                self.slice_gap_mm *= scale_factor_x
+        if x_vector == 0 or y_vector == 0 or z_vector == 0:
+            log.error("Scale vector cannot be zero")
+            raise ValueError("Scale vector cannot be zero")
+        print(x_vector, y_vector, z_vector)
+        # Turn LPS to scan_volum
+        x_scale, y_scale, z_scale = self.LPS_coords_to_scan_volume_mm_coords((x_vector, y_vector, z_vector))
+        
+        # Scale the scan volume by the scale vector
+        self.extentX_mm *= x_scale
+        self.extentY_mm *= y_scale
+        self.slice_gap_mm *= z_scale
 
         self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)

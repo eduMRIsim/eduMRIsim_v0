@@ -211,168 +211,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             f"{rotations} {plane}, {self.previous_handle_position}, {self.scene_center}"
         )
 
-        if plane == "FH" and rotations["FHAngle_rad"] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale(
-                "Axial",
-                self.previous_scale_handle_position,
-                self.scene_center,
-                rotations["RLAngle_rad"],
-                rotations["APAngle_rad"],
-                rotations["FHAngle_rad"],
-            )
-        elif plane == "RL" and rotations["RLAngle_rad"] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale(
-                "Sagittal",
-                self.previous_scale_handle_position,
-                self.scene_center,
-                rotations["RLAngle_rad"],
-                rotations["APAngle_rad"],
-                rotations["FHAngle_rad"],
-            )
-        elif plane == "AP" and rotations["APAngle_rad"] != 0:
-            self.on_x_axis, self.on_y_axis = self.determine_axis_to_scale(
-                "Coronal",
-                self.previous_scale_handle_position,
-                self.scene_center,
-                rotations["RLAngle_rad"],
-                rotations["APAngle_rad"],
-                rotations["FHAngle_rad"],
-            )
-
         # The logic for determining which axis the user is scaling on TBD
         log.debug(f"{self.on_x_axis}, {self.on_y_axis}")
-
-    def determine_axis_to_scale(
-        self,
-        origin_plane,
-        handle_pos,
-        center_pos,
-        RLAngle_rad,
-        APAngle_rad,
-        FHAngle_rad,
-    ):
-        log.debug(
-            f"{origin_plane}, {handle_pos}, {center_pos}, {RLAngle_rad}, {APAngle_rad}, {FHAngle_rad}"
-        )
-        converter = 180 / math.pi
-        if origin_plane == "Sagittal":  # around RL axis
-            # Rotation to positive direction
-            if RLAngle_rad * converter < 90 and RLAngle_rad * converter > 0:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-            elif RLAngle_rad * converter >= 90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-            # Rotation to negative direction
-            elif RLAngle_rad * converter < 0 and RLAngle_rad * converter > -90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-            elif RLAngle_rad * converter <= -90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-        elif origin_plane == "Coronal":  # around AP axis
-            # Rotation to positive direction
-            if APAngle_rad * converter <= 90 and APAngle_rad * converter > 0:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-            elif APAngle_rad * converter > 90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-            # Rotation to negative direction
-            elif APAngle_rad * converter < 0 and APAngle_rad * converter > -90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-            elif APAngle_rad * converter <= -90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-        elif origin_plane == "Axial":  # around FH axis
-            # Rotation to positive direction
-            if FHAngle_rad * converter < 90 and FHAngle_rad * converter > 0:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-            elif FHAngle_rad * converter >= 90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-            # Rotation to negative direction
-            elif FHAngle_rad * converter < 0 and FHAngle_rad * converter > -90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-            elif FHAngle_rad * converter <= -90:
-                if handle_pos.x() > center_pos.x() and handle_pos.y() > center_pos.y():
-                    return False, True
-                if handle_pos.x() > center_pos.x() and handle_pos.y() < center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() > center_pos.y():
-                    return True, False
-                if handle_pos.x() < center_pos.x() and handle_pos.y() < center_pos.y():
-                    return False, True
-        return False, False
 
     def scale_handle_move_event_handler(self, event: QGraphicsSceneMouseEvent):
         """
@@ -387,28 +227,33 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Calculate the scale factors in the x and y directions.
         # Also, avoid division by zero, which would happen if the previous scale handle position's x or y is equal to
         # the scene center's x or y respectively; in that case, set the respective scale factor to 1.0.
-        if (
-            self.on_x_axis
-            or abs(self.previous_scale_handle_position.x() - self.scene_center.x()) == 0
-        ):
-            scale_factor_x = 1.0
-        else:
-            scale_factor_x = abs(new_position.x() - self.scene_center.x()) / abs(
-                self.previous_scale_handle_position.x() - self.scene_center.x()
-            )
-            if scale_factor_x <= 0.92 or scale_factor_x >= 1.08:
-                scale_factor_x = 1.0
-        if (
-            self.on_y_axis
-            or abs(self.previous_scale_handle_position.y() - self.scene_center.y()) == 0
-        ):
-            scale_factor_y = 1.0
-        else:
-            scale_factor_y = abs(new_position.y() - self.scene_center.y()) / abs(
-                self.previous_scale_handle_position.y() - self.scene_center.y()
-            )
-            if scale_factor_y <= 0.92 or scale_factor_y >= 1.08:
-                scale_factor_y = 1.0
+
+        x_p, y_p, z_p = self.viewer.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((self.previous_scale_handle_position.x(), self.previous_scale_handle_position.y()))
+        x_n, y_n, z_n = self.viewer.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((new_position.x(), new_position.y()))
+        x_c, y_c, z_c = self.viewer.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((self.scene_center.x(), self.scene_center.y()))
+
+        x_vector = abs(x_n - x_c) / abs(x_p - x_c)
+        y_vector = abs(y_n - y_c) / abs(y_p - y_c)
+        z_vector = abs(z_n - z_c) / abs(z_p - z_c)
+
+        # change nan to 1
+        if math.isnan(x_vector):
+            x_vector = 1
+        if math.isnan(y_vector):
+            y_vector = 1
+        if math.isnan(z_vector):
+            z_vector = 1
+
+        # Update scaling vectors if they are too big or small
+        if x_vector < 0.95 or x_vector > 1.05:
+            x_vector = 1
+        if y_vector < 0.95 or y_vector > 1.05:
+            y_vector = 1
+        if z_vector < 0.95 or z_vector > 1.05:
+            z_vector = 1
+
+        print(f"X: {x_vector}, Y: {y_vector}, Z: {z_vector}")
+        #print(self.scan_volume.get_parameters())
 
         # Set the previous handle position equal to the new handle position.
         self.previous_scale_handle_position = new_position
@@ -416,11 +261,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
         self.notify_observers(
             EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
-            scale_factor_x=scale_factor_x,
-            scale_factor_y=scale_factor_y,
-            origin_plane=self.viewer.displayed_image.image_geometry.plane,
-            handle_pos=self.active_scale_handle.pos(),
-            center_pos=self.scene_center,
+            x_vector=x_vector,
+            y_vector=y_vector,
+            z_vector=z_vector
         )
 
         # Update the scale handle positions.

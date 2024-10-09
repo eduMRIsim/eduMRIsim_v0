@@ -409,15 +409,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume.rotate_scan_volume(rotation_angle_rad, rotation_axis)
             self.scan_volume.add_observer(self)
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
-            scale_factor_x = kwargs["scale_factor_x"]
-            scale_factor_y = kwargs["scale_factor_y"]
-            origin_plane = kwargs["origin_plane"]
-            handle_pos = kwargs["handle_pos"]
-            center_pos = kwargs["center_pos"]
+            x_vector = kwargs["x_vector"]
+            y_vector = kwargs['y_vector']
+            z_vector = kwargs["z_vector"]
 
             # self.scan_volume.remove_observer(self)
             self.scan_volume.scale_scan_volume(
-                scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos
+                x_vector, y_vector, z_vector
             )
             self._update_scan_volume_display()
             # self.scan_volume.add_observer(self)
