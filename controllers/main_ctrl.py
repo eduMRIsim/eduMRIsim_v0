@@ -251,7 +251,9 @@ class MainController:
         self.scanner.scanlist.active_idx = index
 
     def populate_parameterFormLayout(self, scan_item):
-        self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+        # self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+        active_params = scan_item.get_current_active_parameters()
+        self.ui.parameterFormLayout.set_parameters(active_params)
 
     def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
@@ -301,8 +303,10 @@ class MainController:
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
-        self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
-        self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
+        self.scanner.scanlist.active_scan_item.validate_scan_parameters_single(scan_parameters)
+        self.scanner.scanlist.active_scan_item.perform_rotation_check_single(scan_parameters)
+        # self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        # self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
@@ -484,6 +488,7 @@ class MainController:
             self.scanner.active_scan_item.add_observer(self)
 
             # Set scan volume on planning windows only if the active scan item is not completed
+            # TODO: change over to active_scan_item.scan_volumes
             if self.scanner.active_scan_item.status != ScanItemStatusEnum.COMPLETE:
                 self.ui.scanPlanningWindow1.setScanVolume(
                     self.scanner.active_scan_item.scan_volume
