@@ -490,20 +490,32 @@ class MainController:
             # Set scan volume on planning windows only if the active scan item is not completed
             # TODO: change over to active_scan_item.scan_volumes
             if self.scanner.active_scan_item.status != ScanItemStatusEnum.COMPLETE:
-                self.ui.scanPlanningWindow1.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                # self.ui.scanPlanningWindow1.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                # self.ui.scanPlanningWindow2.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                # self.ui.scanPlanningWindow3.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                self.ui.scanPlanningWindow1.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
-                self.ui.scanPlanningWindow2.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                self.ui.scanPlanningWindow2.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
-                self.ui.scanPlanningWindow3.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                self.ui.scanPlanningWindow3.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
             else:
                 # Clear the scan volume if the scan is completed
-                self.ui.scanPlanningWindow1.setScanVolume(None)
-                self.ui.scanPlanningWindow2.setScanVolume(None)
-                self.ui.scanPlanningWindow3.setScanVolume(None)
+                # self.ui.scanPlanningWindow1.setScanVolume(None)
+                # self.ui.scanPlanningWindow2.setScanVolume(None)
+                # self.ui.scanPlanningWindow3.setScanVolume(None)
+                self.ui.scanPlanningWindow1.setScanVolumes([])
+                self.ui.scanPlanningWindow2.setScanVolumes([])
+                self.ui.scanPlanningWindow3.setScanVolumes([])
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
