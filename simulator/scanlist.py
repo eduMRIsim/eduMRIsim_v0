@@ -6,6 +6,8 @@ from PyQt6.QtCore import QPointF
 from events import EventEnum
 from utils.logger import log
 
+from pydicom.uid import generate_uid
+
 
 class ImageGeometry:
     """This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates."""
@@ -122,20 +124,27 @@ class ImageGeometry:
 
 class AcquiredImage:
     # An acquired image is a 2D image that is acquired during a scan. It consists of image data and image geometry.
-    def __init__(self, image_data: np.ndarray, image_geometry: ImageGeometry):
+    def __init__(self, image_data: np.ndarray, image_geometry: ImageGeometry, acquisition_and_content_date: str, acquisition_and_content_time: str):
         self.image_data = image_data
         self.image_geometry = image_geometry
+
+        self.acquisition_date = self.content_date = acquisition_and_content_date
+        self.acquisition_time = self.content_time = acquisition_and_content_time
 
 
 class AcquiredSeries:
     """A series of acquired images. The acquired images are 2D."""
 
     def __init__(
-        self, series_name, scan_plane, list_acquired_images: list[AcquiredImage]
+        self, series_name, scan_plane, list_acquired_images: list[AcquiredImage], series_date: str, series_time: str
     ):
         self.series_name = series_name
         self.scan_plane = scan_plane
         self.list_acquired_images = list_acquired_images
+        self.series_instance_uid = generate_uid()
+        self.series_date = series_date
+        self.series_time = series_time
+
 
 
 class Scanlist:

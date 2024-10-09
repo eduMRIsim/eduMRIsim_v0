@@ -5,8 +5,10 @@ import pydicom
 from pydicom.dataset import FileDataset
 from pydicom.uid import ExplicitVRLittleEndian
 import nibabel as nib
+
+from simulator.examination import Examination
 from utils.logger import log
-from simulator.scanlist import AcquiredImage, ImageGeometry
+from simulator.scanlist import AcquiredImage, ImageGeometry, AcquiredSeries
 
 
 class ExportImageDialog(QDialog):
@@ -18,7 +20,7 @@ class ExportImageDialog(QDialog):
         super().__init__()
         self.setWindowTitle("Choose a file location")
 
-    def export_file_dialog(self, image: AcquiredImage | None, parameters: dict) -> None:
+    def export_file_dialog(self, image: AcquiredImage | None, series: AcquiredSeries, study: Examination, parameters: dict) -> None:
         """
         This method exports (acquired) image data to an image file through a file save dialog.
         """
@@ -67,7 +69,7 @@ class ExportImageDialog(QDialog):
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
                 ExportImageDialog.export_to_dicom_file(
-                    file_name, image_data, image_geometry, parameters
+                    file_name, image, series, study, parameters
                 )
                 log.info(f"DICOM file saved as {file_name}")
             elif (
@@ -102,7 +104,7 @@ class ExportImageDialog(QDialog):
 
     @staticmethod
     def export_to_dicom_file(
-        file_name: str, image_data: np.ndarray, image_geometry: ImageGeometry, parameters: dict
+        file_name: str, image: AcquiredImage, series: AcquiredSeries, study: Examination, parameters: dict
     ) -> None:
         """
         Static method to export image data to a DICOM file.
@@ -110,6 +112,9 @@ class ExportImageDialog(QDialog):
             https://dicom.innolitics.com/ciods/mr-image
             http://dicomlookup.com/
         """
+        image_data: np.ndarray = image.image_data
+        image_geometry: ImageGeometry = image.image_geometry
+
         # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
         # and multiplying by 4095.0; also set the type of the normalized data array to np.uint16
         max_val: float = np.max(image_data)
@@ -117,18 +122,17 @@ class ExportImageDialog(QDialog):
         image_data_normalized = ((image_data - min_val) / (max_val - min_val)) * 4095.0
         image_data_normalized = image_data_normalized.astype(np.uint16)
 
-        # Create a FileDataset instance
+        # Create a FileDataset instance and set some DICOM attributes on it
         file_meta = pydicom.dataset.FileMetaDataset()
-        file_meta.MediaStorageSOPClassUID = pydicom.uid.generate_uid()
+        file_meta.MediaStorageSOPClassUID = pydicom.uid.MRImageStorage
         file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
         file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
         file_meta.ImplementationClassUID = pydicom.uid.generate_uid()
         ds = FileDataset(file_name, {}, file_meta=file_meta, preamble=b"\0" * 128)
 
         # Set some required DICOM attributes
-        ds.StudyInstanceUID = pydicom.uid.generate_uid()
-        ds.SeriesInstanceUID = pydicom.uid.generate_uid()
-        ds.SOPInstanceUID = pydicom.uid.generate_uid()
+        ds.SOPClassUID = file_meta.MediaStorageSOPClassUID
+        ds.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
 
         # Set DICOM attributes either referring to image data, or referring to one of the scan parameters
         ds.Modality = "MR"
@@ -153,6 +157,19 @@ class ExportImageDialog(QDialog):
         ds.ImagePositionPatient = list(image_geometry.origin_LPS)
         ds.ImageOrientationPatient = image_geometry.axisX_LPS.tolist()
         ds.ImageOrientationPatient.extend(image_geometry.axisY_LPS.tolist())
+
+        ds.StudyDate = study.study_date
+        ds.StudyTime = study.study_time
+        ds.SeriesDate = series.series_date
+        ds.SeriesTime = series.series_time
+
+        ds.StudyInstanceUID = study.study_instance_uid
+        ds.SeriesInstanceUID = series.series_instance_uid
+
+        ds.AcquisitionDate = image.acquisition_date
+        ds.AcquisitionTime = image.acquisition_time
+        ds.ContentDate = image.content_date
+        ds.ContentTime = image.content_time
 
         # Save the DICOM file
         ds.save_as(file_name)

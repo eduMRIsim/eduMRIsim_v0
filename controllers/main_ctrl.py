@@ -372,17 +372,19 @@ class MainController:
 
         if index == 0:
             image = self.ui.scannedImageFrame.displayed_image
-            parameters = self.ui.parameterFormLayout.get_parameters()
+            series = self.ui.scannedImageFrame.acquired_series
         elif index == 1:
             image = self.ui.scanPlanningWindow1.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
+            series = self.ui.scanPlanningWindow1.acquired_series
         elif index == 2:
             image = self.ui.scanPlanningWindow2.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
+            series = self.ui.scanPlanningWindow2.acquired_series
         else:
             image = self.ui.scanPlanningWindow3.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
-        self.export_image_dialog_ui.export_file_dialog(image, parameters)
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters = self._return_parameters_from_image_in_scanlist(image)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_file_dialog(image, series, study, parameters)
 
     def handle_measureDistanceButtonClicked(self):
         if not self.ui._scannedImageFrame.measuring_enabled:
