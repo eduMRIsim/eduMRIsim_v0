@@ -27,7 +27,7 @@ class ExportImageDialog(QDialog):
             raise ValueError("No image found to export")
 
         image_data: np.ndarray = image.image_data
-        image_geometry = image.image_geometry
+        image_geometry: ImageGeometry = image.image_geometry
 
         if image_data is None:
             raise ValueError(
@@ -37,14 +37,6 @@ class ExportImageDialog(QDialog):
             raise ValueError(
                 "No image geometry found; at least one scan should be performed before attempting to export an image"
             )
-
-        # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
-        # and multiplying by 255.0.
-        # Also, set the type of the normalized data array to np.uint8.
-        max_val: float = np.max(image_data)
-        min_val: float = np.min(image_data)
-        image_data_normalized = ((image_data - min_val) / (max_val - min_val)) * 255.0
-        image_data_normalized = image_data_normalized.astype(np.uint8)
 
         # Open a save file dialog so that the user can save the image.
         file_name: str
@@ -62,7 +54,7 @@ class ExportImageDialog(QDialog):
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
                 ExportImageDialog.export_to_standard_image_file(
-                    file_name, image_data_normalized, "jpeg"
+                    file_name, image_data, "jpeg"
                 )
                 log.info(f"JPEG file saved as {file_name}")
             elif selected_filter == "PNG Files (*.png)":
@@ -70,19 +62,19 @@ class ExportImageDialog(QDialog):
                 # The mode, "L", is for 8-bit pixels, grayscale.
                 # This may be something to change in the future if we want different color scales.
                 ExportImageDialog.export_to_standard_image_file(
-                    file_name, image_data_normalized, "png"
+                    file_name, image_data, "png"
                 )
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
                 ExportImageDialog.export_to_dicom_file(
-                    image_data_normalized, image_geometry, parameters, file_name
+                    file_name, image_data, image_geometry, parameters
                 )
                 log.info(f"DICOM file saved as {file_name}")
             elif (
                 selected_filter == "NIfTI Files (*.nii)"
                 or selected_filter == "Compressed (Zipped) NIfTI Files (*.nii.gz)"
             ):
-                ExportImageDialog.export_to_nifti_file(image_data, file_name)
+                ExportImageDialog.export_to_nifti_file(file_name, image_data)
                 log.info(f"NIfTI file saved as {file_name}")
             else:
                 raise ValueError(
@@ -96,12 +88,21 @@ class ExportImageDialog(QDialog):
         """
         Static method to export image data to a standard image file, e.g. JPEG or PNG files.
         """
-        image = Image.fromarray(image_data, mode="L")
+
+        # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
+        # and multiplying by 255.0.
+        # Also, set the type of the normalized data array to np.uint8.
+        max_val: float = np.max(image_data)
+        min_val: float = np.min(image_data)
+        image_data_normalized = ((image_data - min_val) / (max_val - min_val)) * 255.0
+        image_data_normalized = image_data_normalized.astype(np.uint8)
+
+        image = Image.fromarray(image_data_normalized, mode="L")
         image.save(file_name, filter=file_filter)
 
     @staticmethod
     def export_to_dicom_file(
-        image_data: np.ndarray, image_geometry: ImageGeometry, parameters: dict, file_name: str
+        file_name: str, image_data: np.ndarray, image_geometry: ImageGeometry, parameters: dict
     ) -> None:
         """
         Static method to export image data to a DICOM file.
@@ -109,6 +110,13 @@ class ExportImageDialog(QDialog):
             https://dicom.innolitics.com/ciods/mr-image
             http://dicomlookup.com/
         """
+        # Normalize the image data array by scaling it down to a floating point value in range [0.0, 1.0]
+        # and multiplying by 4095.0; also set the type of the normalized data array to np.uint16
+        max_val: float = np.max(image_data)
+        min_val: float = np.min(image_data)
+        image_data_normalized = ((image_data - min_val) / (max_val - min_val)) * 4095.0
+        image_data_normalized = image_data_normalized.astype(np.uint16)
+
         # Create a FileDataset instance
         file_meta = pydicom.dataset.FileMetaDataset()
         file_meta.MediaStorageSOPClassUID = pydicom.uid.generate_uid()
@@ -124,14 +132,14 @@ class ExportImageDialog(QDialog):
 
         # Set DICOM attributes either referring to image data, or referring to one of the scan parameters
         ds.Modality = "MR"
-        ds.Rows, ds.Columns = image_data.shape
-        ds.BitsAllocated = 8  # Should be correct now, but may still need to be changed in the future
-        ds.BitsStored = 8  # Should be correct now, but may still need to be changed in the future
-        ds.HighBit = 7  # Should be correct now, but may still need to be changed in the future
+        ds.Rows, ds.Columns = image_data_normalized.shape
+        ds.BitsAllocated = 16  # Should be correct now, but may still need to be changed in the future
+        ds.BitsStored = 12  # Should be correct now, but may still need to be changed in the future
+        ds.HighBit = 11  # Should be correct now, but may still need to be changed in the future
         ds.PixelRepresentation = 0
         ds.SamplesPerPixel = 1  # This may be changed in the future
         ds.PhotometricInterpretation = "MONOCHROME2"  # Set this to a different value if a different color scale is used
-        ds.PixelData = image_data.tobytes()
+        ds.PixelData = image_data_normalized.tobytes()
         ds.SliceThickness = parameters["SliceThickness_mm"]
         ds.SpacingBetweenSlices = parameters[
             "SliceGap_mm"
@@ -150,7 +158,7 @@ class ExportImageDialog(QDialog):
         ds.save_as(file_name)
 
     @staticmethod
-    def export_to_nifti_file(image_data: np.ndarray, file_name: str) -> None:
+    def export_to_nifti_file(file_name: str, image_data: np.ndarray) -> None:
         """
         Static method to export image data to a (compressed) NIfTI file.
         """
