@@ -171,6 +171,7 @@ class Scanner:
             scanlist_names = [
                 ele.name for ele in self.examination.scanlist.scanlist_elements
             ]
+            # TODO: ele.scan_item._scan_parameters is now list, does it change something for saving state 
             scnalist_params = [
                 ele.scan_item._scan_parameters
                 for ele in self.examination.scanlist.scanlist_elements

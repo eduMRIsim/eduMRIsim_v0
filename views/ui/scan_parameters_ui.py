@@ -212,7 +212,7 @@ class ParameterFormLayout(QVBoxLayout):
 
     def set_parameters(self, parameters):
         # Set the data into the editors
-        # TODO: parameters is now list of parameters, need to get parameters corresponding to ac
+        # TODO: check if parameters is list of parameters or dictionary object
         with block_signals(self.editors.values()):
             for name, value in parameters.items():
                 if (

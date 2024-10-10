@@ -553,7 +553,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.series_name_label.setText("")
 
         self._displayArray()
-        self._update_scan_volume_display()
+        self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
 
     def setScanVolumes(self, scan_volumes: List[ScanVolume]):
         if len(self.scan_volumes) > 0:
@@ -598,6 +598,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume_display.set_scan_volume(None)
         self._update_scan_volume_display()
 
+    def _update_scan_volume_display_for_active_stack_item(self):
+        self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+
     def _update_scan_volume_display(self, stack_item: 'StackItem'):
         # TODO: call these methods on StackItem instead
         """Updates the intersection polygon between the scan volume and the displayed image."""
@@ -640,8 +643,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             scan_item_volume = self.get_scan_volume_for_stack_index(stack_item.stack_index)
             (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords) = scan_item_volume.compute_intersection_with_acquired_image(self.displayed_image)
             stack_item.update_objects_with_pixmap_coords(intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords)
-        else: 
-            stack_item.clear_objects()
+        else:
+            if stack_item is not None:
+                stack_item.clear_objects()
 
 
     def contextMenuEvent(self, event):

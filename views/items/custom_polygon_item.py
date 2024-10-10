@@ -538,7 +538,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             )
         )
         # apply volume updates also for current scan planning window polygon
-        self.viewer._update_scan_volume_display()
+        self.viewer._update_scan_volume_display_for_active_stack_item()
         self.notify_observers(
             EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
             direction_vector_in_lps_coords=direction_vec_in_lps,
@@ -613,7 +613,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         )
 
         # Update display so the currently selected polygon also rotates
-        self.viewer._update_scan_volume_display()
+        self.viewer._update_scan_volume_display_for_active_stack_item()
         self.viewer.viewport().update()
         QApplication.processEvents()
         self.update_rotation_handle_positions()
