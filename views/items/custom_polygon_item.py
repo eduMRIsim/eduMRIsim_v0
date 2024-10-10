@@ -91,11 +91,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def set_movability(self, isMovable: bool):
         if isMovable:
             print("make movable")
-            self.setFlag(QGraphicsItem.ItemIsMovable)
-            self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         else:
-            self.setFlag(QGraphicsItem.ItemIsMovable, False)
-            self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
     
     def set_color(self, color):
         self.setPen(color)

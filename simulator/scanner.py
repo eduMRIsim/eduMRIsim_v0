@@ -25,16 +25,24 @@ class Scanner:
         """Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume."""
         scan_item = self.active_scan_item
         series_name = scan_item.name
-        scan_plane = scan_item.scan_parameters["ScanPlane"]
+
+        active_params = scan_item.get_current_active_parameters()
+        # scan_plane = scan_item.scan_parameters["ScanPlane"]
+        scan_plane = active_params["ScanPlane"]
+
         signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(
-            scan_item.scan_parameters, self.model
+            # scan_item.scan_parameters, self.model
+            active_params, self.model
         )
         list_acquired_images = []
-        n_slices = int(scan_item.scan_parameters["NSlices"])
+        # n_slices = int(scan_item.scan_parameters["NSlices"])
+        n_slices = int(active_params["NSlices"])
         for i in range(n_slices):
             # for each slice create an acquired image
             # Step 1: create image geometry of slice
-            image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
+            # image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
+            scan_vol = scan_item.get_current_active_scan_volume()
+            image_geometry = scan_vol.get_image_geometry_of_slice(i)
             # Step 2: get image data of slice
             image_data = self._get_image_data_from_signal_array(
                 image_geometry, self.model, signal_array

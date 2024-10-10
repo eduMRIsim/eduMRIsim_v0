@@ -374,6 +374,13 @@ class ScanItem:
                 return parms
 
         return None
+    
+    def get_current_active_scan_volume(self):
+        for vol in self.scan_volumes:
+            if vol.stack_index == self.selected_stack_index:
+                return vol
+
+        return None
 
     # find item from list with specified stack index
     def find_item_with_stack_index(self, items, search_stack_index):

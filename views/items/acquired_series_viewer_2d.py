@@ -326,6 +326,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         return super().eventFilter(source, event)
     
     def get_stack_for_stack_id(self, stack_index):
+        print("STACKS " + str(self.stacks))
         for stack in self.stacks:
             if stack.stack_index == stack_index:
                 return stack
@@ -574,6 +575,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             stack = StackItem(self.pixmap_item, self, scan_vol.stack_index)
             stack.volume_display.set_scan_volume(scan_vol)
             self.stacks.append(stack)
+            print("STACK ADDED")
         
         inx = 0
         for stack in self.stacks:
@@ -736,7 +738,7 @@ class StackItem():
         self.volume_display = CustomPolygonItem(pixmap_item, series_viewer)
         # TODO: I think need to add viewer as observer for volume display as well
         self.volume_display.add_observer(series_viewer)
-        self.volume_display.set_color(Qt.red)
+        self.volume_display.set_color(Qt.GlobalColor.red)
         self.volume_display.set_movability(False)
         self.middle_line_display = MiddleLineItem(pixmap_item)
         self.stack_index = stack_index
@@ -748,14 +750,14 @@ class StackItem():
    
     # show this scan volume in yellow as selected scan volume and hide slices and middle lines, make it movable
     def set_active_settings(self):
-        self.volume_display.set_color(Qt.yellow)
+        self.volume_display.set_color(Qt.GlobalColor.yellow)
         self.volume_display.set_movability(True)
         self.middle_line_display.setVisible(True)
 
     # unselect this scan volume so set it red and make non-movable
     def set_inactive_settings(self):
         print("INACTIVE")
-        self.volume_display.set_color(Qt.red)
+        self.volume_display.set_color(Qt.GlobalColor.red)
         self.volume_display.set_movability(False)
         self.middle_line_display.setPolygon(QPolygonF())
         self.middle_line_display.setVisible(False)
