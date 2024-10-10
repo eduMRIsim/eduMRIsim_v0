@@ -31,6 +31,8 @@ class MainController:
     """
 
     def __init__(self, scanner: Scanner, ui: Ui_MainWindow) -> None:
+        self.new_examination_dialog_ui = None
+        self.load_examination_dialog_ui = None
         self.scanner: Scanner = scanner
         self.ui: Ui_MainWindow = ui
         self.ui_signals()

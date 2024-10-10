@@ -1,8 +1,6 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QPen, QColor
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsLineItem, QGraphicsTextItem, QGraphicsScene
-
-from views.items.measurement_tool import MeasurementTool
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 
 from utils.logger import log
 
@@ -19,20 +17,13 @@ class ZoomableView(QGraphicsView):
         self.last_mouse_pos = None
         self.zoom_sensitivity = 0.005
         self.measuring_enabled = False
-        self.zooming_enabled = True # TODO UWAGA
+        self.zooming_enabled = True
         self.max_zoom_out = 0.5
         self.max_zoom_in = 10
         self.zoom_factor = None
 
-        self.line_item = QGraphicsLineItem()
-        self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
-        self.scene.addItem(self.line_item)
-
-        self.text_item = QGraphicsTextItem()
-        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
-        self.scene.addItem(self.text_item)
-
-        self.measure = MeasurementTool(self.line_item, self.text_item, self)
+        # needs to be overriden in the child class
+        self.measure = None
 
     def mousePressEvent(self, event: QMouseEvent):
         if self.zooming_enabled and not self.measuring_enabled:
@@ -62,13 +53,14 @@ class ZoomableView(QGraphicsView):
         ):
             self.zoom_key_pressed = True
         elif event.key() == Qt.Key.Key_M and self.measure.is_measuring:
-            log.warn(f"{self.__class__.__name__} - Measuring tool disabled")
+            log.debug(f"{self.__class__.__name__} - Measuring tool disabled")
             self.measure.end_measurement()
         elif event.key() == Qt.Key.Key_M and not self.measure.is_measuring:
-            log.warn(f"{self.__class__.__name__} - Measuring tool enabled")
+            log.debug(f"{self.__class__.__name__} - Measuring tool enabled")
             # The keypress event is registered but move the measuring tool is not started
             cursor_pos = QCursor.pos()
             scene_pos = self.mapToScene(self.mapFromGlobal(cursor_pos))
+
             self.measure.start_measurement(scene_pos)
         else:
             super().keyPressEvent(event)

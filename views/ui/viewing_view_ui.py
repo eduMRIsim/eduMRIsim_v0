@@ -1,17 +1,17 @@
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent, QKeyEvent, QMouseEvent
+from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent, QPen
 from PyQt6.QtWidgets import (
     QFrame,
     QVBoxLayout,
     QGridLayout,
-    QGraphicsView,
     QGraphicsScene,
     QGraphicsPixmapItem,
-    QSizePolicy,
+    QSizePolicy, QGraphicsLineItem, QGraphicsTextItem,
 )
 
 from simulator.scanlist import AcquiredSeries
+from views.items.measurement_tool import MeasurementTool
 from views.items.zoomin import ZoomableView
 from views.ui.scanlist_ui import ScanlistListWidget
 
@@ -106,69 +106,19 @@ class GridCell(ZoomableView):
 
         self.setAcceptDrops(True)
 
-        # zoom controls
-        # self.mouse_pressed = False
-        # self.zoom_key_pressed = False
-        # self.last_mouse_pos = None
-        # self.zoom_sensitivity = 0.005
+        self.line_item = QGraphicsLineItem()
+        self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
+        self.scene.addItem(self.line_item)
+
+        self.text_item = QGraphicsTextItem()
+        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.scene.addItem(self.text_item)
+
+        self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
     def contextMenuEvent(self, event):
         """Context menu for adding a row or column."""
         super().contextMenuEvent(event)
-
-
-    # start zoom when pressed
-    # def mousePressEvent(self, event: QMouseEvent):
-    #     if event.button() == Qt.MouseButton.LeftButton:
-    #         self.mouse_pressed = True
-    #         self.last_mouse_pos = event.pos()
-
-    # stop zoom when released
-    # def mouseReleaseEvent(self, event: QMouseEvent):
-    #     if event.button() == Qt.MouseButton.LeftButton:
-    #         self.mouse_pressed = False
-    #         self.last_mouse_pos = None
-
-    # def keyPressEvent(self, event: QKeyEvent):
-    #     if event.key() == Qt.Key.Key_Z:
-    #         self.zoom_key_pressed = True
-
-    # def keyReleaseEvent(self, event: QKeyEvent):
-    #     if event.key() == Qt.Key.Key_Z:
-    #         self.zoom_key_pressed = False
-
-
-    # def mouseMoveEvent(self, event):
-    #     """Handle zoom when the mouse is being dragged."""
-    #     if self.mouse_pressed and self.zoom_key_pressed and self.last_mouse_pos is not None:
-    #
-    #         max_zoom_out = 0.1
-    #         max_zoom_in = 10
-    #         current_pos = event.pos()
-    #         delta_y = current_pos.y() - self.last_mouse_pos.y()
-    #
-    #         # cursor_pos = self.mapToScene(current_pos)
-    #         zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
-    #
-    #         # get current zoom level (scaling factor)
-    #         current_zoom = self.transform().m11()
-    #
-    #         new_zoom = current_zoom * zoom_factor
-    #         if max_zoom_out <= new_zoom <= max_zoom_in:
-    #             self.scale(zoom_factor, zoom_factor)
-    #
-    #         self.scale(zoom_factor, zoom_factor)
-    #         self.centerOn(self.mapToScene(current_pos))
-    #         self.last_mouse_pos = current_pos
-
-    # def zoom_in(self, center_point):
-    #     if self.transform().m11() < self.max_zoom_in:
-    #         self.scale(self.zoom_factor, self.zoom_factor)
-    #
-    # def zoom_out(self, center_point):
-    #     if self.transform().m11() > self.max_zoom_out:
-    #         self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-    #         self.centerOn(center_point)
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized.

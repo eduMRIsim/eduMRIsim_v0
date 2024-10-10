@@ -11,13 +11,9 @@ from PyQt6.QtGui import (
     QPolygonF,
     QDragEnterEvent,
     QDragMoveEvent,
-    QDropEvent,
-    QMouseEvent,
-    QKeyEvent,
-    QCursor
+    QDropEvent
 )
 from PyQt6.QtWidgets import (
-    QGraphicsView,
     QGraphicsScene,
     QGraphicsPixmapItem,
     QSizePolicy,
@@ -34,12 +30,12 @@ from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
 from utils.logger import log
-from views.items.measurement_tool import MeasurementTool
 from views.items.custom_polygon_item import CustomPolygonItem
-from views.items.stacks_item import StacksItem
-from views.ui.scanlist_ui import ScanlistListWidget
+from views.items.measurement_tool import MeasurementTool
 from views.items.middle_line_item import MiddleLineItem
+from views.items.stacks_item import StacksItem
 from views.items.zoomin import ZoomableView
+from views.ui.scanlist_ui import ScanlistListWidget
 
 
 class AcquiredSeriesViewer2D(ZoomableView):
@@ -143,23 +139,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.right_click_menu.addAction(self.export_action)
 
         self.scene.installEventFilter(self)
-
-        # Zoom controls
-        self.zooming_enabled = False
-        self.mouse_pressed = False
-        self.last_mouse_pos = None
-        self.zoom_sensitivity = 0.005
-        self.max_zoom_out = 0.5
-        self.max_zoom_in = 10
-        self.zoom_factor = None
-
-
-        # Key press controls
-        self.zoom_key_pressed = False
-        self.measuring_key_pressed = False
-
-        # Measurement tool
-        self.measuring_enabled = False
 
         self.line_item = QGraphicsLineItem()
         self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
@@ -281,9 +260,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
         )
 
     def _displayArray(self):
-        width, height = 0, 0
         if self.array is not None:
-
             # Normalize the slice values for display
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
