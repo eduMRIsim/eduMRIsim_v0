@@ -523,5 +523,6 @@ class MainController:
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
             # self._scan_vo
-            self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
+            # self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
+            self.scanner.active_scan_item.find_item_with_stack_index(self.scanner.active_scan_item.scan_volumes, self.scanner.active_scan_item.selected_stack_index).clamp_to_scanner_dimensions()
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
