@@ -290,7 +290,7 @@ class ScanItem:
             scan_params_processed["StackIndex"] = int(scan_params["StackIndex"])
             params_stack_index = int(scan_params["StackIndex"])
             # if there are are parameters corresponding to the stack index of received params, then replace this item, otherwise add new
-            scan_params_index = self.find_item_with_stack_index(self._scan_parameters, params_stack_index)
+            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, params_stack_index)
             if scan_params_index is not None:
                 self._scan_parameters[scan_params_index] = scan_params_processed
             else:
@@ -319,7 +319,7 @@ class ScanItem:
                 scan_params_processed[key] = value
 
             # update wiht clamped values 
-            scan_params_index = self.find_item_with_stack_index(self._scan_parameters, params_stack_index)
+            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, params_stack_index)
             if scan_params_index is not None:
                 self._scan_parameters[scan_params_index] = scan_params_processed
             else:
@@ -384,6 +384,21 @@ class ScanItem:
                 break
 
         return found_stack_indx
+    
+    def find_scan_volume_with_stack_index(self, stack_index):
+        for vol in self.scan_volumes:
+            if vol.stack_index == stack_index:
+                return vol
+        return None
+    
+    def find_parameters_with_stack_index(self, params: List[dict], stack_index):
+        found_stack_indx = None
+        for idx, item in enumerate(params):
+            if item["StackIndex"] == stack_index:
+                found_stack_indx = idx
+                break
+
+        return found_stack_indx
 
     @property
     def scan_parameters_original(self):
@@ -398,7 +413,7 @@ class ScanItem:
         #         self._scan_parameters_original[key] = value
         for item in scan_parameters:
             processed_params = {}
-            for key, value in scan_parameters.items():
+            for key, value in item.items():
                 try:
                     processed_params[key] = float(value)
                 except:

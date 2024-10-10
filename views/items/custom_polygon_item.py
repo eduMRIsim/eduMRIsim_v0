@@ -88,6 +88,18 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the initial position of the scale handles.
         self.update_scale_handle_positions()
 
+    def set_movability(self, isMovable: bool):
+        if isMovable:
+            print("make movable")
+            self.setFlag(QGraphicsItem.ItemIsMovable)
+            self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        else:
+            self.setFlag(QGraphicsItem.ItemIsMovable, False)
+            self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+    
+    def set_color(self, color):
+        self.setPen(color)
+
     def setScanVolume(self, scan_volume):
         self.scan_volume = scan_volume
 
