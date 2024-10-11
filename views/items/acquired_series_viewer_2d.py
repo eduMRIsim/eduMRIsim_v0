@@ -293,6 +293,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
         if event.type() == QEvent.Type.GraphicsSceneMouseMove:
+            # check if the stack is non
+            if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
+                return RuntimeError("No stack found for selected stack index")
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if self.get_stack_for_stack_id(self.selected_stack_indx).volume_display and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_rotating:
                 # self.scan_volume_display.handle_scene_mouse_move(event)
