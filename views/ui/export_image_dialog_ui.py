@@ -311,6 +311,7 @@ class ExportImageDialog(QDialog):
         nifti_img = nib.Nifti1Image(image_data, transformation_matrix)
 
         nifti_img.header.set_xyzt_units("mm", None)  # time unit is None as there is no time dimension (images are 2D)
+        nifti_img.header.set_dim_info(freq=0, phase=1, slice=None)
 
         # Save the NIfTI image to a file.
         nib.save(nifti_img, file_name)
