@@ -77,7 +77,7 @@ class ExportImageDialog(QDialog):
                 selected_filter == "NIfTI Files (*.nii)"
                 or selected_filter == "Compressed (Zipped) NIfTI Files (*.nii.gz)"
             ):
-                ExportImageDialog.export_to_nifti_file(file_name, image_data)
+                ExportImageDialog.export_to_nifti_file(file_name, image)
                 log.info(f"NIfTI file saved as {file_name}")
             else:
                 raise ValueError(
@@ -281,20 +281,32 @@ class ExportImageDialog(QDialog):
         ds.ContentTime = image.content_time
 
     @staticmethod
-    def export_to_nifti_file(file_name: str, image_data: np.ndarray) -> None:
+    def export_to_nifti_file(file_name: str, image: AcquiredImage) -> None:
         """
         Static method to export image data to a (compressed) NIfTI file.
         """
+        image_data: np.ndarray = image.image_data
+        image_geometry: ImageGeometry = image.image_geometry
+
         # Create an affine transformation matrix
         # Currently, this is just the identity matrix, but this may be changed in the future.
         transformation_matrix: np.ndarray = np.eye(4)
 
-        # if file_name.endswith(".nii"):
         image_data = np.rot90(image_data)
         image_data = np.flip(image_data, axis=0)
 
         # Create a NIfTI image
         nifti_img = nib.Nifti1Image(image_data, transformation_matrix)
+
+        nifti_img.header.set_xyzt_units("mm", "msec")  # msec might not be the correct time unit
+
+        transform = nifti_img.affine
+        for i in range(3):
+            transform[i][0] = image_geometry.axisX_LPS[i]
+            transform[i][1] = image_geometry.axisY_LPS[i]
+            transform[i][2] = image_geometry.axisZ_LPS[i]
+            transform[i][3] = image_geometry.origin_LPS[i]
+        nifti_img.header.set_sform(transform, code=1)
 
         # Save the NIfTI image to a file.
         nib.save(nifti_img, file_name)
