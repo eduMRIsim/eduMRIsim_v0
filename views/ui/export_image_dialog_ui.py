@@ -15,9 +15,8 @@ from simulator.scanlist import AcquiredImage, ImageGeometry, AcquiredSeries
 
 class ExportImageDialog(QDialog):
     """
-    This class represents a dialog to export acquired images to image files.
+    The ExportImageDialog class represents a dialog to export acquired images to image files.
     """
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Choose a file location")
@@ -25,9 +24,8 @@ class ExportImageDialog(QDialog):
 
     def export_file_dialog(self, image: AcquiredImage | None, series: AcquiredSeries, study: Examination, parameters: dict) -> None:
         """
-        This method exports (acquired) image data to an image file through a file save dialog.
+        Export (acquired) image data to an image file through a file save dialog.
         """
-
         if image is None:
             raise ValueError("No image found to export")
 
@@ -108,11 +106,23 @@ class ExportImageDialog(QDialog):
     def export_to_dicom_with_dicomdir(
             self, image: AcquiredImage, series: AcquiredSeries, study: Examination, parameters: dict
     ) -> None:
+        """
+        Export image data to a DICOM file with an associated DICOMDIR file.
+        When running this method, the user should choose a folder to store the DICOM folder in.
+        This DICOM folder will contain the DICOM files and the associated DICOMDIR file.
+        If the user chooses a folder with an existing DICOM folder and DICOMDIR file, the existing DICOMDIR file will be updated, and the new DICOM file will be added to the existing DICOM folder.
 
+        Args:
+            image: The acquired image to save to the DICOM file.
+        """
+        # Open a directory dialog so that the user can choose a directory to save the DICOM folder in.
+        # If a folder is selected that contains a valid DICOM folder, the existing DICOM folder is used instead of a new one.
         dicomdir_path = QFileDialog.getExistingDirectory(
             parent=self,
             caption="Choose a directory for the DICOM folder with DICOMDIR file",
         )
+
+        # Only if the user specified a directory, save the image in that directory.
         if dicomdir_path:
             dicomdir_path = os.path.join(dicomdir_path, "DICOM").replace("\\", "/")
             fs = FileSet()
@@ -120,15 +130,16 @@ class ExportImageDialog(QDialog):
                 fs.load(os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/"))
                 log.info(f"Loaded existing DICOMDIR file from {dicomdir_path}")
 
+            # Get the image data and image geometry from the acquired image
             image_data: np.ndarray = image.image_data
             image_geometry: ImageGeometry = image.image_geometry
 
+            # Normalize the image data for DICOM files
             image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(image_data)
 
             # Create a FileDataset instance and set some DICOM attributes on it
             file_meta = ExportImageDialog._create_file_meta_for_dicom()
             ds = FileDataset("this_is_the_file_name", {}, file_meta=file_meta, preamble=b"\0" * 128)
-
             self._set_dicom_attributes(ds, file_meta, image, image_data_normalized, image_geometry, parameters, series,
                                        study)
 
@@ -145,7 +156,7 @@ class ExportImageDialog(QDialog):
         self, file_name: str, image: AcquiredImage, series: AcquiredSeries, study: Examination, parameters: dict
     ) -> None:
         """
-        Export image data to a DICOM file.
+        Export image data to a single DICOM file.
         For reference, the following websites were used for the DICOM attributes that are set within this method:
             https://dicom.innolitics.com/ciods/mr-image
             http://dicomlookup.com/
@@ -157,23 +168,29 @@ class ExportImageDialog(QDialog):
             study: The examination study to which the series belongs.
             parameters: The scan parameters of the acquired image.
         """
+        # Get the image data and image geometry from the acquired image
         image_data: np.ndarray = image.image_data
         image_geometry: ImageGeometry = image.image_geometry
 
+        # Normalize the image data for DICOM files
         image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(image_data)
 
-        # Create a FileDataset instance and set some DICOM attributes on it
+        # Create a FileDataset instance and set DICOM attributes on it
         file_meta = ExportImageDialog._create_file_meta_for_dicom()
         ds = FileDataset(file_name, {}, file_meta=file_meta, preamble=b"\0" * 128)
-
-        self._set_dicom_attributes(ds, file_meta, image, image_data_normalized, image_geometry, parameters, series,
-                                   study)
+        self._set_dicom_attributes(ds, file_meta, image, image_data_normalized, image_geometry, parameters, series, study)
 
         # Save the DICOM file
         ds.save_as(file_name)
 
     @staticmethod
-    def _create_file_meta_for_dicom():
+    def _create_file_meta_for_dicom() -> pydicom.dataset.FileMetaDataset:
+        """
+        Create a FileMetaDataset instance with required DICOM attributes.
+
+        Returns:
+            A FileMetaDataset instance with required DICOM attributes.
+        """
         file_meta = pydicom.dataset.FileMetaDataset()
         file_meta.MediaStorageSOPClassUID = pydicom.uid.MRImageStorage
         file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
@@ -182,20 +199,42 @@ class ExportImageDialog(QDialog):
         return file_meta
 
     @staticmethod
-    def _normalize_image_data_for_dicom(image_data):
-        # Normalize the image data array
+    def _normalize_image_data_for_dicom(image_data: np.ndarray) -> np.ndarray:
+        """
+        Static method to normalize the image data array for DICOM files.
+        This normalization method scales the image data array to a floating point value in the range [0.0, 1.0] and multiplies it by 4095.0.
+        This way, the image data array is scaled to the 12-bit unsigned integer range that DICOM requires.
+
+        Args:
+            image_data: The image data array to normalize.
+
+        Returns:
+            The normalized image data array.
+        """
         max_val: float = np.max(image_data)
         min_val: float = np.min(image_data)
         image_data_normalized = ((image_data - min_val) / (max_val - min_val)) * 4095.0
         image_data_normalized = image_data_normalized.astype(np.uint16)
         return image_data_normalized
 
-    def _set_dicom_attributes(self, ds, file_meta, image, image_data_normalized, image_geometry, parameters, series,
-                              study) -> None:
-        # Set some required DICOM attributes
+    def _set_dicom_attributes(
+            self, ds, file_meta, image, image_data_normalized, image_geometry, parameters, series, study
+    ) -> None:
+        """
+        Set DICOM attributes on a FileDataset instance.
+
+        Args:
+            ds: The FileDataset instance to set DICOM attributes on.
+            file_meta: The FileMetaDataset instance with required DICOM attributes.
+            image: The acquired image to save to a DICOM file.
+            image_data_normalized: The normalized image data array to save to the DICOM file.
+            image_geometry: The image geometry of the acquired image.
+            parameters: The scan parameters of the acquired image.
+            series: The acquired series to which the image belongs.
+            study: The examination study to which the series belongs.
+        """
         ds.SOPClassUID = file_meta.MediaStorageSOPClassUID
         ds.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
-        # Set DICOM attributes either referring to image data, or referring to one of the scan parameters
         ds.Modality = "MR"
         ds.Rows, ds.Columns = image_data_normalized.shape
         ds.BitsAllocated = 16  # Should be correct now, but may still need to be changed in the future
