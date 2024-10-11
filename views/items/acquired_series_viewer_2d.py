@@ -137,6 +137,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
+        self.export_dicomdir_action = QAction("Export using DICOMDIR...")
+        self.right_click_menu.addAction(self.export_dicomdir_action)
 
         self.scene.installEventFilter(self)
 

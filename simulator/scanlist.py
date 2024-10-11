@@ -130,20 +130,27 @@ class AcquiredImage:
 
         self.acquisition_date = self.content_date = acquisition_and_content_date
         self.acquisition_time = self.content_time = acquisition_and_content_time
+        self.instance_number = None
 
 
 class AcquiredSeries:
     """A series of acquired images. The acquired images are 2D."""
+    series_number = 101
 
     def __init__(
         self, series_name, scan_plane, list_acquired_images: list[AcquiredImage], series_date: str, series_time: str
     ):
         self.series_name = series_name
         self.scan_plane = scan_plane
+        for i, image in enumerate(list_acquired_images):
+            image.instance_number = i+1
         self.list_acquired_images = list_acquired_images
+
         self.series_instance_uid = generate_uid()
         self.series_date = series_date
         self.series_time = series_time
+        self.series_number = AcquiredSeries.series_number
+        AcquiredSeries.series_number += 100
 
 
 
