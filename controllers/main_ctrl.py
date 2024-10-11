@@ -451,6 +451,8 @@ class MainController:
             # For each scan list element, loop over all (acquired) images
             acquired_series: AcquiredSeries = scanlist_element.acquired_data
             acquired_image: AcquiredImage
+            if acquired_series is None:
+                continue
             for acquired_image in acquired_series.list_acquired_images:
                 # If the image data does not match, continue to the next image
                 if not np.array_equal(acquired_image.image_data, image.image_data):
