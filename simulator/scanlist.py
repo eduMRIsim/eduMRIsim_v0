@@ -152,6 +152,14 @@ class Scanlist:
         if self.active_idx is None:
             self.active_idx = 0
 
+    def add_scanlist_element_multi(self, name, scan_parameters):
+        # TODO: if scan_parameters is list stored in settings, should handle loading all scan parameters objects as stacks into scanlistelememnt
+        new_scanlist_element = ScanlistElement(name, scan_parameters[0])
+        self.scanlist_elements.append(new_scanlist_element)
+        self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
+        if self.active_idx is None:
+            self.active_idx = 0
+
     @property
     def active_idx(self):
         return self._active_idx
@@ -217,6 +225,14 @@ class ScanlistElement:
 
 
 class ScanItem:
+    # def __init__(self, *inp):
+    #     # when 2 arguments are passed 
+    #     if len(inp) == 2: 
+    #         self.ans = self.initialize_with2_params(inp) 
+    #     if len(inp) == 3:
+    #         self.ans = self.initialize_with3_params(inp)
+
+    # scan_parameters argument is single object in this case
     def __init__(self, name, scan_parameters):
         self.name = name
         # self._scan_parameters = {}
@@ -237,6 +253,28 @@ class ScanItem:
         self._status = ScanItemStatusEnum.READY_TO_SCAN
         # initialize selected stack index
         self.selected_stack_index = 0
+
+    # # scan_parameters argument is list in this case
+    # def __init__(self, name, scan_parameters, multi):
+    #     self.name = name
+    #     # self._scan_parameters = {}
+    #     self._scan_parameters: List[dict] = []
+    #     # self.scan_volume = ScanVolume()
+    #     # self.scan_volume.add_observer(
+    #     #     self
+    #     # )  # Scan item adds itself to scan volume as an observer so that it can receive notifications that the scan volume has changed. It receives notifications when changes are caused by user interactions with the scan volume display on viewing windows on the UI.
+    #     self.scan_volumes: List[ScanVolume] = []
+    #     self.observers = []
+    #     # self.scan_parameters = scan_parameters
+    #     # TODO: does first time setting value also go through setter function as it is important for creating scan volumes object etc
+    #     self.scan_parameters: List[dict] = scan_parameters
+    #     self._scan_parameters_original: List[dict] = []
+    #     self.scan_parameters_original: List[dict] = scan_parameters
+    #     self.messages = {}
+    #     self.valid = True
+    #     self._status = ScanItemStatusEnum.READY_TO_SCAN
+    #     # initialize selected stack index
+    #     self.selected_stack_index = 0
 
     @property
     def status(self):
@@ -544,7 +582,7 @@ class ScanItem:
         if index_to_replace is not None:
             scan_params_copy[index_to_replace] = scan_params
 
-        self.perform_rotation_check(self, self.scan_parameters)
+        self.perform_rotation_check(self.scan_parameters)
 
     # Rotation check for Plane changing according to rotation. Only gets called when the save button is pressed
     def perform_rotation_check(self, scan_parameters_list):

@@ -51,7 +51,11 @@ class SettingsManager:
 
             if scan_list_items is not None:
                 for i in range(len(scan_list_items)):
-                    self.scanner.scanlist.add_scanlist_element(
+                    # self.scanner.scanlist.add_scanlist_element(
+                    #     scan_list_items[i], scan_list_params[i]
+                    # )
+                    # scanlist params are stored now as a list
+                    self.scanner.scanlist.add_scanlist_element_multi(
                         scan_list_items[i], scan_list_params[i]
                     )
                     self.main_controller.update(EventEnum.SCANLIST_ITEM_ADDED)

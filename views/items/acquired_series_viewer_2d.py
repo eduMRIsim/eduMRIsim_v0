@@ -166,6 +166,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
+        self.only_display_image = False
+
     # start zoom when pressed
     def mousePressEvent(self, event):
         # TODO the user should not be able to zoom in and out when the measuring tool is active
@@ -533,6 +535,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.stacks.append(new_stack)
         
         self.setAcquiredSeries(acquired_series)
+        self.only_display_image = True
 
 
 
@@ -567,7 +570,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.series_name_label.setText("")
 
         self._displayArray()
-        self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+        if self.only_display_image != True:
+            self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
 
     def setScanVolumes(self, scan_volumes: List[ScanVolume]):
         if len(self.scan_volumes) > 0:
