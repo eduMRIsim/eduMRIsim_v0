@@ -288,25 +288,29 @@ class ExportImageDialog(QDialog):
         image_data: np.ndarray = image.image_data
         image_geometry: ImageGeometry = image.image_geometry
 
-        # Create an affine transformation matrix
-        # Currently, this is just the identity matrix, but this may be changed in the future.
-        transformation_matrix: np.ndarray = np.eye(4)
-
         image_data = np.rot90(image_data)
         image_data = np.flip(image_data, axis=0)
+
+        lps_to_ras_transform_matrix = np.eye(4)
+        lps_to_ras_transform_matrix[0][0] = -1
+        lps_to_ras_transform_matrix[1][1] = -1
+
+        axisX_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.axisX_LPS, [1.0]))
+        axisY_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.axisY_LPS, [1.0]))
+        axisZ_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.axisZ_LPS, [1.0]))
+        origin_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.origin_LPS, [1.0]))
+
+        transformation_matrix = np.eye(4)
+        for i in range(3):
+            transformation_matrix[i][0] = axisX_RAS[i]
+            transformation_matrix[i][1] = axisY_RAS[i]
+            transformation_matrix[i][2] = axisZ_RAS[i]
+            transformation_matrix[i][3] = origin_RAS[i]
 
         # Create a NIfTI image
         nifti_img = nib.Nifti1Image(image_data, transformation_matrix)
 
-        nifti_img.header.set_xyzt_units("mm", "msec")  # msec might not be the correct time unit
-
-        transform = nifti_img.affine
-        for i in range(3):
-            transform[i][0] = image_geometry.axisX_LPS[i]
-            transform[i][1] = image_geometry.axisY_LPS[i]
-            transform[i][2] = image_geometry.axisZ_LPS[i]
-            transform[i][3] = image_geometry.origin_LPS[i]
-        nifti_img.header.set_sform(transform, code=1)
+        nifti_img.header.set_xyzt_units("mm", None)  # time unit is None as there is no time dimension (images are 2D)
 
         # Save the NIfTI image to a file.
         nib.save(nifti_img, file_name)
