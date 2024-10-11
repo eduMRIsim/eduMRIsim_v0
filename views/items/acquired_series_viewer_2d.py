@@ -523,6 +523,19 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.acquired_series = None
             self.setDisplayedImage(None)
 
+    def setScanCompleteAcquiredData(self, acquired_series: AcquiredSeries):
+        if (len(self.stacks) == 0):
+            self.scan_volumes = []
+            new_stack = StackItem(self.pixmap_item, self, 0)
+            new_scan_vol = ScanVolume(0)
+            self.scan_volumes.append(new_scan_vol)
+            new_stack.volume_display.setScanVolume(new_scan_vol)
+            self.stacks.append(new_stack)
+        
+        self.setAcquiredSeries(acquired_series)
+
+
+
     def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:

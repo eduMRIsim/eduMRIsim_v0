@@ -320,7 +320,7 @@ class MainController:
             self.ui.state = UI_state.InvalidParametersState()
         elif status == ScanItemStatusEnum.COMPLETE:
             self.ui.state = UI_state.ScanCompleteState()
-            self.ui.scannedImageFrame.setAcquiredSeries(
+            self.ui.scannedImageFrame.setScanCompleteAcquiredData(
                 self.scanner.active_scanlist_element.acquired_data
             )
 
@@ -477,7 +477,7 @@ class MainController:
             self.ui.editingStackedLayout.setCurrentIndex(
                 0
             )  # Switch to scan parameter editor view
-            self.ui.scannedImageFrame.setAcquiredSeries(
+            self.ui.scannedImageFrame.setScanCompleteAcquiredData(
                 self.scanner.active_scanlist_element.acquired_data
             )  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
             current_list_item = self.ui.scanlistListWidget.item(

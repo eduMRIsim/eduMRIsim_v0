@@ -443,11 +443,11 @@ class ScanItem:
     def validate_scan_parameters_single(self, scan_params):
         self.valid = True
         self.messages = {}
-        slice_index = scan_params["SliceIndex"]
+        slice_index = scan_params["StackIndex"]
         scan_params_copy = self._scan_parameters.copy()
         index_to_replace = None
         for inx, scan_parms in enumerate(scan_params_copy):
-            if scan_parms["SliceIndex"] == slice_index:
+            if scan_parms["StackIndex"] == slice_index:
                 index_to_replace = inx
                 break
 
@@ -533,11 +533,11 @@ class ScanItem:
         #     self.status = ScanlistElementStatusEnum.INVALID
 
     def perform_rotation_check_single(self, scan_params):
-        slice_index = scan_params["SliceIndex"]
+        slice_index = scan_params["StackIndex"]
         scan_params_copy = self._scan_parameters.copy()
         index_to_replace = None
         for inx, scan_parms in enumerate(scan_params_copy):
-            if scan_parms["SliceIndex"] == slice_index:
+            if scan_parms["StackIndex"] == slice_index:
                 index_to_replace = inx
                 break
 
