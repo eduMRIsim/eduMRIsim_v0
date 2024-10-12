@@ -203,6 +203,8 @@ class MainController:
                 list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))
             elif item.scan_item.status == ScanItemStatusEnum.BEING_MODIFIED:
                 list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
+            elif item.scan_item.status == ScanItemStatusEnum.BEING_SCANNED:
+                list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
             elif item.scan_item.status == ScanItemStatusEnum.INVALID:
                 list_item.setIcon(QIcon("resources/icons/alert-circle-outline.png"))
             elif item.scan_item.status == ScanItemStatusEnum.COMPLETE:
@@ -319,6 +321,8 @@ class MainController:
             self.ui.state = UI_state.ReadyToScanState()
         elif status == ScanItemStatusEnum.BEING_MODIFIED:
             self.ui.state = UI_state.BeingModifiedState()
+        elif status == ScanItemStatusEnum.BEING_SCANNED:
+            self.ui.state = UI_state.BeingScannedState()
         elif status == ScanItemStatusEnum.INVALID:
             self.ui.state = UI_state.InvalidParametersState()
         elif status == ScanItemStatusEnum.COMPLETE:

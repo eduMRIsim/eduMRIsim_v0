@@ -25,19 +25,25 @@ class Scanner(QObject):
         self.scan_time = 0
         self.scan_timer = None
         self.scan_elapsed_time = 0
+        self.scan_started = False
 
     def scan(self) -> None:
         """Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume."""
-        scan_item = self.active_scan_item
-        self.scan_time = scan_item.scan_parameters["NSlices"] * int(scan_item.scan_parameters["TR_ms"]) * round(scan_item.scan_parameters["FOVPE_mm"])
-        self.scan_elapsed_time = 0
+        if not self.scan_started:
+            self.scan_started = True
+            scan_item = self.active_scan_item
+            self.scan_time = scan_item.scan_parameters["NSlices"] * int(scan_item.scan_parameters["TR_ms"]) * round(scan_item.scan_parameters["FOVPE_mm"])
+            self.scan_elapsed_time = 0
 
-        # Set up a QTimer to simulate scanning over time
-        self.scan_timer = QTimer()
-        self.scan_timer.setInterval(100)  # Update every 100 ms
-        self.scan_timer.timeout.connect(self._perform_scan_step)
-        self.scan_timer.start()
-
+            # Set up a QTimer to simulate scanning over time
+            self.active_scan_item.status = ScanItemStatusEnum.BEING_SCANNED
+            self.scan_timer = QTimer()
+            self.scan_timer.setInterval(100)  # Update every 100 ms
+            self.scan_timer.timeout.connect(self._perform_scan_step)
+            self.scan_timer.start()
+        else:
+            self.scan_elapsed_time = self.scan_time
+        
     def _perform_scan_step(self):
         """Perform a step in the scanning process."""
         # Increment elapsed time
@@ -55,8 +61,9 @@ class Scanner(QObject):
             # Stop the timer
             self.scan_timer.stop()
             self.scan_timer = None
+            self.scan_started = False
 
-            # Perform the actual scanning (synthesizing MRI data)
+            # Perform the actual scanning 
             acquired_series = self._perform_scan()
             # Set scan item status to COMPLETE
             self.active_scan_item.status = ScanItemStatusEnum.COMPLETE

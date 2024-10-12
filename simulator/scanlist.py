@@ -200,6 +200,7 @@ class ScanItemStatusEnum(Enum):
         auto()
     )  # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
     BEING_MODIFIED = auto()  # Scan parameters are being modified by the user on the UI
+    BEING_SCANNED = auto()  # Scan being performed
     INVALID = (
         auto()
     )  # Scan parameters are invalid and the scan item cannot be applied to "scan" the anatomical model
