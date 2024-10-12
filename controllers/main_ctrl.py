@@ -80,6 +80,9 @@ class MainController:
         # Signals related to scanning
         self.ui.startScanButton.clicked.connect(self.scanner.scan)
 
+        # Connect scanner signals to slots
+        self.scanner.scan_progress.connect(self.update_scan_progress)
+
         # Signals related to scan planning windows
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
@@ -211,7 +214,11 @@ class MainController:
         if active_idx is not None:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
-        progress = scanlist.get_progress()
+
+    # Sync progress bar to scan progress
+    def update_scan_progress(self, progress: float):
+        """Update the progress bar during scanning."""
+        # Assuming the progress bar ranges from 0 to 100
         self.ui.scanProgressBar.setValue(int(progress * 100))
 
     def save_complete_scanlist_items(self, scanlist):
