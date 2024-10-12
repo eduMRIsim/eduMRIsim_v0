@@ -110,6 +110,12 @@ class App(QApplication):
             lambda: self.main_controller.handle_measureDistanceButtonClicked(),
             checkable=True,
         )
+        
+        tools_section.add_action(
+        "Window Level Mode",
+        lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
+        checkable=True
+        )
 
         # WARNING: not implemented yet
         tools_section.add_action("Measure Area", self.test_action, checkable=False)
