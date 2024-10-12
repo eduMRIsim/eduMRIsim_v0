@@ -29,7 +29,7 @@ class gridViewingWindowLayout(QFrame):
         for i in range(2):
             rows = []  # list of elements in each row
             for j in range(2):
-                empty_widget = GridCell(i, j)
+                empty_widget = GridCell(self, i, j)
                 rows.append(empty_widget)
                 self.right_layout.addWidget(empty_widget, i, j)
             self.grid_cells.append(rows)
@@ -62,15 +62,15 @@ class gridViewingWindowLayout(QFrame):
 
         if row_index < 5:
             for j in range(nr_columns):
-                new_cell = GridCell(row_index, j)
+                new_cell = GridCell(self, row_index, j)
                 if row_index > 0:
                     new_cell.dropEventSignal.connect(self.grid_cells[row_index-1][j].dropEventSignal)
-                    #self.grid_cells[row_index-1][j].dropEventSignal.connect(self.drop_handler)
                 new_row.append(new_cell)
                 self.right_layout.addWidget(new_cell, row_index, j)
 
-            # adds a list of GridCell instances to the list of rows
             self.grid_cells.append(new_row)
+            self.reconnect_signals()
+            
         else:
             print("Row limit reached!")
 
@@ -86,30 +86,98 @@ class gridViewingWindowLayout(QFrame):
 
         if col_index < 5:
             for i in range(nr_rows):
-                new_cell = GridCell(i, col_index)
+                new_cell = GridCell(self, i, col_index)
                 if col_index > 0:
                     new_cell.dropEventSignal.connect(self.grid_cells[i][col_index-1].dropEventSignal)
                 new_col.append(new_cell)
                 self.right_layout.addWidget(new_cell, i, col_index)
 
-            #self.grid_cells.append(new_col)
-
-            # appends one new cell in each list from the row list
             for i in range(nr_rows):
                 if len(self.grid_cells) <= i:
                     self.grid_cells.append([])
                 self.grid_cells[i].append(new_col[i])
+
+            self.reconnect_signals()
         else:
             print("Column limit reached!")
+
+    # remove widgets in a row and update ds
+    def remove_row(self, row_index):
+        '''Removes the row of the cell you right-click on. '''
+
+        if row_index < 0 or row_index >= len(self.grid_cells):
+            print("There's no row here")
+            return
+    
+        if len(self.grid_cells) < 3:
+            print("Default grid; can't remove this row.")
+            return
+
+        for j in range(len(self.grid_cells[row_index])): 
+            widget_to_remove = self.grid_cells[row_index][j]
+            widget_to_remove.dropEventSignal.disconnect()
+            self.right_layout.removeWidget(widget_to_remove) 
+            widget_to_remove.deleteLater()
+        
+        self.grid_cells.pop(row_index)
+        
+        for i in range(row_index, len(self.grid_cells)):  
+            for j in range(len(self.grid_cells[i])):
+                widget = self.grid_cells[i][j]
+                self.right_layout.addWidget(widget, i, j)
+
+        self.reconnect_signals()
+        self.update() 
+    
+    def remove_col(self, col_index):
+        '''Removes the column of the cell you right-click on. '''
+
+        if col_index < 0 or col_index >= len(self.grid_cells[0]):
+            print("There's no column here")
+            return
+    
+        if len(self.grid_cells[0]) < 3:
+            print("Default grid; can't remove this column.")
+            return
+
+        for i in range(len(self.grid_cells)): 
+            widget_to_remove = self.grid_cells[i][col_index]
+            widget_to_remove.dropEventSignal.disconnect()
+            print(f'signal disconnected for row {i} in column {col_index}')
+            self.right_layout.removeWidget(widget_to_remove) 
+            widget_to_remove.deleteLater()  
+            self.grid_cells[i].pop(col_index)
+
+        for i in range(len(self.grid_cells)):
+            for j in range(col_index, len(self.grid_cells[i])):
+                widget = self.grid_cells[i][j]
+                self.right_layout.addWidget(widget, i, j) 
+        
+        self.reconnect_signals()
+        self.update() 
+    
+    def reconnect_signals(self):
+        '''Reconnects the drop event signals for all cells in the grid.'''
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                    widget = self.grid_cells[i][j]
+                    if j > 0:  
+                        widget.dropEventSignal.connect(self.grid_cells[i][j - 1].dropEventSignal)
+                        print(f"Reconnected drop signal for cell at row {i}, column {j} to left cell at column {j - 1}")
+                    if i > 0:
+                        widget.dropEventSignal.connect(self.grid_cells[i - 1][j].dropEventSignal)
+                        print(f"Reconnected drop signal for cell at row {i}, column {j} to above cell at row {i - 1}")
+                
 
 class GridCell(ZoomableView):
     dropEventSignal = pyqtSignal(int, int, int)
 
-    def __init__(self, row: int, col: int):
+    def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
 
         self.row = row  # row index
         self.col = col  # col index
+        self.parent_layout = parent_layout # reference to the parent layout
 
         # pixmap graphics
         self.scene = QGraphicsScene(self)
@@ -124,6 +192,8 @@ class GridCell(ZoomableView):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.contextMenuEvent)
 
         self.displayed_image = None
         self.acquired_series = None
@@ -147,17 +217,25 @@ class GridCell(ZoomableView):
 
     def add_row(self):
         '''Trigger add_row method of the parent.'''
-        if self.parent():
-            self.parent().add_row()
+        #if self.parent():
+           #self.parent().add_row()
+        self.parent_layout.add_row()
 
     def add_column(self):
         '''Trigger add_column method of the parent.'''
-        if self.parent():
-            self.parent().add_column()
+        #if self.parent():
+            #self.parent().add_column()
+        self.parent_layout.add_column()
 
-    def contextMenuEvent(self, event):
+    def remove_row(self):
+        self.parent_layout.remove_row(self.row)
+
+    def remove_col(self):
+        self.parent_layout.remove_col(self.row)
+
+    def contextMenuEvent(self, position):
         '''Context menu for adding a row or column.'''
-        super().contextMenuEvent(event)
+        #super().contextMenuEvent(event)
 
         # Initialize add row/col actions in the context menu
         self.add_rowcol_menu = QMenu(self)
@@ -165,12 +243,20 @@ class GridCell(ZoomableView):
         self.add_rowcol_menu.addAction(self.add_row_action)
         self.add_col_action = QAction("Add column")
         self.add_rowcol_menu.addAction(self.add_col_action)
+        self.remove_row_action = QAction("Remove row")
+        self.add_rowcol_menu.addAction(self.remove_row_action)
+        self.remove_col_action = QAction("Remove column")
+        self.add_rowcol_menu.addAction(self.remove_col_action)
+
 
         # Actions trigger the methods from this class which trigger the methods in the parent
         self.add_row_action.triggered.connect(lambda: self.add_row())
         self.add_col_action.triggered.connect(lambda: self.add_column())
+        self.remove_row_action.triggered.connect(lambda: self.remove_row())
+        self.remove_col_action.triggered.connect(lambda: self.remove_col())
 
-        self.add_rowcol_menu.exec(event.globalPos())
+        #self.add_rowcol_menu.exec(event.globalPos())
+        self.add_rowcol_menu.exec(self.mapToGlobal(position)) #shows menu at the cursor position
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized.
