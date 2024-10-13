@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QGraphicsOpacityEffect,
+    QApplication
 )
 
 from typing import List, Optional
@@ -40,6 +41,7 @@ from views.items.middle_line_item import MiddleLineItem
 
 
 class AcquiredSeriesViewer2D(QGraphicsView):
+    testSignal = pyqtSignal(int)
     """Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved."""
 
     def __init__(self):
@@ -168,6 +170,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.only_display_image = False
 
+    def sendTestSignal(self):
+        self.testSignal.emit(0)
+
     # start zoom when pressed
     def mousePressEvent(self, event):
         # TODO the user should not be able to zoom in and out when the measuring tool is active
@@ -292,6 +297,10 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
+        if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
+            print("HEREEE")
+            return True
+        
         if event.type() == QEvent.Type.GraphicsSceneMouseMove:
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if self.get_stack_for_stack_id(self.selected_stack_indx).volume_display and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_rotating:
@@ -435,7 +444,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             # self.scan_volume.clamp_to_scanner_dimensions()
             # self._update_scan_volume_display()
             self.get_scan_volume_for_stack_index(self.selected_stack_indx).clamp_to_scanner_dimensions()
+            print("UPDATE DISPLAY1")
             self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+            self.testSignal.emit(1)
+            # self.viewport().update()
+            # QApplication.processEvents()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
             # self.scan_volume.remove_observer(self)
@@ -515,6 +528,15 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
             self.update_buttons_visibility()
+
+            # TODO: is this all code in if condition needed
+            if (len(self.stacks) == 0):
+                self.scan_volumes = []
+                new_stack = StackItem(self.pixmap_item, self, 0)
+                new_scan_vol = ScanVolume(0)
+                self.scan_volumes.append(new_scan_vol)
+                new_stack.volume_display.setScanVolume(new_scan_vol)
+                self.stacks.append(new_stack)
 
             self.setDisplayedImage(
                 self.acquired_series.list_acquired_images[self.displayed_image_index],
@@ -660,6 +682,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             #     if vol.stack_index == stack_item.stack_index:
             #         scan_item_volume = vol
             scan_item_volume = self.get_scan_volume_for_stack_index(stack_item.stack_index)
+            print("SCAN VOLUME AP " + str(scan_item_volume.origin_LPS))
             (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords) = scan_item_volume.compute_intersection_with_acquired_image(self.displayed_image)
             stack_item.update_objects_with_pixmap_coords(intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords)
         else:
@@ -752,6 +775,7 @@ class StackItem():
 
     def __init__(self, pixmap_item, series_viewer, stack_index):
         self.pixmap_item = pixmap_item
+        self.series_viewer = series_viewer
         self.volume_display = CustomPolygonItem(pixmap_item, series_viewer)
         # TODO: I think need to add viewer as observer for volume display as well
         self.volume_display.add_observer(series_viewer)
@@ -786,6 +810,9 @@ class StackItem():
     # update stack item display component with coordinates
     def update_objects_with_pixmap_coords(self, volume_edges, middle_edges, slice_edges):
         self.volume_display.setPolygon(QPolygonF())
+        print("UPDATE VOLUME EDGES " + str(volume_edges))
+        self.series_viewer.sendTestSignal()
+
         self.volume_display.setPolygonFromPixmapCoords(volume_edges)
         self.middle_line_display.setPolygonFromPixmapCoords(middle_edges)
         for slice in self.slices_display:
@@ -795,6 +822,10 @@ class StackItem():
             slice_item = SlicecItem(self.pixmap_item)
             slice_item.setPolygonFromPixmapCoords(slice_edges)
             self.slices_display.append(slice_item)
+
+        # TODO: try to update viewer here, it sometimes happens that polygon is set with coordinates, but views are not updated
+        self.series_viewer.viewport().update()
+        # QApplication.processEvents()
 
     # clear all objects for this stack item
     def clear_objects(self):

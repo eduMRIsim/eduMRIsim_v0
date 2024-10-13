@@ -434,6 +434,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle_pos=self.active_scale_handle.pos(),
             center_pos=self.scene_center,
         )
+        self.viewer._update_scan_volume_display_for_active_stack_item()
+        self.viewer.viewport().update()
+        # QApplication.processEvents()
+
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
@@ -518,6 +522,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.update_scale_handle_positions()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
+        print(" SET POSITION FROM COORDINATES " + str(polygon_in_pixmap_coords))
         polygon_in_polygon_coords = QPolygonF()
         for pt in polygon_in_pixmap_coords:
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
@@ -550,11 +555,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             )
         )
         # apply volume updates also for current scan planning window polygon
-        self.viewer._update_scan_volume_display_for_active_stack_item()
+
         self.notify_observers(
             EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
             direction_vector_in_lps_coords=direction_vec_in_lps,
         )
+        self.viewer._update_scan_volume_display_for_active_stack_item()
+        self.viewer.viewport().update()
+        # QApplication.processEvents()
 
     # on press show "size all" cursor
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):

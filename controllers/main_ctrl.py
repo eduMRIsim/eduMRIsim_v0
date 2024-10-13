@@ -84,6 +84,9 @@ class MainController:
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
         )
+        self.ui.scanPlanningWindow1.testSignal.connect(self.testWindow1Signal)
+        self.ui.scanPlanningWindow2.testSignal.connect(self.testWindow2Signal)
+
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
         )
@@ -190,6 +193,12 @@ class MainController:
             name = self.ui.examCardListView.model().itemFromIndex(index).text()
             scan_parameters = self.ui.examCardListView.model().get_data(index)
             self.scanner.scanlist.add_scanlist_element(name, scan_parameters)
+
+    def testWindow1Signal(self, n):
+        print("window 1 signal")
+
+    def testWindow2Signal(self, n):
+        print("window 2 signal")
 
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()

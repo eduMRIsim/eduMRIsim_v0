@@ -743,6 +743,7 @@ class ScanItem:
     def update(self, event):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
             # TODO: update only currently active stack index parameters
+            print("UPDATE HERE")
             changed_parameters = None
             for vol in self.scan_volumes:
                 if vol.stack_index == self.selected_stack_index:

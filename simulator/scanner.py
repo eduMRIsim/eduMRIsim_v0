@@ -27,6 +27,7 @@ class Scanner:
         series_name = scan_item.name
 
         active_params = scan_item.get_current_active_parameters()
+        print("ACTIVE PARAMS " + active_params["ScanTechnique"])
         # scan_plane = scan_item.scan_parameters["ScanPlane"]
         scan_plane = active_params["ScanPlane"]
 
