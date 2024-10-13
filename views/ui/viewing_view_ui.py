@@ -51,7 +51,7 @@ class gridViewingWindowLayout(QFrame):
             return None
     
     def add_row(self):
-        '''Adds a new row of GridCell instances into the grid. '''
+        """Adds a new row of GridCell instances into the grid. """
         row_index = len(self.grid_cells) 
         new_row= []  
 
@@ -75,7 +75,7 @@ class gridViewingWindowLayout(QFrame):
             print("Row limit reached!")
 
     def add_column(self):
-        '''Adds a new column of GridCell instances into the grid. '''
+        """Adds a new column of GridCell instances into the grid. """
         if self.grid_cells:
             col_index = len(self.grid_cells[0]) # number of element in the first row
         else:
@@ -103,7 +103,7 @@ class gridViewingWindowLayout(QFrame):
 
     # remove widgets in a row and update ds
     def remove_row(self, row_index):
-        '''Removes the row of the cell you right-click on. '''
+        """Removes the row of the cell you right-click on. """
 
         if row_index < 0 or row_index >= len(self.grid_cells):
             print("There's no row here")
@@ -175,6 +175,12 @@ class GridCell(ZoomableView):
     def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
 
+        self.displayed_image_index = None
+        self.remove_col_action = None
+        self.remove_row_action = None
+        self.add_col_action = None
+        self.add_row_action = None
+        self.add_rowcol_menu = None
         self.row = row  # row index
         self.col = col  # col index
         self.parent_layout = parent_layout # reference to the parent layout
@@ -216,15 +222,12 @@ class GridCell(ZoomableView):
         super().contextMenuEvent(event)
 
     def add_row(self):
-        '''Trigger add_row method of the parent.'''
-        #if self.parent():
-           #self.parent().add_row()
+        """Trigger add_row method of the parent."""
         self.parent_layout.add_row()
 
     def add_column(self):
-        '''Trigger add_column method of the parent.'''
-        #if self.parent():
-            #self.parent().add_column()
+        """Trigger add_column method of the parent."""
+
         self.parent_layout.add_column()
 
     def remove_row(self):
@@ -234,8 +237,7 @@ class GridCell(ZoomableView):
         self.parent_layout.remove_col(self.row)
 
     def contextMenuEvent(self, position):
-        '''Context menu for adding a row or column.'''
-        #super().contextMenuEvent(event)
+        """Context menu for adding a row or column."""
 
         # Initialize add row/col actions in the context menu
         self.add_rowcol_menu = QMenu(self)
@@ -247,7 +249,6 @@ class GridCell(ZoomableView):
         self.add_rowcol_menu.addAction(self.remove_row_action)
         self.remove_col_action = QAction("Remove column")
         self.add_rowcol_menu.addAction(self.remove_col_action)
-
 
         # Actions trigger the methods from this class which trigger the methods in the parent
         self.add_row_action.triggered.connect(lambda: self.add_row())
@@ -310,8 +311,6 @@ class GridCell(ZoomableView):
 
             self.setDisplayedImage(
                 self.acquired_series.list_acquired_images[self.displayed_image_index],
-                self.acquired_series.scan_plane,
-                self.acquired_series.series_name,
             )
         else:
             self.acquired_series = None
@@ -320,7 +319,7 @@ class GridCell(ZoomableView):
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
 
-    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
+    def setDisplayedImage(self, image):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
