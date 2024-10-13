@@ -141,6 +141,10 @@ class IdleState(UI_MainWindowState):
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
 
+        # HIDE EXPORT BUTTONS FOR THE SCAN PLANNING WINDOWS
+        context.scanPlanningWindow1ExportButton.setVisible(False)
+        context.scanPlanningWindow2ExportButton.setVisible(False)
+        context.scanPlanningWindow3ExportButton.setVisible(False)
 
 class MRIfortheBrainState(UI_MainWindowState):
     def update_UI(self, context) -> None:
@@ -151,6 +155,7 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.scanPlanningWindow1ExportButton.setEnabled(False)
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
+
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)
 
         if (
@@ -171,3 +176,8 @@ class MRIfortheBrainState(UI_MainWindowState):
             is not None
         ):
             context.scanPlanningWindow3ExportButton.setEnabled(True)
+
+        # HIDE EXPORT BUTTONS FOR THE SCAN PLANNING WINDOWS
+        context.scanPlanningWindow1ExportButton.setVisible(False)
+        context.scanPlanningWindow2ExportButton.setVisible(False)
+        context.scanPlanningWindow3ExportButton.setVisible(False)
