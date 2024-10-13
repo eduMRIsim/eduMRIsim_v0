@@ -297,6 +297,8 @@ class ScanItem:
     @scan_parameters.setter
     def scan_parameters(self, scan_parameters):
         print(" ================== SCAN PARAMETERS SETTER ====================== ")
+        print(" SCAN PARAMS ORIGINAL " + str(self._scan_parameters))
+        print(" SCAN PARAMS NEW VALUE " + str(scan_parameters))
         # for key, value in scan_parameters.items():
         #     try:
         #         self._scan_parameters[key] = float(value)
@@ -320,15 +322,19 @@ class ScanItem:
 
         for scan_params in scan_parameters:
             scan_params_processed = {}
+            stack_inx = int(scan_params["StackIndex"])
+            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, stack_inx)
+            # TODO: should also copy other keys and values of _scan_parameters into scan_params_processed
+            if scan_params_index is not None:
+                scan_params_processed = self._scan_parameters[scan_params_index]
+            
             for key, value in scan_params.items():
                 try:
                     scan_params_processed[key] = float(value)
                 except:
                     scan_params_processed[key] = value
-            scan_params_processed["StackIndex"] = int(scan_params["StackIndex"])
-            params_stack_index = int(scan_params["StackIndex"])
+            scan_params_processed["StackIndex"] = stack_inx
             # if there are are parameters corresponding to the stack index of received params, then replace this item, otherwise add new
-            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, params_stack_index)
             if scan_params_index is not None:
                 self._scan_parameters[scan_params_index] = scan_params_processed
             else:
@@ -337,11 +343,11 @@ class ScanItem:
             scan_volume = None
             # search if there already is scan volume with specified stack_index
             for vol in self.scan_volumes:
-                if vol.stack_index == params_stack_index:
+                if vol.stack_index == stack_inx:
                     scan_volume = vol
             # if no scan_volume is found, we need to create one with specified stack_index
             if scan_volume == None:
-                scan_volume = ScanVolume(params_stack_index)
+                scan_volume = ScanVolume(stack_inx)
                 self.scan_volumes.append(scan_volume)
             else:
                  # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. 
@@ -357,13 +363,14 @@ class ScanItem:
                 scan_params_processed[key] = value
 
             # update wiht clamped values 
-            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, params_stack_index)
+            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, stack_inx)
             if scan_params_index is not None:
                 self._scan_parameters[scan_params_index] = scan_params_processed
             else:
                 self._scan_parameters.append(scan_params_processed)
 
             scan_volume.add_observer(self)
+            print("END OF SCAN PARAMS SETTER " + str(self._scan_parameters[0]))
             self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
         # TODO: handle deletion of object in _scan_parameters list or deletion of scan volume in scan volumes' list if there was not corresponding 
@@ -458,6 +465,16 @@ class ScanItem:
         #         self._scan_parameters_original[key] = value
         for item in scan_parameters:
             processed_params = {}
+            # TODO: set also keys from _scan_parameters_original
+            stack_index = int(item["StackIndex"])
+            index_scan_params = None
+            for idx, itm in enumerate(self._scan_parameters_original):
+                if itm["StackIndex"] == stack_index:
+                    index_scan_params = idx
+                    break
+            if index_scan_params is not None:
+                processed_params = self._scan_parameters_original[index_scan_params]
+
             for key, value in item.items():
                 try:
                     processed_params[key] = float(value)
@@ -465,12 +482,6 @@ class ScanItem:
                     processed_params[key] = value
             if item.get("StackIndex") == None:
                 return
-            stack_index = int(item["StackIndex"])
-            index_scan_params = None
-            for idx, itm in enumerate(self._scan_parameters_original):
-                if itm["StackIndex"] == stack_index:
-                    index_scan_params = idx
-                    break
             if index_scan_params == None:
                 self._scan_parameters_original.append(processed_params)
             else:
@@ -492,6 +503,7 @@ class ScanItem:
         if index_to_replace is not None:
             scan_params_copy[index_to_replace] = scan_params
 
+        print("SET HERE PARAMS")
         self.scan_parameters = scan_params_copy
 
         if self.valid == True:
@@ -515,6 +527,7 @@ class ScanItem:
         """This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid."""
         self.valid = True
         self.messages = {}
+        print("HERE SET PARAMS INIT")
         self.scan_parameters = scan_parameters
 
         if self.valid == True:
@@ -749,10 +762,15 @@ class ScanItem:
                 if vol.stack_index == self.selected_stack_index:
                     changed_parameters = vol.get_parameters()
                     break
+            # maybe should take copy here, otherwise references straight to instance variable
             current_scan_params = self.scan_parameters
             for inx, scan_params in enumerate(current_scan_params):
                 if scan_params["StackIndex"] == changed_parameters["StackIndex"]:
-                    current_scan_params[inx] = changed_parameters
+                    # fix, set here also previous scan item parameter values
+                    previous_values = current_scan_params[inx]
+                    for key, val in changed_parameters.items():
+                        previous_values[key] = val
+                    current_scan_params[inx] = previous_values
                     break
             self.scan_parameters = current_scan_params
             # parameters = self.scan_volume.get_parameters()
