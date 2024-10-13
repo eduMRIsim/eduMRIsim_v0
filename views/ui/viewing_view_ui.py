@@ -69,7 +69,12 @@ class gridViewingWindowLayout(QFrame):
                 self.right_layout.addWidget(new_cell, row_index, j)
 
             self.grid_cells.append(new_row)
-            self.reconnect_signals()
+            #self.reconnect_signals()
+
+            # reconnect signals
+            #for j in range(nr_columns):
+               #if row_index > 0:
+                   # new_cell.dropEventSignal.connect(self.grid_cells[row_index - 1][j].dropEventSignal)
             
         else:
             print("Row limit reached!")
@@ -77,7 +82,7 @@ class gridViewingWindowLayout(QFrame):
     def add_column(self):
         '''Adds a new column of GridCell instances into the grid. '''
         if self.grid_cells:
-            col_index = len(self.grid_cells[0]) # number of element in the first row
+            col_index = len(self.grid_cells[0])
         else:
             col_index = 0
         new_col = []
@@ -97,11 +102,14 @@ class gridViewingWindowLayout(QFrame):
                     self.grid_cells.append([])
                 self.grid_cells[i].append(new_col[i])
 
-            self.reconnect_signals()
+            #self.reconnect_signals()
+            # reconnect signals
+            for i in range(nr_rows):
+                if col_index > 0:
+                    new_col[i].dropEventSignal.connect(self.grid_cells[i][col_index - 1].dropEventSignal)
         else:
             print("Column limit reached!")
 
-    # remove widgets in a row and update ds
     def remove_row(self, row_index):
         '''Removes the row of the cell you right-click on. '''
 
@@ -120,10 +128,11 @@ class gridViewingWindowLayout(QFrame):
             widget_to_remove.deleteLater()
         
         self.grid_cells.pop(row_index)
-        
+
         for i in range(row_index, len(self.grid_cells)):  
             for j in range(len(self.grid_cells[i])):
                 widget = self.grid_cells[i][j]
+                widget.row = i # updates the row index for every widget
                 self.right_layout.addWidget(widget, i, j)
 
         self.reconnect_signals()
@@ -151,11 +160,12 @@ class gridViewingWindowLayout(QFrame):
         for i in range(len(self.grid_cells)):
             for j in range(col_index, len(self.grid_cells[i])):
                 widget = self.grid_cells[i][j]
+                widget.col = j # updates the col index for every widget
                 self.right_layout.addWidget(widget, i, j) 
         
         self.reconnect_signals()
         self.update() 
-    
+
     def reconnect_signals(self):
         '''Reconnects the drop event signals for all cells in the grid.'''
         for i in range(len(self.grid_cells)):
@@ -163,10 +173,14 @@ class gridViewingWindowLayout(QFrame):
                     widget = self.grid_cells[i][j]
                     if j > 0:  
                         widget.dropEventSignal.connect(self.grid_cells[i][j - 1].dropEventSignal)
-                        print(f"Reconnected drop signal for cell at row {i}, column {j} to left cell at column {j - 1}")
+                        print(f"Connect cell [{i},{j}] to left cell at column {j - 1}")
+                    else:
+                        print(f"no left neighbour for [{i},{j}]")
                     if i > 0:
                         widget.dropEventSignal.connect(self.grid_cells[i - 1][j].dropEventSignal)
-                        print(f"Reconnected drop signal for cell at row {i}, column {j} to above cell at row {i - 1}")
+                        print(f"Connect cell [{i},{j}] to above cell at row {i - 1}")
+                    else:
+                        print(f"no top neighbour for [{i},{j}]")
                 
 
 class GridCell(ZoomableView):
@@ -210,10 +224,6 @@ class GridCell(ZoomableView):
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
-
-    def contextMenuEvent(self, event):
-        """Context menu for adding a row or column."""
-        super().contextMenuEvent(event)
 
     def add_row(self):
         '''Trigger add_row method of the parent.'''
