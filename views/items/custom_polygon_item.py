@@ -56,6 +56,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle.mousePressEvent = (
                 lambda event, h=handle: self.handle_rotation_handle_press(event, h)
             )
+            handle.setVisible(False)
             self.rotation_handles.append(handle)
 
         # Initial positioning of the rotation handle
@@ -76,6 +77,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     event, hdl
                 )
             )
+            handle.setVisible(False)
             self.scale_handles.append(handle)
         self.scale_handle_offsets = []
         self.active_scale_handle = None
@@ -154,6 +156,19 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         """
         This function updates the scale handle positions so that they are moved to their new positions.
         """
+
+        # If the polygon is empty, clear the scale handles and exit early. This check prevents a crash.
+        if self.polygon().isEmpty() or not self.scale_handle_offsets:
+            return
+        if not self.isVisible():
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            return
+
+        if self.polygon().isEmpty() or not self.scale_handle_offsets:
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            return
 
         # Get the current polygon and its number of points.
         polygon = self.polygon()

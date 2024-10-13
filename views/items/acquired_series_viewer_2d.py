@@ -595,7 +595,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.series_name_label.setText("")
 
         self._displayArray()
-        if self.only_display_image != True:
+        if self.only_display_image != True and self.displayed_image is not None:
             self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
 
     def setScanVolumes(self, scan_volumes: List[ScanVolume]):
@@ -679,7 +679,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         #     self.slices_display = []
         # self.scan_volume_display.update_slice_lines()
         if self.displayed_image is not None and stack_item is not None:
-
             # scan_item_volume = None
             # for vol in self.scan_volumes:
             #     if vol.stack_index == stack_item.stack_index:
