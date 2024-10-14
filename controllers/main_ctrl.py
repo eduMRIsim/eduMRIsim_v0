@@ -420,6 +420,18 @@ class MainController:
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
 
+    def handle_toggleWindowLevelButtonClicked(self):
+        """Toggle the window-level mode"""
+        if hasattr(self.ui.scannedImageFrame, "leveling_enabled"):
+            if not self.ui.scannedImageFrame.leveling_enabled:
+                self.ui.scannedImageFrame.leveling_enabled = True
+                log.info("Window-level mode enabled")
+            else:
+                self.ui.scannedImageFrame.leveling_enabled = False
+                log.info("Window-level mode disabled")
+        else:
+            log.error("Error with window-level mode")
+
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
             raise ValueError(
@@ -462,7 +474,9 @@ class MainController:
             series = self.ui.scanPlanningWindow3.acquired_series
         parameters = self._return_parameters_from_image_in_scanlist(image)
         study = self.ui.scanner.examination
-        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(image, series, study, parameters)
+        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(
+            image, series, study, parameters
+        )
 
     def handle_measureDistanceButtonClicked(self):
         if not self.ui._scannedImageFrame.measuring_enabled:

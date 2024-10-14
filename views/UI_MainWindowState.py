@@ -77,6 +77,7 @@ class BeingModifiedState(ExamState):
         context.scanParametersResetButton.setEnabled(True)
         context.scanParametersSaveChangesButton.setEnabled(True)
 
+
 class BeingScannedState(ExamState):
     name = "BeingScannedState"
 
@@ -92,7 +93,6 @@ class BeingScannedState(ExamState):
         context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
-
 
 
 class InvalidParametersState(ExamState):
@@ -162,6 +162,7 @@ class IdleState(UI_MainWindowState):
         context.scanPlanningWindow1ExportButton.setVisible(False)
         context.scanPlanningWindow2ExportButton.setVisible(False)
         context.scanPlanningWindow3ExportButton.setVisible(False)
+
 
 class MRIfortheBrainState(UI_MainWindowState):
     def update_UI(self, context) -> None:

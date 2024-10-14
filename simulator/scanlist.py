@@ -127,7 +127,13 @@ class ImageGeometry:
 
 class AcquiredImage:
     # An acquired image is a 2D image that is acquired during a scan. It consists of image data and image geometry.
-    def __init__(self, image_data: np.ndarray, image_geometry: ImageGeometry, acquisition_and_content_date: str, acquisition_and_content_time: str):
+    def __init__(
+        self,
+        image_data: np.ndarray,
+        image_geometry: ImageGeometry,
+        acquisition_and_content_date: str,
+        acquisition_and_content_time: str,
+    ):
         self.image_data = image_data
         self.image_geometry = image_geometry
 
@@ -138,15 +144,21 @@ class AcquiredImage:
 
 class AcquiredSeries:
     """A series of acquired images. The acquired images are 2D."""
+
     series_number = 101
 
     def __init__(
-        self, series_name, scan_plane, list_acquired_images: list[AcquiredImage], series_date: str, series_time: str
+        self,
+        series_name,
+        scan_plane,
+        list_acquired_images: list[AcquiredImage],
+        series_date: str,
+        series_time: str,
     ):
         self.series_name = series_name
         self.scan_plane = scan_plane
         for i, image in enumerate(list_acquired_images):
-            image.instance_number = i+1
+            image.instance_number = i + 1
         self.list_acquired_images = list_acquired_images
 
         self.series_instance_uid = generate_uid()
@@ -154,7 +166,6 @@ class AcquiredSeries:
         self.series_time = series_time
         self.series_number = AcquiredSeries.series_number
         AcquiredSeries.series_number += 100
-
 
 
 class Scanlist:
@@ -731,8 +742,10 @@ class ScanItem:
                     scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
                     changed = True
 
-                scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = scan_parameters["FOVPE_mm"], scan_parameters["FOVFE_mm"]
-
+                    scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = (
+                        scan_parameters["FOVPE_mm"],
+                        scan_parameters["FOVFE_mm"],
+)
             elif (
                     abs(FHAngle_deg) > THRESHOLD_ANGLE >= abs(APAngle_deg)
             ):
@@ -1444,7 +1457,7 @@ class ScanVolume:
             "ScanPlane": self.scanPlane,
             "Rotation_lock": self.Rotation_lock,
             "StackIndex": self.stack_index,
-            "TR_ms": self.TR_ms
+            "TR_ms": self.TR_ms,
         }
 
     def calculate_slice_positions(self):

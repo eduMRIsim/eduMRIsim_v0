@@ -87,9 +87,14 @@ class MeasurementTool:
             dot_size_px = 3
 
             self.start_dot.setRect(
-                self.start_point.x() - 2, self.start_point.y() - 2, dot_size_px, dot_size_px
+                self.start_point.x() - 2,
+                self.start_point.y() - 2,
+                dot_size_px,
+                dot_size_px,
             )
-            self.end_dot.setRect(self.end_point.x() - 2, self.end_point.y() - 2, dot_size_px, dot_size_px)
+            self.end_dot.setRect(
+                self.end_point.x() - 2, self.end_point.y() - 2, dot_size_px, dot_size_px
+            )
 
     def calculate_distance(self, p1, p2):
         p1_mm_coords = self.ac_series.displayed_image.image_geometry.pixmap_coords_to_image_mm_coords(
