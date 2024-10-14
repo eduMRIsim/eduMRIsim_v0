@@ -430,7 +430,9 @@ class MainController:
             series = self.ui.scanPlanningWindow3.acquired_series
         parameters = self._return_parameters_from_image_in_scanlist(image)
         study = self.ui.scanner.examination
-        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(image, series, study, parameters)
+        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(
+            image, series, study, parameters
+        )
 
     def handle_measureDistanceButtonClicked(self):
         if not self.ui._scannedImageFrame.measuring_enabled:

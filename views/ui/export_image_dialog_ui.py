@@ -17,12 +17,19 @@ class ExportImageDialog(QDialog):
     """
     The ExportImageDialog class represents a dialog to export acquired images to image files.
     """
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Choose a file location")
         self.instance_number = 1
 
-    def export_file_dialog(self, image: AcquiredImage | None, series: AcquiredSeries, study: Examination, parameters: dict) -> None:
+    def export_file_dialog(
+        self,
+        image: AcquiredImage | None,
+        series: AcquiredSeries,
+        study: Examination,
+        parameters: dict,
+    ) -> None:
         """
         Export (acquired) image data to an image file through a file save dialog.
         """
@@ -69,9 +76,7 @@ class ExportImageDialog(QDialog):
                 )
                 log.info(f"PNG file saved as {file_name}")
             elif selected_filter == "DICOM Files (*.dcm)":
-                self.export_to_dicom_file(
-                    file_name, image, series, study, parameters
-                )
+                self.export_to_dicom_file(file_name, image, series, study, parameters)
                 log.info(f"DICOM file saved as {file_name}")
             elif (
                 selected_filter == "NIfTI Files (*.nii)"
@@ -104,7 +109,11 @@ class ExportImageDialog(QDialog):
         image.save(file_name, filter=file_filter)
 
     def export_to_dicom_with_dicomdir(
-            self, image: AcquiredImage, series: AcquiredSeries, study: Examination, parameters: dict
+        self,
+        image: AcquiredImage,
+        series: AcquiredSeries,
+        study: Examination,
+        parameters: dict,
     ) -> None:
         """
         Export image data to a DICOM file with an associated DICOMDIR file.
@@ -135,17 +144,31 @@ class ExportImageDialog(QDialog):
             image_geometry: ImageGeometry = image.image_geometry
 
             # Normalize the image data for DICOM files
-            image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(image_data)
+            image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(
+                image_data
+            )
 
             # Create a FileDataset instance and set some DICOM attributes on it
             file_meta = ExportImageDialog._create_file_meta_for_dicom()
-            ds = FileDataset("this_is_the_file_name", {}, file_meta=file_meta, preamble=b"\0" * 128)
-            self._set_dicom_attributes(ds, file_meta, image, image_data_normalized, image_geometry, parameters, series,
-                                       study)
+            ds = FileDataset(
+                "this_is_the_file_name", {}, file_meta=file_meta, preamble=b"\0" * 128
+            )
+            self._set_dicom_attributes(
+                ds,
+                file_meta,
+                image,
+                image_data_normalized,
+                image_geometry,
+                parameters,
+                series,
+                study,
+            )
 
             fs.add(ds)
 
-            if os.path.exists(os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")):
+            if os.path.exists(
+                os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")
+            ):
                 fs.write()
                 log.info(f"Wrote to existing DICOMDIR file to {dicomdir_path}")
             else:
@@ -153,7 +176,12 @@ class ExportImageDialog(QDialog):
                 log.info(f"Wrote to new DICOMDIR file at {dicomdir_path}")
 
     def export_to_dicom_file(
-        self, file_name: str, image: AcquiredImage, series: AcquiredSeries, study: Examination, parameters: dict
+        self,
+        file_name: str,
+        image: AcquiredImage,
+        series: AcquiredSeries,
+        study: Examination,
+        parameters: dict,
     ) -> None:
         """
         Export image data to a single DICOM file.
@@ -173,12 +201,23 @@ class ExportImageDialog(QDialog):
         image_geometry: ImageGeometry = image.image_geometry
 
         # Normalize the image data for DICOM files
-        image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(image_data)
+        image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(
+            image_data
+        )
 
         # Create a FileDataset instance and set DICOM attributes on it
         file_meta = ExportImageDialog._create_file_meta_for_dicom()
         ds = FileDataset(file_name, {}, file_meta=file_meta, preamble=b"\0" * 128)
-        self._set_dicom_attributes(ds, file_meta, image, image_data_normalized, image_geometry, parameters, series, study)
+        self._set_dicom_attributes(
+            ds,
+            file_meta,
+            image,
+            image_data_normalized,
+            image_geometry,
+            parameters,
+            series,
+            study,
+        )
 
         # Save the DICOM file
         ds.save_as(file_name)
@@ -218,7 +257,15 @@ class ExportImageDialog(QDialog):
         return image_data_normalized
 
     def _set_dicom_attributes(
-            self, ds, file_meta, image, image_data_normalized, image_geometry, parameters, series, study
+        self,
+        ds,
+        file_meta,
+        image,
+        image_data_normalized,
+        image_geometry,
+        parameters,
+        series,
+        study,
     ) -> None:
         """
         Set DICOM attributes on a FileDataset instance.
@@ -237,9 +284,15 @@ class ExportImageDialog(QDialog):
         ds.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
         ds.Modality = "MR"
         ds.Rows, ds.Columns = image_data_normalized.shape
-        ds.BitsAllocated = 16  # Should be correct now, but may still need to be changed in the future
-        ds.BitsStored = 12  # Should be correct now, but may still need to be changed in the future
-        ds.HighBit = 11  # Should be correct now, but may still need to be changed in the future
+        ds.BitsAllocated = (
+            16  # Should be correct now, but may still need to be changed in the future
+        )
+        ds.BitsStored = (
+            12  # Should be correct now, but may still need to be changed in the future
+        )
+        ds.HighBit = (
+            11  # Should be correct now, but may still need to be changed in the future
+        )
         ds.PixelRepresentation = 0
         ds.SamplesPerPixel = 1  # This may be changed in the future
         ds.PhotometricInterpretation = "MONOCHROME2"  # Set this to a different value if a different color scale is used
@@ -295,10 +348,18 @@ class ExportImageDialog(QDialog):
         lps_to_ras_transform_matrix[0][0] = -1
         lps_to_ras_transform_matrix[1][1] = -1
 
-        axisX_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.axisX_LPS, [1.0]))
-        axisY_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.axisY_LPS, [1.0]))
-        axisZ_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.axisZ_LPS, [1.0]))
-        origin_RAS = np.dot(lps_to_ras_transform_matrix, np.append(image_geometry.origin_LPS, [1.0]))
+        axisX_RAS = np.dot(
+            lps_to_ras_transform_matrix, np.append(image_geometry.axisX_LPS, [1.0])
+        )
+        axisY_RAS = np.dot(
+            lps_to_ras_transform_matrix, np.append(image_geometry.axisY_LPS, [1.0])
+        )
+        axisZ_RAS = np.dot(
+            lps_to_ras_transform_matrix, np.append(image_geometry.axisZ_LPS, [1.0])
+        )
+        origin_RAS = np.dot(
+            lps_to_ras_transform_matrix, np.append(image_geometry.origin_LPS, [1.0])
+        )
 
         transformation_matrix = np.eye(4)
         for i in range(3):
@@ -310,7 +371,9 @@ class ExportImageDialog(QDialog):
         # Create a NIfTI image
         nifti_img = nib.Nifti1Image(image_data, transformation_matrix)
 
-        nifti_img.header.set_xyzt_units("mm", None)  # time unit is None as there is no time dimension (images are 2D)
+        nifti_img.header.set_xyzt_units(
+            "mm", None
+        )  # time unit is None as there is no time dimension (images are 2D)
         nifti_img.header.set_dim_info(freq=0, phase=1, slice=None)
 
         # Save the NIfTI image to a file.
