@@ -12,6 +12,8 @@ from simulator.scanlist import (
     ScanItemStatusEnum,
 )
 
+import datetime
+
 
 class Scanner(QObject):
     scan_progress = pyqtSignal(float)
@@ -29,6 +31,8 @@ class Scanner(QObject):
 
     def scan(self) -> None:
         """Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume."""
+
+
         if not self.scan_started:
             self.scan_started = True
             scan_item = self.active_scan_item
@@ -70,6 +74,9 @@ class Scanner(QObject):
 
     def _perform_scan(self) -> AcquiredSeries:
         """Perform the actual scanning and return the acquired series."""
+
+        series_date = datetime.datetime.now().strftime("%Y%m%d")
+        series_time = datetime.datetime.now().strftime("%H%M%S.%f")
         scan_item = self.active_scan_item
         series_name = scan_item.name
         scan_plane = scan_item.scan_parameters["ScanPlane"]
@@ -86,11 +93,15 @@ class Scanner(QObject):
             image_data = self._get_image_data_from_signal_array(
                 image_geometry, self.model, signal_array
             )
+
+            acquisition_and_content_date = datetime.datetime.now().strftime("%Y%m%d")
+            acquisition_and_content_time = datetime.datetime.now().strftime("%H%M%S.%f")
+
             # Step 3: create acquired image
-            acquired_image = AcquiredImage(image_data, image_geometry)
+            acquired_image = AcquiredImage(image_data, image_geometry, acquisition_and_content_date, acquisition_and_content_time)
             list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
-        acquired_series = AcquiredSeries(series_name, scan_plane, list_acquired_images)
+        acquired_series = AcquiredSeries(series_name, scan_plane, list_acquired_images, series_date, series_time)
         self.active_scanlist_element.acquired_data = acquired_series
         return acquired_series    
 
