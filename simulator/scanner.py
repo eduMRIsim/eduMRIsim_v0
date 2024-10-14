@@ -32,11 +32,14 @@ class Scanner(QObject):
     def scan(self) -> None:
         """Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume."""
 
-
         if not self.scan_started:
             self.scan_started = True
             scan_item = self.active_scan_item
-            self.scan_time = scan_item.scan_parameters["NSlices"] * int(scan_item.scan_parameters["TR_ms"]) * round(scan_item.scan_parameters["FOVPE_mm"])
+            self.scan_time = (
+                scan_item.scan_parameters["NSlices"]
+                * int(scan_item.scan_parameters["TR_ms"])
+                * round(scan_item.scan_parameters["FOVPE_mm"])
+            )
             self.scan_elapsed_time = 0
 
             # Set up a QTimer to simulate scanning over time
@@ -47,13 +50,13 @@ class Scanner(QObject):
             self.scan_timer.start()
         else:
             self.scan_elapsed_time = self.scan_time
-        
+
     def _perform_scan_step(self):
         """Perform a step in the scanning process."""
         # Increment elapsed time
         self.scan_elapsed_time += self.scan_timer.interval()  # 100 ms
 
-        #Calculate progress, set progress to 1 if greater; for progress bar
+        # Calculate progress, set progress to 1 if greater; for progress bar
         progress = self.scan_elapsed_time / self.scan_time
         if progress > 1.0:
             progress = 1.0
@@ -67,7 +70,7 @@ class Scanner(QObject):
             self.scan_timer = None
             self.scan_started = False
 
-            # Perform the actual scanning 
+            # Perform the actual scanning
             acquired_series = self._perform_scan()
             # Set scan item status to COMPLETE
             self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
@@ -98,12 +101,19 @@ class Scanner(QObject):
             acquisition_and_content_time = datetime.datetime.now().strftime("%H%M%S.%f")
 
             # Step 3: create acquired image
-            acquired_image = AcquiredImage(image_data, image_geometry, acquisition_and_content_date, acquisition_and_content_time)
+            acquired_image = AcquiredImage(
+                image_data,
+                image_geometry,
+                acquisition_and_content_date,
+                acquisition_and_content_time,
+            )
             list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
-        acquired_series = AcquiredSeries(series_name, scan_plane, list_acquired_images, series_date, series_time)
+        acquired_series = AcquiredSeries(
+            series_name, scan_plane, list_acquired_images, series_date, series_time
+        )
         self.active_scanlist_element.acquired_data = acquired_series
-        return acquired_series    
+        return acquired_series
 
     def _get_image_data_from_signal_array(
         self, image_geometry: ImageGeometry, model: Model, signal_array: np.ndarray
