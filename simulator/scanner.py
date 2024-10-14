@@ -32,8 +32,6 @@ class Scanner(QObject):
     def scan(self) -> None:
         """Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume."""
 
-        series_date = datetime.datetime.now().strftime("%Y%m%d")
-        series_time = datetime.datetime.now().strftime("%H%M%S.%f")
 
         if not self.scan_started:
             self.scan_started = True
@@ -76,6 +74,9 @@ class Scanner(QObject):
 
     def _perform_scan(self) -> AcquiredSeries:
         """Perform the actual scanning and return the acquired series."""
+
+        series_date = datetime.datetime.now().strftime("%Y%m%d")
+        series_time = datetime.datetime.now().strftime("%H%M%S.%f")
         scan_item = self.active_scan_item
         series_name = scan_item.name
         scan_plane = scan_item.scan_parameters["ScanPlane"]
