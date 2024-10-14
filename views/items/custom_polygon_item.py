@@ -31,6 +31,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.slice_lines = []
         self.scan_volume = None
         self.displayed_image = None
+        self.is_active_stack = False
 
         # Added viewer to update the scan view of the scan area with the selected rotation handler
         # It does not rotate when the other do without this viewer
@@ -56,6 +57,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle.mousePressEvent = (
                 lambda event, h=handle: self.handle_rotation_handle_press(event, h)
             )
+            handle.setVisible(False)
             self.rotation_handles.append(handle)
 
         # Initial positioning of the rotation handle
@@ -76,6 +78,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     event, hdl
                 )
             )
+            handle.setVisible(False)
             self.scale_handles.append(handle)
         self.scale_handle_offsets = []
         self.active_scale_handle = None
@@ -88,8 +91,33 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the initial position of the scale handles.
         self.update_scale_handle_positions()
 
+    def set_movability(self, isMovable: bool):
+        if isMovable:
+            # print("make movable")
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        else:
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
+    
+    def set_color(self, color):
+        self.setPen(color)
+
     def setScanVolume(self, scan_volume):
         self.scan_volume = scan_volume
+
+    def set_handles_invisible(self):
+        # print("SET HANDLES INVISIBLE")
+        for h in self.rotation_handles:
+            h.setVisible(False)
+        for h in self.scale_handles:
+            h.setVisible(False)
+
+    def set_handles_visible(self):
+        for h in self.rotation_handles:
+            h.setVisible(True)
+        for h in self.scale_handles:
+            h.setVisible(True)
 
     def update_rotation_handle_positions(self):
         """Update the positions of the rotation handlers"""
@@ -120,7 +148,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.rotation_handles[i]
             handle_pos_local = centroid_local + offset
             handle.setPos(handle_pos_local)
-            handle.setVisible(True)
+            if (self.is_active_stack):
+                handle.setVisible(True)
 
         # Hide any extra handles
         for i in range(len(self.rotation_handle_offsets), len(self.rotation_handles)):
@@ -142,6 +171,19 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         """
         This function updates the scale handle positions so that they are moved to their new positions.
         """
+
+        # If the polygon is empty, clear the scale handles and exit early. This check prevents a crash.
+        if self.polygon().isEmpty() or not self.scale_handle_offsets:
+            return
+        if not self.isVisible():
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            return
+
+        if self.polygon().isEmpty() or not self.scale_handle_offsets:
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            return
 
         # Get the current polygon and its number of points.
         polygon = self.polygon()
@@ -165,7 +207,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.scale_handles[i]
             handle_pos_local = local_center + offset
             handle.setPos(handle_pos_local)
-            handle.setVisible(True)
+            if (self.is_active_stack):
+                handle.setVisible(True)
 
         # Hide the remaining handles.
         for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
@@ -422,6 +465,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle_pos=self.active_scale_handle.pos(),
             center_pos=self.scene_center,
         )
+        self.viewer._update_scan_volume_display_for_active_stack_item()
+        self.viewer.viewport().update()
+        # QApplication.processEvents()
+
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
@@ -506,6 +553,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.update_scale_handle_positions()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
+        print(" SET POSITION FROM COORDINATES " + str(polygon_in_pixmap_coords))
         polygon_in_polygon_coords = QPolygonF()
         for pt in polygon_in_pixmap_coords:
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
@@ -538,11 +586,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             )
         )
         # apply volume updates also for current scan planning window polygon
-        self.viewer._update_scan_volume_display()
+
         self.notify_observers(
             EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
             direction_vector_in_lps_coords=direction_vec_in_lps,
         )
+        self.viewer._update_scan_volume_display_for_active_stack_item()
+        self.viewer.viewport().update()
+        # QApplication.processEvents()
 
     # on press show "size all" cursor
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
@@ -613,7 +664,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         )
 
         # Update display so the currently selected polygon also rotates
-        self.viewer._update_scan_volume_display()
+        self.viewer._update_scan_volume_display_for_active_stack_item()
         self.viewer.viewport().update()
         QApplication.processEvents()
         self.update_rotation_handle_positions()

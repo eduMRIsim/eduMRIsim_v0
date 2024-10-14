@@ -67,6 +67,9 @@ class MainController:
         self.ui.parameterFormLayout.formActivatedSignal.connect(
             self.handle_parameterFormLayout_activated
         )
+        self.ui.parameterFormLayout.stackSignal.connect(
+            self.handle_stack_action
+        )
         self.ui.scanParametersCancelChangesButton.clicked.connect(
             self.handle_scanParametersCancelChangesButton_clicked
         )
@@ -87,6 +90,9 @@ class MainController:
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
         )
+        self.ui.scanPlanningWindow1.testSignal.connect(self.testWindow1Signal)
+        self.ui.scanPlanningWindow2.testSignal.connect(self.testWindow2Signal)
+
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
         )
@@ -207,6 +213,14 @@ class MainController:
             scan_parameters = self.ui.examCardListView.model().get_data(index)
             self.scanner.scanlist.add_scanlist_element(name, scan_parameters)
 
+    def testWindow1Signal(self, n):
+        # print("window 1 signal")
+        pass
+
+    def testWindow2Signal(self, n):
+        # print("window 2 signal")
+        pass
+
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()
         list = scanlist.scanlist_elements
@@ -273,7 +287,9 @@ class MainController:
         self.scanner.scanlist.active_idx = index
 
     def populate_parameterFormLayout(self, scan_item):
-        self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+        # self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+        active_params = scan_item.get_current_active_parameters()
+        self.ui.parameterFormLayout.set_parameters(active_params)
 
     def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
@@ -317,14 +333,30 @@ class MainController:
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 
+    def handle_stack_action(self, act):
+        if act["event"] == "ADD":
+            # print("HERE111111111")
+            self.scanner.active_scan_item.add_stack()
+            self.ui.scanPlanningWindow1.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow2.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow3.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+
     def handle_scanParametersCancelChangesButton_clicked(self):
         self.scanner.active_scan_item.cancel_changes()
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
-        self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
-        self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
+        self.scanner.scanlist.active_scan_item.validate_scan_parameters_single(scan_parameters)
+        self.scanner.scanlist.active_scan_item.perform_rotation_check_single(scan_parameters)
+        # self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        # self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
@@ -340,7 +372,7 @@ class MainController:
             self.ui.state = UI_state.InvalidParametersState()
         elif status == ScanItemStatusEnum.COMPLETE:
             self.ui.state = UI_state.ScanCompleteState()
-            self.ui.scannedImageFrame.setAcquiredSeries(
+            self.ui.scannedImageFrame.setScanCompleteAcquiredData(
                 self.scanner.active_scanlist_element.acquired_data
             )
 
@@ -523,7 +555,7 @@ class MainController:
             self.ui.editingStackedLayout.setCurrentIndex(
                 0
             )  # Switch to scan parameter editor view
-            self.ui.scannedImageFrame.setAcquiredSeries(
+            self.ui.scannedImageFrame.setScanCompleteAcquiredData(
                 self.scanner.active_scanlist_element.acquired_data
             )  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
             current_list_item = self.ui.scanlistListWidget.item(
@@ -534,21 +566,34 @@ class MainController:
             self.scanner.active_scan_item.add_observer(self)
 
             # Set scan volume on planning windows only if the active scan item is not completed
+            # TODO: change over to active_scan_item.scan_volumes
             if self.scanner.active_scan_item.status != ScanItemStatusEnum.COMPLETE:
-                self.ui.scanPlanningWindow1.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                # self.ui.scanPlanningWindow1.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                # self.ui.scanPlanningWindow2.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                # self.ui.scanPlanningWindow3.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                self.ui.scanPlanningWindow1.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
-                self.ui.scanPlanningWindow2.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                self.ui.scanPlanningWindow2.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
-                self.ui.scanPlanningWindow3.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                self.ui.scanPlanningWindow3.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
             else:
                 # Clear the scan volume if the scan is completed
-                self.ui.scanPlanningWindow1.setScanVolume(None)
-                self.ui.scanPlanningWindow2.setScanVolume(None)
-                self.ui.scanPlanningWindow3.setScanVolume(None)
+                # self.ui.scanPlanningWindow1.setScanVolume(None)
+                # self.ui.scanPlanningWindow2.setScanVolume(None)
+                # self.ui.scanPlanningWindow3.setScanVolume(None)
+                self.ui.scanPlanningWindow1.setScanVolumes([])
+                self.ui.scanPlanningWindow2.setScanVolumes([])
+                self.ui.scanPlanningWindow3.setScanVolumes([])
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
@@ -556,5 +601,6 @@ class MainController:
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
             # self._scan_vo
-            self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
+            # self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
+            self.scanner.active_scan_item.find_scan_volume_with_stack_index(self.scanner.active_scan_item.selected_stack_index).clamp_to_scanner_dimensions()
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
