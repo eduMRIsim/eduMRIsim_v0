@@ -66,7 +66,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         # Initialize displayed image to None
         self.displayed_image = None
-        
+
         # window level mode
         self.window_center = None
         self.window_width = None
@@ -223,13 +223,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         elif self.leveling_enabled:
             if self.window_center is None or self.window_width is None:
                 return
-            
+
             if self.last_mouse_pos is not None:
                 delta = event.pos() - self.last_mouse_pos
                 self.last_mouse_pos = event.pos()
 
                 self.window_center += delta.y()  # Adjust level (vertical movement)
-                self.window_width += delta.x()   # Adjust window (horizontal movement)
+                self.window_width += delta.x()  # Adjust window (horizontal movement)
 
                 self.window_width = max(1, self.window_width)
 
@@ -357,7 +357,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
-        
+
         if window_center is None or window_width is None:
             window_center = np.mean(self.array)
             window_width = np.max(self.array) - np.min(self.array)
@@ -372,7 +372,9 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         # Create QImage and display
         image = np.ascontiguousarray(array_8bit)
         height, width = image.shape
-        qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
+        qimage = QImage(
+            image.data, width, height, width, QImage.Format.Format_Grayscale8
+        )
 
         # Create a QPixmap - a pixmap which can be displayed in a GUI
         pixmap = QPixmap.fromImage(qimage)
@@ -383,7 +385,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
-        
+
         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
         # self.scene.setSceneRect(0, 0, width, height)
         # The centerOn method is used to center the view on a particular point within the scene.
@@ -391,7 +393,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         # calculate LPS direction vector from the moved direction vector
 
-        
     def toggle_window_level_mode(self):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
@@ -504,7 +505,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
             # Set default window and level values
             self.window_center = np.mean(self.array)
-            self.window_width = np.max(self.array) - np.min(self.array) 
+            self.window_width = np.max(self.array) - np.min(self.array)
 
             self.scan_volume_display.set_displayed_image(image)
 
