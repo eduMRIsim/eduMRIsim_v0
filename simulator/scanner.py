@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import interpolate
 from utils.logger import log
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from simulator.MRI_data_synthesiser import MRIDataSynthesiser
 from simulator.examination import Examination
 from simulator.model import Model
@@ -12,17 +13,63 @@ from simulator.scanlist import (
 )
 
 
-class Scanner:
+class Scanner(QObject):
+    scan_progress = pyqtSignal(float)
 
     def __init__(self):
-
+        super().__init__()
         self.MRI_data_synthesiser = (
             MRIDataSynthesiser()
         )  # Create an instance of the MRIDataSynthesiser class. The MRIDataSynthesiser class is responsible for synthesising MRI data from the model and scan parameters. Not relevant for SEP project.
         self.examination = None
+        self.scan_time = 0
+        self.scan_timer = None
+        self.scan_elapsed_time = 0
+        self.scan_started = False
 
-    def scan(self) -> AcquiredSeries:
+    def scan(self) -> None:
         """Scan the model with the scan parameters defined in the scan item and return an acquired series. The acquired series is a list of acquired 2D images that represent the slices of the scanned volume."""
+        if not self.scan_started:
+            self.scan_started = True
+            scan_item = self.active_scan_item
+            self.scan_time = scan_item.scan_parameters["NSlices"] * int(scan_item.scan_parameters["TR_ms"]) * round(scan_item.scan_parameters["FOVPE_mm"])
+            self.scan_elapsed_time = 0
+
+            # Set up a QTimer to simulate scanning over time
+            self.active_scan_item.status = ScanItemStatusEnum.BEING_SCANNED
+            self.scan_timer = QTimer()
+            self.scan_timer.setInterval(100)  # Update every 100 ms
+            self.scan_timer.timeout.connect(self._perform_scan_step)
+            self.scan_timer.start()
+        else:
+            self.scan_elapsed_time = self.scan_time
+        
+    def _perform_scan_step(self):
+        """Perform a step in the scanning process."""
+        # Increment elapsed time
+        self.scan_elapsed_time += self.scan_timer.interval()  # 100 ms
+
+        #Calculate progress, set progress to 1 if greater; for progress bar
+        progress = self.scan_elapsed_time / self.scan_time
+        if progress > 1.0:
+            progress = 1.0
+
+        # Emit progress signal
+        self.scan_progress.emit(progress)
+
+        if progress >= 1.0:
+            # Stop the timer
+            self.scan_timer.stop()
+            self.scan_timer = None
+            self.scan_started = False
+
+            # Perform the actual scanning 
+            acquired_series = self._perform_scan()
+            # Set scan item status to COMPLETE
+            self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
+
+    def _perform_scan(self) -> AcquiredSeries:
+        """Perform the actual scanning and return the acquired series."""
         scan_item = self.active_scan_item
         series_name = scan_item.name
         scan_plane = scan_item.scan_parameters["ScanPlane"]
@@ -32,7 +79,7 @@ class Scanner:
         list_acquired_images = []
         n_slices = int(scan_item.scan_parameters["NSlices"])
         for i in range(n_slices):
-            # for each slice create an acquired image
+            # For each slice, create an acquired image
             # Step 1: create image geometry of slice
             image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
             # Step 2: get image data of slice
@@ -45,8 +92,7 @@ class Scanner:
         # Create an acquired series from the list of acquired images
         acquired_series = AcquiredSeries(series_name, scan_plane, list_acquired_images)
         self.active_scanlist_element.acquired_data = acquired_series
-        self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
-        return acquired_series
+        return acquired_series    
 
     def _get_image_data_from_signal_array(
         self, image_geometry: ImageGeometry, model: Model, signal_array: np.ndarray

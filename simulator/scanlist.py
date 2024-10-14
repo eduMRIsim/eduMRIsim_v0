@@ -200,6 +200,7 @@ class ScanItemStatusEnum(Enum):
         auto()
     )  # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
     BEING_MODIFIED = auto()  # Scan parameters are being modified by the user on the UI
+    BEING_SCANNED = auto()  # Scan being performed
     INVALID = (
         auto()
     )  # Scan parameters are invalid and the scan item cannot be applied to "scan" the anatomical model
@@ -546,6 +547,7 @@ class ScanVolume:
         self.slice_thickness_mm = None
         self.slice_gap_mm = None
         self.scanPlane = None
+        self.TR_ms = 0
 
         # Angle radians to be used for rotation
         self.RLAngle_rad = 0.0
@@ -596,6 +598,7 @@ class ScanVolume:
 
     def set_scan_volume_geometry(self, scan_parameters: dict):
         self.N_slices = int(float(scan_parameters["NSlices"]))
+        self.TR_ms = int(float(scan_parameters["TR_ms"]))
         self.slice_gap_mm = float(scan_parameters["SliceGap_mm"])
         self.slice_thickness_mm = float(scan_parameters["SliceThickness_mm"])
         self.extentX_mm = float(scan_parameters["FOVPE_mm"])
@@ -1117,6 +1120,7 @@ class ScanVolume:
             "FHAngle_deg": np.degrees(self.FHAngle_rad),
             "ScanPlane": self.scanPlane,
             "Rotation_lock": self.Rotation_lock,
+            "TR_ms": self.TR_ms
         }
 
     def calculate_slice_positions(self):
