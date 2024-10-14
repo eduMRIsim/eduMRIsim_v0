@@ -66,6 +66,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         # Initialize displayed image to None
         self.displayed_image = None
+        
+        # window level mode
+        self.window_center = None
+        self.window_width = None
+        self.leveling_enabled = False
 
         # Initalize displayed series to None
         self.acquired_series = None
@@ -168,9 +173,12 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = True
                 self.last_mouse_pos = event.pos()
-        if self.measuring_enabled:
+        elif self.measuring_enabled:
             self.measure.start_measurement(self.mapToScene(event.pos()))
             self.measure.show_items()
+        elif self.leveling_enabled:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.last_mouse_pos = event.pos()
         else:
             super().mousePressEvent(event)
 
@@ -180,8 +188,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             if event.button() == Qt.MouseButton.LeftButton:
                 self.mouse_pressed = False
                 self.last_mouse_pos = None
-        if self.measuring_enabled:
+        elif self.measuring_enabled:
             self.measure.end_measurement()
+        elif self.leveling_enabled:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.last_mouse_pos = None
         else:
             super().mouseReleaseEvent(event)
 
@@ -209,6 +220,20 @@ class AcquiredSeriesViewer2D(QGraphicsView):
                 self.last_mouse_pos = current_pos
         elif self.measuring_enabled and self.measure.is_measuring:
             self.measure.update_measurement(self.mapToScene(event.pos()))
+        elif self.leveling_enabled:
+            if self.window_center is None or self.window_width is None:
+                return
+            
+            if self.last_mouse_pos is not None:
+                delta = event.pos() - self.last_mouse_pos
+                self.last_mouse_pos = event.pos()
+
+                self.window_center += delta.y()  # Adjust level (vertical movement)
+                self.window_width += delta.x()   # Adjust window (horizontal movement)
+
+                self.window_width = max(1, self.window_width)
+
+                self._displayArray(self.window_center, self.window_width)
         else:
             super().mouseMoveEvent(event)
 
@@ -329,51 +354,51 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
-    def _displayArray(self):
-        width, height = 0, 0
-        if self.array is not None:
+    def _displayArray(self, window_center=None, window_width=None):
+        if self.array is None:
+            return
+        
+        if window_center is None or window_width is None:
+            window_center = np.mean(self.array)
+            window_width = np.max(self.array) - np.min(self.array)
 
-            # Normalize the slice values for display
-            array_norm = (self.array[:, :] - np.min(self.array)) / (
-                np.max(self.array) - np.min(self.array)
-            )
-            array_8bit = (array_norm * 255).astype(np.uint8)
+        min_window = window_center - (window_width / 2)
+        max_window = window_center + (window_width / 2)
 
-            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
-            image = np.ascontiguousarray(np.array(array_8bit))
-            height, width = image.shape
-            qimage = QImage(
-                image.data, width, height, width, QImage.Format.Format_Grayscale8
-            )
+        array_clamped = np.clip(self.array, min_window, max_window)
+        array_norm = (array_clamped - min_window) / (max_window - min_window)
+        array_8bit = (array_norm * 255).astype(np.uint8)
 
-            # Create a QPixmap - a pixmap which can be displayed in a GUI
-            pixmap = QPixmap.fromImage(qimage)
-            self.pixmap_item.setPixmap(pixmap)
+        # Create QImage and display
+        image = np.ascontiguousarray(array_8bit)
+        height, width = image.shape
+        qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
 
-            self.pixmap_item.setPos(0, 0)  # Ensure the pixmap item is at (0, 0)
-            self.scene.setSceneRect(
-                0, 0, width, height
-            )  # Adjust the scene rectangle to match the pixmap dimensions
+        # Create a QPixmap - a pixmap which can be displayed in a GUI
+        pixmap = QPixmap.fromImage(qimage)
+        self.pixmap_item.setPixmap(pixmap)
 
-        else:
-            # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
-            black_image.fill(Qt.GlobalColor.black)
-            pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)
-            self.scene.setSceneRect(0, 0, 1, 1)
-
+        self.pixmap_item.setPos(0, 0)
+        self.scene.setSceneRect(0, 0, width, height)
         self.resetTransform()
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
-
+        
         # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
         # self.scene.setSceneRect(0, 0, width, height)
         # The centerOn method is used to center the view on a particular point within the scene.
         # self.centerOn(width / 2, height / 2)
 
         # calculate LPS direction vector from the moved direction vector
+
+        
+    def toggle_window_level_mode(self):
+        """Toggles window-leveling mode."""
+        self.leveling_enabled = not self.leveling_enabled
+        if self.leveling_enabled:
+            print("Window-level mode enabled")
+        else:
+            print("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
@@ -476,6 +501,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
+
+            # Set default window and level values
+            self.window_center = np.mean(self.array)
+            self.window_width = np.max(self.array) - np.min(self.array) 
+
             self.scan_volume_display.set_displayed_image(image)
 
             # Determine the scan plane
@@ -500,7 +530,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_plane_label.clear()
             self.series_name_label.setText("")
 
-        self._displayArray()
+        self._displayArray(self.window_center, self.window_width)
         self._update_scan_volume_display()
 
     def setScanVolume(self, scan_volume: ScanVolume):

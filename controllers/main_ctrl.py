@@ -387,6 +387,19 @@ class MainController:
         self.ui.state = UI_state.ExamState()
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
+        
+    def handle_toggleWindowLevelButtonClicked(self):
+        """Toggle the window-level mode"""
+        if hasattr(self.ui.scannedImageFrame, 'leveling_enabled'):
+            if not self.ui.scannedImageFrame.leveling_enabled:
+                self.ui.scannedImageFrame.leveling_enabled = True
+                log.info("Window-level mode enabled")
+            else:
+                self.ui.scannedImageFrame.leveling_enabled = False
+                log.info("Window-level mode disabled")
+        else:
+            log.error("Error with window-level mode")
+
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
