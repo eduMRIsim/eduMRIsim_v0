@@ -93,7 +93,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def set_movability(self, isMovable: bool):
         if isMovable:
-            print("make movable")
+            # print("make movable")
             self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
             self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         else:
@@ -107,7 +107,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.scan_volume = scan_volume
 
     def set_handles_invisible(self):
-        print("SET HANDLES INVISIBLE")
+        # print("SET HANDLES INVISIBLE")
         for h in self.rotation_handles:
             h.setVisible(False)
         for h in self.scale_handles:

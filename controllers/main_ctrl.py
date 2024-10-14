@@ -83,6 +83,9 @@ class MainController:
         # Signals related to scanning
         self.ui.startScanButton.clicked.connect(self.scanner.scan)
 
+        # Connect scanner signals to slots
+        self.scanner.scan_progress.connect(self.update_scan_progress)
+
         # Signals related to scan planning windows
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
@@ -110,7 +113,7 @@ class MainController:
         )
 
         # Signals and UIs related to exporting images
-        self.export_image_dialog_ui = ExportImageDialog(None)
+        self.export_image_dialog_ui = ExportImageDialog()
 
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
             lambda: self.handle_viewingPortExport_triggered(0)
@@ -135,6 +138,19 @@ class MainController:
         )
         self.ui.scanPlanningWindow3.export_action.triggered.connect(
             lambda: self.handle_viewingPortExport_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(0)
+        )
+        self.ui.scanPlanningWindow1.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(1)
+        )
+        self.ui.scanPlanningWindow2.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(2)
+        )
+        self.ui.scanPlanningWindow3.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(3)
         )
 
     def prepare_model_data(self):
@@ -198,10 +214,12 @@ class MainController:
             self.scanner.scanlist.add_scanlist_element(name, scan_parameters)
 
     def testWindow1Signal(self, n):
-        print("window 1 signal")
+        # print("window 1 signal")
+        pass
 
     def testWindow2Signal(self, n):
-        print("window 2 signal")
+        # print("window 2 signal")
+        pass
 
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()
@@ -211,6 +229,8 @@ class MainController:
             if item.scan_item.status == ScanItemStatusEnum.READY_TO_SCAN:
                 list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))
             elif item.scan_item.status == ScanItemStatusEnum.BEING_MODIFIED:
+                list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
+            elif item.scan_item.status == ScanItemStatusEnum.BEING_SCANNED:
                 list_item.setIcon(QIcon("resources/icons/edit-outline.png"))
             elif item.scan_item.status == ScanItemStatusEnum.INVALID:
                 list_item.setIcon(QIcon("resources/icons/alert-circle-outline.png"))
@@ -223,7 +243,11 @@ class MainController:
         if active_idx is not None:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
-        progress = scanlist.get_progress()
+
+    # Sync progress bar to scan progress
+    def update_scan_progress(self, progress: float):
+        """Update the progress bar during scanning."""
+        # Assuming the progress bar ranges from 0 to 100
         self.ui.scanProgressBar.setValue(int(progress * 100))
 
     def save_complete_scanlist_items(self, scanlist):
@@ -311,7 +335,7 @@ class MainController:
 
     def handle_stack_action(self, act):
         if act["event"] == "ADD":
-            print("HERE111111111")
+            # print("HERE111111111")
             self.scanner.active_scan_item.add_stack()
             self.ui.scanPlanningWindow1.setScanVolumes(
                 self.scanner.active_scan_item.scan_volumes
@@ -342,6 +366,8 @@ class MainController:
             self.ui.state = UI_state.ReadyToScanState()
         elif status == ScanItemStatusEnum.BEING_MODIFIED:
             self.ui.state = UI_state.BeingModifiedState()
+        elif status == ScanItemStatusEnum.BEING_SCANNED:
+            self.ui.state = UI_state.BeingScannedState()
         elif status == ScanItemStatusEnum.INVALID:
             self.ui.state = UI_state.InvalidParametersState()
         elif status == ScanItemStatusEnum.COMPLETE:
@@ -402,17 +428,41 @@ class MainController:
 
         if index == 0:
             image = self.ui.scannedImageFrame.displayed_image
-            parameters = self.ui.parameterFormLayout.get_parameters()
+            series = self.ui.scannedImageFrame.acquired_series
         elif index == 1:
             image = self.ui.scanPlanningWindow1.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
+            series = self.ui.scanPlanningWindow1.acquired_series
         elif index == 2:
             image = self.ui.scanPlanningWindow2.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
+            series = self.ui.scanPlanningWindow2.acquired_series
         else:
             image = self.ui.scanPlanningWindow3.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
-        self.export_image_dialog_ui.export_file_dialog(image, parameters)
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters = self._return_parameters_from_image_in_scanlist(image)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_file_dialog(image, series, study, parameters)
+
+    def handle_exportToDicomdir_triggered(self, index: int):
+        if index not in range(0, 4):
+            raise ValueError(
+                f"Index {index} does not refer to a valid image viewing port"
+            )
+
+        if index == 0:
+            image = self.ui.scannedImageFrame.displayed_image
+            series = self.ui.scannedImageFrame.acquired_series
+        elif index == 1:
+            image = self.ui.scanPlanningWindow1.displayed_image
+            series = self.ui.scanPlanningWindow1.acquired_series
+        elif index == 2:
+            image = self.ui.scanPlanningWindow2.displayed_image
+            series = self.ui.scanPlanningWindow2.acquired_series
+        else:
+            image = self.ui.scanPlanningWindow3.displayed_image
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters = self._return_parameters_from_image_in_scanlist(image)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(image, series, study, parameters)
 
     def handle_measureDistanceButtonClicked(self):
         if not self.ui._scannedImageFrame.measuring_enabled:
@@ -444,6 +494,8 @@ class MainController:
             # For each scan list element, loop over all (acquired) images
             acquired_series: AcquiredSeries = scanlist_element.acquired_data
             acquired_image: AcquiredImage
+            if acquired_series is None:
+                continue
             for acquired_image in acquired_series.list_acquired_images:
                 # If the image data does not match, continue to the next image
                 if not np.array_equal(acquired_image.image_data, image.image_data):

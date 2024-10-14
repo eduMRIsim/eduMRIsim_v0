@@ -24,6 +24,7 @@ from views.UI_MainWindowState import (
 from views.UI_MainWindowState import (
     ReadyToScanState,
     BeingModifiedState,
+    BeingScannedState,
     ScanCompleteState,
     IdleState,
 )
@@ -393,6 +394,8 @@ class Ui_MainWindow(QMainWindow):
             self.state = ScanCompleteState()
         elif state_name == "BeingModifiedState":
             self.state = BeingModifiedState()
+        elif state_name == "BeingScannedState":
+            self.state = BeingScannedState()
         elif state_name == "ReadyToScanState":
             self.state = ReadyToScanState()
         elif state_name == "ExamState":

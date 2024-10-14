@@ -50,6 +50,8 @@ class App(QApplication):
             self.starting_window.load_previous_examination_button.setDisabled(True)
         self.starting_window.show()
 
+        self.menu_bar = None
+
     def start_main_app(self):
         """Start the main application."""
         self.main_view.update_UI()
@@ -106,8 +108,11 @@ class App(QApplication):
         tools_section.add_action(
             "Measure Distance",
             lambda: self.main_controller.handle_measureDistanceButtonClicked(),
+            checkable=True,
         )
-        tools_section.add_action("Measure Area", self.test_action)
+
+        # WARNING: not implemented yet
+        tools_section.add_action("Measure Area", self.test_action, checkable=False)
 
     def test_action(self):
         pass

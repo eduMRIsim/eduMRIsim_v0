@@ -55,7 +55,7 @@ class SettingsManager:
                     #     scan_list_items[i], scan_list_params[i]
                     # )
                     # scanlist params are stored now as a list
-                    print("LEN SCAN LIST ITEMS " + str(len(scan_list_params[i])))
+                    # print("LEN SCAN LIST ITEMS " + str(len(scan_list_params[i])))
                     self.scanner.scanlist.add_scanlist_element_multi(
                         scan_list_items[i], scan_list_params[i]
                     )

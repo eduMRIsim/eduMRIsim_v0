@@ -77,6 +77,23 @@ class BeingModifiedState(ExamState):
         context.scanParametersResetButton.setEnabled(True)
         context.scanParametersSaveChangesButton.setEnabled(True)
 
+class BeingScannedState(ExamState):
+    name = "BeingScannedState"
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.scanningModeButton.setEnabled(False)
+        context.viewingModeButton.setEnabled(False)
+        context.scanlistListWidget.setEnabled(False)
+        context.addScanItemButton.setEnabled(False)
+        context.startScanButton.setEnabled(True)
+        context.stopScanButton.setEnabled(False)
+        context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersCancelChangesButton.setEnabled(False)
+        context.scanParametersResetButton.setEnabled(False)
+        context.scanParametersSaveChangesButton.setEnabled(False)
+
+
 
 class InvalidParametersState(ExamState):
     name = "InvalidParametersState"
@@ -141,6 +158,10 @@ class IdleState(UI_MainWindowState):
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
 
+        # HIDE EXPORT BUTTONS FOR THE SCAN PLANNING WINDOWS
+        context.scanPlanningWindow1ExportButton.setVisible(False)
+        context.scanPlanningWindow2ExportButton.setVisible(False)
+        context.scanPlanningWindow3ExportButton.setVisible(False)
 
 class MRIfortheBrainState(UI_MainWindowState):
     def update_UI(self, context) -> None:
@@ -151,6 +172,7 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.scanPlanningWindow1ExportButton.setEnabled(False)
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
+
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)
 
         if (
@@ -171,3 +193,8 @@ class MRIfortheBrainState(UI_MainWindowState):
             is not None
         ):
             context.scanPlanningWindow3ExportButton.setEnabled(True)
+
+        # HIDE EXPORT BUTTONS FOR THE SCAN PLANNING WINDOWS
+        context.scanPlanningWindow1ExportButton.setVisible(False)
+        context.scanPlanningWindow2ExportButton.setVisible(False)
+        context.scanPlanningWindow3ExportButton.setVisible(False)

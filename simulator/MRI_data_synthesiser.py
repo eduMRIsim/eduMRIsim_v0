@@ -42,7 +42,7 @@ class SignalCalculatorFactory:
 
     def create_signal_calculator(self, scan_parameters):
         scan_technique = scan_parameters.get("ScanTechnique")
-        print("SCAN TECHNIQUE " + scan_technique)
+        # print("SCAN TECHNIQUE " + scan_technique)
         if scan_technique in self.cache:
             return self.cache[scan_technique]
 

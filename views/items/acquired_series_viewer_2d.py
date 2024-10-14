@@ -146,6 +146,8 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
+        self.export_dicomdir_action = QAction("Export using DICOMDIR...")
+        self.right_click_menu.addAction(self.export_dicomdir_action)
 
         self.scene.installEventFilter(self)
 
@@ -298,7 +300,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
         if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
-            print("HEREEE")
+            # print("HEREEE")
             return True
         
         if event.type() == QEvent.Type.GraphicsSceneMouseMove:

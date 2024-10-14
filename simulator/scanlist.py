@@ -9,6 +9,8 @@ from . import load
 import math as ma
 from utils.logger import log
 
+from pydicom.uid import generate_uid
+
 
 class ImageGeometry:
     """This class represents the geometry of a 2D acquired image. The axisX_LPS and axisY_LPS parameters define the orientation of the image plane in LPS coordinates. The extentX_mm and extentY_mm parameters define the extent of the image in the X and Y directions in millimeters. The resX_mm and resY_mm parameters define the resolution of the image in the X and Y directions in millimeters. The origin_LPS parameter defines the origin of the image in LPS coordinates."""
@@ -125,20 +127,34 @@ class ImageGeometry:
 
 class AcquiredImage:
     # An acquired image is a 2D image that is acquired during a scan. It consists of image data and image geometry.
-    def __init__(self, image_data: np.ndarray, image_geometry: ImageGeometry):
+    def __init__(self, image_data: np.ndarray, image_geometry: ImageGeometry, acquisition_and_content_date: str, acquisition_and_content_time: str):
         self.image_data = image_data
         self.image_geometry = image_geometry
+
+        self.acquisition_date = self.content_date = acquisition_and_content_date
+        self.acquisition_time = self.content_time = acquisition_and_content_time
+        self.instance_number = None
 
 
 class AcquiredSeries:
     """A series of acquired images. The acquired images are 2D."""
+    series_number = 101
 
     def __init__(
-        self, series_name, scan_plane, list_acquired_images: list[AcquiredImage]
+        self, series_name, scan_plane, list_acquired_images: list[AcquiredImage], series_date: str, series_time: str
     ):
         self.series_name = series_name
         self.scan_plane = scan_plane
+        for i, image in enumerate(list_acquired_images):
+            image.instance_number = i+1
         self.list_acquired_images = list_acquired_images
+
+        self.series_instance_uid = generate_uid()
+        self.series_date = series_date
+        self.series_time = series_time
+        self.series_number = AcquiredSeries.series_number
+        AcquiredSeries.series_number += 100
+
 
 
 class Scanlist:
@@ -213,6 +229,7 @@ class ScanItemStatusEnum(Enum):
         auto()
     )  # Scan parameters are valid and the scan item can be applied to "scan" the anatomical model
     BEING_MODIFIED = auto()  # Scan parameters are being modified by the user on the UI
+    BEING_SCANNED = auto()  # Scan being performed
     INVALID = (
         auto()
     )  # Scan parameters are invalid and the scan item cannot be applied to "scan" the anatomical model
@@ -233,9 +250,9 @@ class ScanlistElement:
 
 class ScanItem:
     # def __init__(self, *inp):
-    #     # when 2 arguments are passed 
-    #     if len(inp) == 2: 
-    #         self.ans = self.initialize_with2_params(inp) 
+    #     # when 2 arguments are passed
+    #     if len(inp) == 2:
+    #         self.ans = self.initialize_with2_params(inp)
     #     if len(inp) == 3:
     #         self.ans = self.initialize_with3_params(inp)
 
@@ -303,9 +320,9 @@ class ScanItem:
     # everytime we set scan parameters we need to convert some string values of parameters to floats and also set scan volume geometries depending on for which stack index is in the scan parameter object
     @scan_parameters.setter
     def scan_parameters(self, scan_parameters):
-        print(" ================== SCAN PARAMETERS SETTER ====================== ")
-        print(" SCAN PARAMS ORIGINAL " + str(self._scan_parameters))
-        print(" SCAN PARAMS NEW VALUE " + str(scan_parameters))
+        # print(" ================== SCAN PARAMETERS SETTER ====================== ")
+        # print(" SCAN PARAMS ORIGINAL " + str(self._scan_parameters))
+        # print(" SCAN PARAMS NEW VALUE " + str(scan_parameters))
         # for key, value in scan_parameters.items():
         #     try:
         #         self._scan_parameters[key] = float(value)
@@ -334,7 +351,7 @@ class ScanItem:
             # TODO: should also copy other keys and values of _scan_parameters into scan_params_processed
             if scan_params_index is not None:
                 scan_params_processed = self._scan_parameters[scan_params_index]
-            
+
             for key, value in scan_params.items():
                 try:
                     scan_params_processed[key] = float(value)
@@ -357,11 +374,11 @@ class ScanItem:
                 scan_volume = ScanVolume(stack_inx)
                 self.scan_volumes.append(scan_volume)
             else:
-                 # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed. 
-                 # This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not 
+                 # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed.
+                 # This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not
                  # respond to events that they themselves initiated.
                 scan_volume.remove_observer(self)
-            
+
             assert scan_volume is not None
             scan_volume.set_scan_volume_geometry(scan_params_processed)
             params = scan_volume.get_parameters()
@@ -369,7 +386,7 @@ class ScanItem:
             for key, value in params.items():
                 scan_params_processed[key] = value
 
-            # update wiht clamped values 
+            # update wiht clamped values
             scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, stack_inx)
             if scan_params_index is not None:
                 self._scan_parameters[scan_params_index] = scan_params_processed
@@ -377,18 +394,18 @@ class ScanItem:
                 self._scan_parameters.append(scan_params_processed)
 
             scan_volume.add_observer(self)
-            print("END OF SCAN PARAMS SETTER " + str(self._scan_parameters[0]))
+            # print("END OF SCAN PARAMS SETTER " + str(self._scan_parameters[0]))
             self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
-        # TODO: handle deletion of object in _scan_parameters list or deletion of scan volume in scan volumes' list if there was not corresponding 
+        # TODO: handle deletion of object in _scan_parameters list or deletion of scan volume in scan volumes' list if there was not corresponding
         # parameters object in the argument with specified stack index
-        
+
         # TESTING ASSERTIONS
-        # check if length of scan_parameters equals lenght of _scan_parameters finally and it should have eacb object with stack index 
-        # appearing only once in both lists  
+        # check if length of scan_parameters equals lenght of _scan_parameters finally and it should have eacb object with stack index
+        # appearing only once in both lists
         assert len(scan_parameters) == len(self._scan_parameters)
         assert len(scan_parameters) == len(self.scan_volumes)
-        
+
         count_correct_objects = 0
         for item in scan_parameters:
             scan_params_processed = {}
@@ -401,7 +418,7 @@ class ScanItem:
             corresponding_stack_index_params: List[dict] = [parms for parms in self._scan_parameters if parms["StackIndex"] == stack_index]
             # there should be only one params object created for each stack index
             assert len(corresponding_stack_index_params) == 1
-            
+
             stored_parms = corresponding_stack_index_params[0]
             test_scan_vol = ScanVolume(0)
             test_scan_vol.set_scan_volume_geometry(scan_params_processed)
@@ -414,7 +431,7 @@ class ScanItem:
                 if processed_scan_volume_params[key] != stored_parms[key]:
                     valid_object_found = False
                     break
-            
+
             if valid_object_found:
                 count_correct_objects += 1
 
@@ -426,7 +443,7 @@ class ScanItem:
                 return parms
 
         return None
-    
+
     def add_stack(self):
         jsonFilePath = "repository/exam_cards/scan_items.json"
         scan_params = load.load_json(jsonFilePath)
@@ -452,11 +469,11 @@ class ScanItem:
         stack_indices = []
         for parm in self.scan_parameters:
             stack_indices.append(parm["StackIndex"])
-        
+
         m = max(stack_indices)
 
         return m + 1
-    
+
     def get_current_active_scan_volume(self):
         for vol in self.scan_volumes:
             if vol.stack_index == self.selected_stack_index:
@@ -473,13 +490,13 @@ class ScanItem:
                 break
 
         return found_stack_indx
-    
+
     def find_scan_volume_with_stack_index(self, stack_index):
         for vol in self.scan_volumes:
             if vol.stack_index == stack_index:
                 return vol
         return None
-    
+
     def find_parameters_with_stack_index(self, params: List[dict], stack_index):
         found_stack_indx = None
         for idx, item in enumerate(params):
@@ -546,7 +563,7 @@ class ScanItem:
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
 
-    
+
 
     def cancel_changes(self):
         if self.valid == True:
@@ -669,6 +686,8 @@ class ScanItem:
                     scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
                     changed = True
 
+                    scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = scan_parameters["FOVPE_mm"], scan_parameters["FOVFE_mm"]
+
                 elif (
                     abs(RLAngle_deg) > THRESHOLD_ANGLE
                     and abs(APAngle_deg) <= THRESHOLD_ANGLE
@@ -712,31 +731,31 @@ class ScanItem:
                     scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
                     changed = True
 
-                elif (
-                    abs(FHAngle_deg) > THRESHOLD_ANGLE
-                    and abs(APAngle_deg) <= THRESHOLD_ANGLE
-                ):
-                    # Change to Coronal plane
-                    scan_parameters["ScanPlane"] = "Coronal"
+                scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = scan_parameters["FOVPE_mm"], scan_parameters["FOVFE_mm"]
 
-                    # Adjust FHAngle_deg
-                    if FHAngle_deg > 0:
-                        # APAngle_deg += 90
-                        FHAngle_deg -= 90
-                    else:
-                        # APAngle_deg -= 90
-                        FHAngle_deg += 90
+            elif (
+                    abs(FHAngle_deg) > THRESHOLD_ANGLE >= abs(APAngle_deg)
+            ):
+                # Change to Coronal plane
+                scan_parameters["ScanPlane"] = "Coronal"
 
-                    # Set parameters
-                    scan_parameters["RLAngle_deg"] = str(RLAngle_deg)
-                    scan_parameters["APAngle_deg"] = str(APAngle_deg)
-                    scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
-                    changed = True
+                # Adjust FHAngle_deg
+                if FHAngle_deg > 0:
+                    # APAngle_deg += 90
+                    FHAngle_deg -= 90
+                else:
+                    # APAngle_deg -= 90
+                    FHAngle_deg += 90
+
+                # Set parameters
+                scan_parameters["RLAngle_deg"] = str(RLAngle_deg)
+                scan_parameters["APAngle_deg"] = str(APAngle_deg)
+                scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
+                changed = True
 
             elif scanPlane == "Coronal":
                 if (
-                    abs(RLAngle_deg) > THRESHOLD_ANGLE
-                    and abs(FHAngle_deg) <= THRESHOLD_ANGLE
+                        abs(RLAngle_deg) > THRESHOLD_ANGLE >= abs(FHAngle_deg)
                 ):
                     # Change to Axial plane
                     scan_parameters["ScanPlane"] = "Axial"
@@ -847,6 +866,7 @@ class ScanVolume:
         self.slice_thickness_mm = None
         self.slice_gap_mm = None
         self.scanPlane = None
+        self.TR_ms = 0
 
         # Angle radians to be used for rotation
         self.RLAngle_rad = 0.0
@@ -900,6 +920,7 @@ class ScanVolume:
 
     def set_scan_volume_geometry(self, scan_parameters: dict):
         self.N_slices = int(float(scan_parameters["NSlices"]))
+        self.TR_ms = int(float(scan_parameters["TR_ms"]))
         self.slice_gap_mm = float(scan_parameters["SliceGap_mm"])
         self.slice_thickness_mm = float(scan_parameters["SliceThickness_mm"])
         self.extentX_mm = float(scan_parameters["FOVPE_mm"])
@@ -1422,7 +1443,8 @@ class ScanVolume:
             "FHAngle_deg": np.degrees(self.FHAngle_rad),
             "ScanPlane": self.scanPlane,
             "Rotation_lock": self.Rotation_lock,
-            "StackIndex": self.stack_index
+            "StackIndex": self.stack_index,
+            "TR_ms": self.TR_ms
         }
 
     def calculate_slice_positions(self):

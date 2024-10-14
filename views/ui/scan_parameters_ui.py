@@ -185,7 +185,7 @@ class ParameterFormLayout(QVBoxLayout):
 
     
     def handle_add_new_stack_btn_clicked(self):
-        print("ADD PRESS")
+        # print("ADD PRESS")
         self.stackSignal.emit({"event": "ADD"})
         self.add_new_stack()
 
