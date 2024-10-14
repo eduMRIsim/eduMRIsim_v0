@@ -773,6 +773,7 @@ class StackItem():
     volume_display: Optional[CustomPolygonItem] = None
     middle_line_display: Optional[MiddleLineItem] = None
     slices_display: List[SlicecItem] = []
+    activ_stack = False
     stack_index = 0
 
     def __init__(self, pixmap_item, series_viewer, stack_index):
@@ -793,13 +794,17 @@ class StackItem():
    
     # show this scan volume in yellow as selected scan volume and hide slices and middle lines, make it movable
     def set_active_settings(self):
+        self.activ_stack = True
         self.volume_display.set_color(Qt.GlobalColor.yellow)
         self.volume_display.set_movability(True)
         self.middle_line_display.setVisible(True)
+        self.volume_display.set_handles_visible()
+        self.volume_display.is_active_stack = True
 
     # unselect this scan volume so set it red and make non-movable
     def set_inactive_settings(self):
         print("INACTIVE")
+        self.activ_stack = False
         self.volume_display.set_color(Qt.GlobalColor.red)
         self.volume_display.set_movability(False)
         self.middle_line_display.setPolygon(QPolygonF())
@@ -808,6 +813,8 @@ class StackItem():
         for slice in self.slices_display:
             slice.setPolygon(QPolygonF())
         self.slices_display = []
+        self.volume_display.set_handles_invisible()
+        self.volume_display.is_active_stack = False
 
     # update stack item display component with coordinates
     def update_objects_with_pixmap_coords(self, volume_edges, middle_edges, slice_edges):
@@ -820,10 +827,11 @@ class StackItem():
         for slice in self.slices_display:
             slice.setPolygon(QPolygonF())
         self.slices_display = []
-        for slice_edges in slice_edges:
-            slice_item = SlicecItem(self.pixmap_item)
-            slice_item.setPolygonFromPixmapCoords(slice_edges)
-            self.slices_display.append(slice_item)
+        if self.activ_stack:
+            for slice_edges in slice_edges:
+                slice_item = SlicecItem(self.pixmap_item)
+                slice_item.setPolygonFromPixmapCoords(slice_edges)
+                self.slices_display.append(slice_item)
 
         # TODO: try to update viewer here, it sometimes happens that polygon is set with coordinates, but views are not updated
         self.series_viewer.viewport().update()

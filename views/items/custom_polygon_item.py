@@ -31,6 +31,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.slice_lines = []
         self.scan_volume = None
         self.displayed_image = None
+        self.is_active_stack = False
 
         # Added viewer to update the scan view of the scan area with the selected rotation handler
         # It does not rotate when the other do without this viewer
@@ -105,6 +106,19 @@ class CustomPolygonItem(QGraphicsPolygonItem):
     def setScanVolume(self, scan_volume):
         self.scan_volume = scan_volume
 
+    def set_handles_invisible(self):
+        print("SET HANDLES INVISIBLE")
+        for h in self.rotation_handles:
+            h.setVisible(False)
+        for h in self.scale_handles:
+            h.setVisible(False)
+
+    def set_handles_visible(self):
+        for h in self.rotation_handles:
+            h.setVisible(True)
+        for h in self.scale_handles:
+            h.setVisible(True)
+
     def update_rotation_handle_positions(self):
         """Update the positions of the rotation handlers"""
         if self.polygon().isEmpty() or not self.rotation_handle_offsets:
@@ -134,7 +148,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.rotation_handles[i]
             handle_pos_local = centroid_local + offset
             handle.setPos(handle_pos_local)
-            handle.setVisible(True)
+            if (self.is_active_stack):
+                handle.setVisible(True)
 
         # Hide any extra handles
         for i in range(len(self.rotation_handle_offsets), len(self.rotation_handles)):
@@ -192,7 +207,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.scale_handles[i]
             handle_pos_local = local_center + offset
             handle.setPos(handle_pos_local)
-            handle.setVisible(True)
+            if (self.is_active_stack):
+                handle.setVisible(True)
 
         # Hide the remaining handles.
         for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):

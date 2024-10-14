@@ -5,6 +5,8 @@ from PyQt6.QtCore import QPointF
 from typing import List
 
 from events import EventEnum
+from . import load
+import math as ma
 from utils.logger import log
 
 
@@ -152,9 +154,11 @@ class Scanlist:
         if self.active_idx is None:
             self.active_idx = 0
 
+    # scan_parameters argument is list of dict objects in this case
     def add_scanlist_element_multi(self, name, scan_parameters):
         # TODO: if scan_parameters is list stored in settings, should handle loading all scan parameters objects as stacks into scanlistelememnt
         new_scanlist_element = ScanlistElement(name, scan_parameters[0])
+        new_scanlist_element.set_scan_params_of_scan_item_as_array(scan_parameters)
         self.scanlist_elements.append(new_scanlist_element)
         self.notify_observers(EventEnum.SCANLIST_ITEM_ADDED)
         if self.active_idx is None:
@@ -222,6 +226,9 @@ class ScanlistElement:
         self.scan_item = ScanItem(name, scan_parameters)
         self.acquired_data = None
         self.name = name
+
+    def set_scan_params_of_scan_item_as_array(self, scan_params: List[dict]):
+        self.scan_item.scan_parameters = scan_params
 
 
 class ScanItem:
@@ -419,6 +426,36 @@ class ScanItem:
                 return parms
 
         return None
+    
+    def add_stack(self):
+        jsonFilePath = "repository/exam_cards/scan_items.json"
+        scan_params = load.load_json(jsonFilePath)
+        stack_inx = self.generate_unique_stack_index()
+        current_active_params = self.get_current_active_parameters()
+        new_params = {}
+
+        if current_active_params["ScanPlane"] == "Coronal":
+            new_params = scan_params["T1WSE_Axial"]
+        elif current_active_params["ScanPlane"] == "Axial":
+            new_params = scan_params["T1WSE_Coronal"]
+        elif current_active_params["ScanPlane"] == "Sagittal":
+            new_params = scan_params["T1WSE_Coronal"]
+
+        new_params["StackIndex"] = stack_inx
+
+        previous_scan_params = self.scan_parameters.copy()
+        previous_scan_params.append(new_params)
+        self.scan_parameters = previous_scan_params
+
+
+    def generate_unique_stack_index(self):
+        stack_indices = []
+        for parm in self.scan_parameters:
+            stack_indices.append(parm["StackIndex"])
+        
+        m = max(stack_indices)
+
+        return m + 1
     
     def get_current_active_scan_volume(self):
         for vol in self.scan_volumes:

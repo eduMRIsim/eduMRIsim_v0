@@ -67,6 +67,9 @@ class MainController:
         self.ui.parameterFormLayout.formActivatedSignal.connect(
             self.handle_parameterFormLayout_activated
         )
+        self.ui.parameterFormLayout.stackSignal.connect(
+            self.handle_stack_action
+        )
         self.ui.scanParametersCancelChangesButton.clicked.connect(
             self.handle_scanParametersCancelChangesButton_clicked
         )
@@ -305,6 +308,20 @@ class MainController:
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
+
+    def handle_stack_action(self, act):
+        if act["event"] == "ADD":
+            print("HERE111111111")
+            self.scanner.active_scan_item.add_stack()
+            self.ui.scanPlanningWindow1.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow2.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow3.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
 
     def handle_scanParametersCancelChangesButton_clicked(self):
         self.scanner.active_scan_item.cancel_changes()
