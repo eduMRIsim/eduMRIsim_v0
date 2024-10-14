@@ -56,10 +56,8 @@ class MainController:
         self._new_examination_dialog_ui.newExaminationOkButton.clicked.connect(lambda: self.handle_newExaminationOkButton_clicked(self._new_examination_dialog_ui.examNameLineEdit.text(), self._new_examination_dialog_ui.modelComboBox.currentText()))      
 
     def handle_scanlistListWidget_itemChanged(self, item):
-        print("item changed signal received", "item:", item)
         self.scanner.scanlist.rename_scanlist_element(self.ui.scanlistListWidget.row(item), item.text())
-        print("new name:", self.scanner.scanlist.scanlist_elements[self.ui.scanlistListWidget.row(item)].name)
-        print("new name scan item:", self.scanner.scanlist.scanlist_elements[self.ui.scanlistListWidget.row(item)].scan_item.name)
+
 
     def handle_scanlistListWidget_itemDeleted(self, item):
         self.scanner.scanlist.remove_scanlist_element(self.ui.scanlistListWidget.row(item))
@@ -182,7 +180,7 @@ class MainController:
         self.ui.state = UI_state.ScanCompleteState()
         self.ui.update_UI()        
         self.ui.scannedImageFrame.update_scanlist_element_name_text_item(self.scanner.active_scanlist_element.name)
-        self.ui.scannedImageFrame.setArray(array)
+        self.ui.scannedImageFrame.setArray(self.scanner.active_scanlist_element.acquired_data)
         self.ui.scannedImageFrame.displayArray()
 
         #self.update_scanlistListWidget(self.scanner.scanlist)
