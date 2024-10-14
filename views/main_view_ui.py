@@ -674,7 +674,7 @@ class ParameterFormLayout(QVBoxLayout):
                 inversion_time_editor = self.editors.get("TI_ms", None)
                 if inversion_time_editor is not None:
                     print("inversion_time_editor is not None")
-                    inversion_time_editor.setText("i am read only")
+                    inversion_time_editor.setText("0")
                     inversion_time_editor.setReadOnly(True)
 
     def get_parameters(self):
