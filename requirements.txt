@@ -1,4 +1,6 @@
 ﻿
 numpy
 PyQt5
+scipy==1.11.3
+
 
