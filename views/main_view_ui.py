@@ -601,9 +601,7 @@ class ParameterFormLayout(QVBoxLayout):
         self.isReadOnly = True
         self.editors = {}
 
-
     def createForm(self, parameters : dict) -> None:
-        
         # Create form elements based on the data in "parameters".
         for parameter in parameters:
             name = parameter["name"]
@@ -624,9 +622,6 @@ class ParameterFormLayout(QVBoxLayout):
                 editor.textChanged.connect(lambda: self.formActivatedSignal.emit())
             elif editor_type == "QComboBox":
                 editor = QComboBox()
-                # if the editor being created is the "ScanTechnique" editor, connect the handle_scan_technique_changed method to the currentIndexChanged signal of the editor. 
-                if parameter_key == "ScanTechnique":
-                    editor.currentIndexChanged.connect(lambda: self.handle_scan_technique_changed())                
                 editor.addItems(default_value)
                 editor.setCurrentIndex(0)
                 parameter_layout.addWidget(QLabel(name), 0, 0, Qt.AlignLeft)
@@ -649,33 +644,6 @@ class ParameterFormLayout(QVBoxLayout):
 
             # Store the editor widget in the dictionary for later access.
             self.editors[parameter_key] = editor
-
-
-
-
-    def handle_scan_technique_changed(self):
-        print("handle_scan_technique_changed called")
-        # get current scan technique
-        scan_technique_editor = self.editors.get("ScanTechnique", None) # Get the editor widget for the scan technique. If the key "ScanTechnique" is not found in the dictionary, the default value of None is returned.
-        if scan_technique_editor is not None:
-            print("scan_technique_editor is not None")
-            scan_technique = scan_technique_editor.currentText()
-            if scan_technique == "SE": 
-                print("scan_technique is SE")	
-                # Disable the flip angle editor "FA_deg"
-                flip_angle_editor = self.editors.get("FA_deg", None)
-                if flip_angle_editor is not None:
-                    print("flip_angle_editor is not None")
-                    flip_angle_editor.setText("90")
-                    flip_angle_editor.setReadOnly(True)
-            elif scan_technique == "GE": 
-                print("scan_technique is GE")
-                # Disable the inversion time editor "TI_ms"
-                inversion_time_editor = self.editors.get("TI_ms", None)
-                if inversion_time_editor is not None:
-                    print("inversion_time_editor is not None")
-                    inversion_time_editor.setText("0")
-                    inversion_time_editor.setReadOnly(True)
 
     def get_parameters(self):
         # Create a dictionary to store the current values of the editor widgets.
@@ -704,7 +672,6 @@ class ParameterFormLayout(QVBoxLayout):
                         index = editor.findText(str(value))
                         if index != -1:
                             editor.setCurrentIndex(index)        
-        self.handle_scan_technique_changed()
 
     def setReadOnly(self, bool : bool):
         for editor in self.editors.values():
@@ -713,8 +680,6 @@ class ParameterFormLayout(QVBoxLayout):
             if isinstance(editor, (QComboBox)):
                 editor.setEnabled(not bool)
         self.isReadOnly = bool
-        if bool == False: # something more sophisticated should be thought of instead of this. This is done because according to the current scan technique, either the flip angle or the inversion time editors should remain read only. Without this code, all edits would be enabled when the "BeingModifiedState" is entered.
-            self.handle_scan_technique_changed()
 
     def setScanTechniqueComboBox(self, scan_techniques):
         with block_signals(self.editors.values()):
