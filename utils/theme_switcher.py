@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QApplication, QStyleFactory
 def set_light_mode(app):
     app.setPalette(QApplication.style().standardPalette())
     app.setStyle(QStyleFactory.create("windows11"))  # or "Windows", "Macintosh", etc.
-    print(QStyleFactory.keys())
+    # print(QStyleFactory.keys())
 
 
 def set_dark_mode(app):

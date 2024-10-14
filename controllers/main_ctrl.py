@@ -69,6 +69,9 @@ class MainController:
         self.ui.parameterFormLayout.formActivatedSignal.connect(
             self.handle_parameterFormLayout_activated
         )
+        self.ui.parameterFormLayout.stackSignal.connect(
+            self.handle_stack_action
+        )
         self.ui.scanParametersCancelChangesButton.clicked.connect(
             self.handle_scanParametersCancelChangesButton_clicked
         )
@@ -89,6 +92,9 @@ class MainController:
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
         )
+        self.ui.scanPlanningWindow1.testSignal.connect(self.testWindow1Signal)
+        self.ui.scanPlanningWindow2.testSignal.connect(self.testWindow2Signal)
+
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
         )
@@ -109,7 +115,7 @@ class MainController:
         )
 
         # Signals and UIs related to exporting images
-        self.export_image_dialog_ui = ExportImageDialog(None)
+        self.export_image_dialog_ui = ExportImageDialog()
 
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
             lambda: self.handle_viewingPortExport_triggered(0)
@@ -134,6 +140,19 @@ class MainController:
         )
         self.ui.scanPlanningWindow3.export_action.triggered.connect(
             lambda: self.handle_viewingPortExport_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(0)
+        )
+        self.ui.scanPlanningWindow1.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(1)
+        )
+        self.ui.scanPlanningWindow2.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(2)
+        )
+        self.ui.scanPlanningWindow3.export_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportToDicomdir_triggered(3)
         )
 
     def prepare_model_data(self):
@@ -195,6 +214,14 @@ class MainController:
             name = self.ui.examCardListView.model().itemFromIndex(index).text()
             scan_parameters = self.ui.examCardListView.model().get_data(index)
             self.scanner.scanlist.add_scanlist_element(name, scan_parameters)
+
+    def testWindow1Signal(self, n):
+        # print("window 1 signal")
+        pass
+
+    def testWindow2Signal(self, n):
+        # print("window 2 signal")
+        pass
 
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()
@@ -262,7 +289,9 @@ class MainController:
         self.scanner.scanlist.active_idx = index
 
     def populate_parameterFormLayout(self, scan_item):
-        self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+        # self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
+        active_params = scan_item.get_current_active_parameters()
+        self.ui.parameterFormLayout.set_parameters(active_params)
 
     def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
@@ -309,14 +338,30 @@ class MainController:
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 
+    def handle_stack_action(self, act):
+        if act["event"] == "ADD":
+            # print("HERE111111111")
+            self.scanner.active_scan_item.add_stack()
+            self.ui.scanPlanningWindow1.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow2.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow3.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+
     def handle_scanParametersCancelChangesButton_clicked(self):
         self.scanner.active_scan_item.cancel_changes()
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
-        self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
-        self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
+        self.scanner.scanlist.active_scan_item.validate_scan_parameters_single(scan_parameters)
+        self.scanner.scanlist.active_scan_item.perform_rotation_check_single(scan_parameters)
+        # self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
+        # self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
     def handle_scanParametersResetButton_clicked(self):
         self.scanner.scanlist.active_scan_item.reset_parameters()
@@ -332,7 +377,7 @@ class MainController:
             self.ui.state = UI_state.InvalidParametersState()
         elif status == ScanItemStatusEnum.COMPLETE:
             self.ui.state = UI_state.ScanCompleteState()
-            self.ui.scannedImageFrame.setAcquiredSeries(
+            self.ui.scannedImageFrame.setScanCompleteAcquiredData(
                 self.scanner.active_scanlist_element.acquired_data
             )
 
@@ -380,6 +425,18 @@ class MainController:
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
 
+    def handle_toggleWindowLevelButtonClicked(self):
+        """Toggle the window-level mode"""
+        if hasattr(self.ui.scannedImageFrame, "leveling_enabled"):
+            if not self.ui.scannedImageFrame.leveling_enabled:
+                self.ui.scannedImageFrame.leveling_enabled = True
+                log.info("Window-level mode enabled")
+            else:
+                self.ui.scannedImageFrame.leveling_enabled = False
+                log.info("Window-level mode disabled")
+        else:
+            log.error("Error with window-level mode")
+
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
             raise ValueError(
@@ -388,17 +445,43 @@ class MainController:
 
         if index == 0:
             image = self.ui.scannedImageFrame.displayed_image
-            parameters = self.ui.parameterFormLayout.get_parameters()
+            series = self.ui.scannedImageFrame.acquired_series
         elif index == 1:
             image = self.ui.scanPlanningWindow1.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
+            series = self.ui.scanPlanningWindow1.acquired_series
         elif index == 2:
             image = self.ui.scanPlanningWindow2.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
+            series = self.ui.scanPlanningWindow2.acquired_series
         else:
             image = self.ui.scanPlanningWindow3.displayed_image
-            parameters = self._return_parameters_from_image_in_scanlist(image)
-        self.export_image_dialog_ui.export_file_dialog(image, parameters)
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters = self._return_parameters_from_image_in_scanlist(image)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_file_dialog(image, series, study, parameters)
+
+    def handle_exportToDicomdir_triggered(self, index: int):
+        if index not in range(0, 4):
+            raise ValueError(
+                f"Index {index} does not refer to a valid image viewing port"
+            )
+
+        if index == 0:
+            image = self.ui.scannedImageFrame.displayed_image
+            series = self.ui.scannedImageFrame.acquired_series
+        elif index == 1:
+            image = self.ui.scanPlanningWindow1.displayed_image
+            series = self.ui.scanPlanningWindow1.acquired_series
+        elif index == 2:
+            image = self.ui.scanPlanningWindow2.displayed_image
+            series = self.ui.scanPlanningWindow2.acquired_series
+        else:
+            image = self.ui.scanPlanningWindow3.displayed_image
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters = self._return_parameters_from_image_in_scanlist(image)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(
+            image, series, study, parameters
+        )
 
     def handle_measureDistanceButtonClicked(self):
         if not self.ui._scannedImageFrame.measuring_enabled:
@@ -430,6 +513,8 @@ class MainController:
             # For each scan list element, loop over all (acquired) images
             acquired_series: AcquiredSeries = scanlist_element.acquired_data
             acquired_image: AcquiredImage
+            if acquired_series is None:
+                continue
             for acquired_image in acquired_series.list_acquired_images:
                 # If the image data does not match, continue to the next image
                 if not np.array_equal(acquired_image.image_data, image.image_data):
@@ -489,7 +574,7 @@ class MainController:
             self.ui.editingStackedLayout.setCurrentIndex(
                 0
             )  # Switch to scan parameter editor view
-            self.ui.scannedImageFrame.setAcquiredSeries(
+            self.ui.scannedImageFrame.setScanCompleteAcquiredData(
                 self.scanner.active_scanlist_element.acquired_data
             )  # Display acquired series in scannedImageFrame. If it is None, the scannedImageFrame will display a blank image.
             current_list_item = self.ui.scanlistListWidget.item(
@@ -500,21 +585,34 @@ class MainController:
             self.scanner.active_scan_item.add_observer(self)
 
             # Set scan volume on planning windows only if the active scan item is not completed
+            # TODO: change over to active_scan_item.scan_volumes
             if self.scanner.active_scan_item.status != ScanItemStatusEnum.COMPLETE:
-                self.ui.scanPlanningWindow1.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                # self.ui.scanPlanningWindow1.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                # self.ui.scanPlanningWindow2.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                # self.ui.scanPlanningWindow3.setScanVolume(
+                #     self.scanner.active_scan_item.scan_volume
+                # )
+                self.ui.scanPlanningWindow1.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
-                self.ui.scanPlanningWindow2.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                self.ui.scanPlanningWindow2.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
-                self.ui.scanPlanningWindow3.setScanVolume(
-                    self.scanner.active_scan_item.scan_volume
+                self.ui.scanPlanningWindow3.setScanVolumes(
+                    self.scanner.active_scan_item.scan_volumes
                 )
             else:
                 # Clear the scan volume if the scan is completed
-                self.ui.scanPlanningWindow1.setScanVolume(None)
-                self.ui.scanPlanningWindow2.setScanVolume(None)
-                self.ui.scanPlanningWindow3.setScanVolume(None)
+                # self.ui.scanPlanningWindow1.setScanVolume(None)
+                # self.ui.scanPlanningWindow2.setScanVolume(None)
+                # self.ui.scanPlanningWindow3.setScanVolume(None)
+                self.ui.scanPlanningWindow1.setScanVolumes([])
+                self.ui.scanPlanningWindow2.setScanVolumes([])
+                self.ui.scanPlanningWindow3.setScanVolumes([])
 
         if event == EventEnum.SCAN_ITEM_STATUS_CHANGED:
             self.handle_scan_item_status_change(self.scanner.active_scan_item.status)
@@ -522,5 +620,6 @@ class MainController:
 
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
             # self._scan_vo
-            self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
+            # self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
+            self.scanner.active_scan_item.find_scan_volume_with_stack_index(self.scanner.active_scan_item.selected_stack_index).clamp_to_scanner_dimensions()
             self.populate_parameterFormLayout(self.scanner.active_scan_item)

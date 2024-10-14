@@ -115,11 +115,13 @@ class ParameterTab(QScrollArea):
 
 class ParameterFormLayout(QVBoxLayout):
     formActivatedSignal = pyqtSignal()
+    stackSignal = pyqtSignal(object)
 
     def __init__(self):
         super().__init__()
         self.isReadOnly = True
         self.editors = {}
+        self.nr_of_stacks = 1
 
     def createForm(self, parameters: dict) -> None:
         # Create form elements based on the data in "parameters".
@@ -176,6 +178,19 @@ class ParameterFormLayout(QVBoxLayout):
 
             # Store the editor widget in the dictionary for later access.
             self.editors[parameter_key] = editor
+        
+        add_stack_button = PrimaryActionButton("Add stack")
+        add_stack_button.clicked.connect(lambda: self.handle_add_new_stack_btn_clicked())
+        self.addWidget(add_stack_button)
+
+    
+    def handle_add_new_stack_btn_clicked(self):
+        # print("ADD PRESS")
+        self.stackSignal.emit({"event": "ADD"})
+        self.add_new_stack()
+
+    def add_new_stack(self):
+        self.nr_of_stacks += 1
 
     def save_state(self):
         params = self.get_parameters()
@@ -198,6 +213,7 @@ class ParameterFormLayout(QVBoxLayout):
 
     def set_parameters(self, parameters):
         # Set the data into the editors
+        # TODO: check if parameters is list of parameters or dictionary object
         with block_signals(self.editors.values()):
             for name, value in parameters.items():
                 if (

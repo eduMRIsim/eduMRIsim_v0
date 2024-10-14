@@ -19,7 +19,8 @@
             "FA_deg": "90",
             "FlipAngle_deg": "90",
             "ScanTechnique": "SE",
-            "Rotation_lock": "None"
+            "Rotation_lock": "None",
+            "StackIndex": "0"
     },
     "T1WSE_Coronal": {
             "description": "T1-weighted spin echo coronal survey scan",
@@ -41,7 +42,8 @@
             "FA_deg": "90",
             "FlipAngle_deg": "90"            ,
             "ScanTechnique": "SE",
-            "Rotation_lock": "None"
+            "Rotation_lock": "None",
+            "StackIndex": "0"
     },
     "T1WSE_Sagittal": {
             "description": "T1-weighted spin echo sagittal survey scan",
@@ -63,7 +65,8 @@
             "FA_deg": "90",
             "FlipAngle_deg": "90",
             "ScanTechnique": "SE",
-            "Rotation_lock": "None"            
+            "Rotation_lock": "None",
+            "StackIndex": "0"            
     }
 
 }
