@@ -11,10 +11,9 @@ from PyQt6.QtGui import (
     QPolygonF,
     QDragEnterEvent,
     QDragMoveEvent,
-    QDropEvent,
+    QDropEvent
 )
 from PyQt6.QtWidgets import (
-    QGraphicsView,
     QGraphicsScene,
     QGraphicsPixmapItem,
     QSizePolicy,
@@ -33,14 +32,16 @@ from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
 from utils.logger import log
-from views.items.measurement_tool import MeasurementTool
 from views.items.custom_polygon_item import CustomPolygonItem
+from views.items.measurement_tool import MeasurementTool
+from views.items.middle_line_item import MiddleLineItem
+from views.items.stacks_item import StacksItem
+from views.items.zoomin import ZoomableView
 from views.items.stacks_item import SlicecItem
 from views.ui.scanlist_ui import ScanlistListWidget
-from views.items.middle_line_item import MiddleLineItem
 
 
-class AcquiredSeriesViewer2D(QGraphicsView):
+class AcquiredSeriesViewer2D(ZoomableView):
     testSignal = pyqtSignal(int)
     """Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved."""
 
@@ -156,15 +157,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         self.scene.installEventFilter(self)
 
-        # zoom controls
-        self.zooming_enabled = False
-        self.mouse_pressed = False
-        self.last_mouse_pos = None
-        self.zoom_sensitivity = 0.005
-
-        # Measurement tool
-        self.measuring_enabled = False
-
         self.line_item = QGraphicsLineItem()
         self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
         self.scene.addItem(self.line_item)
@@ -174,6 +166,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
+
 
         self.only_display_image = False
 
@@ -384,7 +377,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view."""
         super().resizeEvent(event)
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.updateLabelPosition()
 
@@ -405,9 +398,16 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
+
     def _displayArray(self, window_center=None, window_width=None):
-        if self.array is None:
+      if self.array is None:
             return
+      
+      if self.array is not None:
+            array_norm = (self.array[:, :] - np.min(self.array)) / (
+                np.max(self.array) - np.min(self.array)
+            )
+            array_8bit = (array_norm * 255).astype(np.uint8)
 
         if window_center is None or window_width is None:
             window_center = np.mean(self.array)
@@ -437,12 +437,6 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
 
-        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        # self.scene.setSceneRect(0, 0, width, height)
-        # The centerOn method is used to center the view on a particular point within the scene.
-        # self.centerOn(width / 2, height / 2)
-
-        # calculate LPS direction vector from the moved direction vector
 
     def toggle_window_level_mode(self):
         """Toggles window-leveling mode."""

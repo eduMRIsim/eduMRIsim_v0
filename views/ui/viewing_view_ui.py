@@ -1,17 +1,18 @@
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent
+from PyQt6.QtGui import QPainter, QColor, QResizeEvent, QImage, QPixmap, QDropEvent, QPen, QAction
 from PyQt6.QtWidgets import (
     QFrame,
     QVBoxLayout,
     QGridLayout,
-    QGraphicsView,
     QGraphicsScene,
     QGraphicsPixmapItem,
-    QSizePolicy,
+    QSizePolicy, QGraphicsLineItem, QGraphicsTextItem, QMenu,
 )
 
 from simulator.scanlist import AcquiredSeries
+from views.items.measurement_tool import MeasurementTool
+from views.items.zoomin import ZoomableView
 from views.ui.scanlist_ui import ScanlistListWidget
 
 
@@ -21,41 +22,182 @@ class gridViewingWindowLayout(QFrame):
 
         rightLayout = QVBoxLayout()
 
-        # store all GridCell cells
-        # useful for handling the drops
         self.grid_cells = []
 
         # creates default 2x2 grid
-        right_layout = QGridLayout()
+        self.right_layout = QGridLayout()
         for i in range(2):
             rows = []  # list of elements in each row
             for j in range(2):
-                empty_widget = GridCell(i, j)
+                empty_widget = GridCell(self, i, j)
                 rows.append(empty_widget)
-                right_layout.addWidget(empty_widget, i, j)
+                self.right_layout.addWidget(empty_widget, i, j)
             self.grid_cells.append(rows)
 
-        rightLayout.addLayout(right_layout)
+        rightLayout.addLayout(self.right_layout)
         self.setLayout(rightLayout)
 
     def connect_drop_signals(self, drop_handler):
-        for i in range(2):
-            for j in range(2):
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
                 grid_cell = self.grid_cells[i][j]
                 grid_cell.dropEventSignal.connect(drop_handler)
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
-        return self.grid_cells[i][j]
+        if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
+            return self.grid_cells[i][j]
+        else:
+            print(f"Invalid cell access: row {i}, column {j}.")
+            return None
+    
+    def add_row(self):
+        """Adds a new row of GridCell instances into the grid. """
+        row_index = len(self.grid_cells) 
+        new_row= []  
 
+        if self.grid_cells:
+            nr_columns = len(self.grid_cells[0])
+        else:
+            nr_columns = 0
 
-class GridCell(QGraphicsView):
+        if row_index < 5:
+            for j in range(nr_columns):
+                new_cell = GridCell(self, row_index, j)
+                if row_index > 0:
+                    new_cell.dropEventSignal.connect(self.grid_cells[row_index-1][j].dropEventSignal)
+                new_row.append(new_cell)
+                self.right_layout.addWidget(new_cell, row_index, j)
+
+            self.grid_cells.append(new_row)
+            #self.reconnect_signals()
+
+            # reconnect signals
+            #for j in range(nr_columns):
+               #if row_index > 0:
+                   # new_cell.dropEventSignal.connect(self.grid_cells[row_index - 1][j].dropEventSignal)
+            
+        else:
+            print("Row limit reached!")
+
+    def add_column(self):
+        """Adds a new column of GridCell instances into the grid. """
+        if self.grid_cells:
+            col_index = len(self.grid_cells[0])
+        else:
+            col_index = 0
+        new_col = []
+
+        nr_rows = len(self.grid_cells)
+
+        if col_index < 5:
+            for i in range(nr_rows):
+                new_cell = GridCell(self, i, col_index)
+                if col_index > 0:
+                    new_cell.dropEventSignal.connect(self.grid_cells[i][col_index-1].dropEventSignal)
+                new_col.append(new_cell)
+                self.right_layout.addWidget(new_cell, i, col_index)
+
+            for i in range(nr_rows):
+                if len(self.grid_cells) <= i:
+                    self.grid_cells.append([])
+                self.grid_cells[i].append(new_col[i])
+
+            #self.reconnect_signals()
+            # reconnect signals
+            for i in range(nr_rows):
+                if col_index > 0:
+                    new_col[i].dropEventSignal.connect(self.grid_cells[i][col_index - 1].dropEventSignal)
+        else:
+            print("Column limit reached!")
+
+    def remove_row(self, row_index):
+        """Removes the row of the cell you right-click on. """
+
+        if row_index < 0 or row_index >= len(self.grid_cells):
+            print("There's no row here")
+            return
+    
+        if len(self.grid_cells) < 3:
+            print("Default grid; can't remove this row.")
+            return
+
+        for j in range(len(self.grid_cells[row_index])): 
+            widget_to_remove = self.grid_cells[row_index][j]
+            widget_to_remove.dropEventSignal.disconnect()
+            self.right_layout.removeWidget(widget_to_remove) 
+            widget_to_remove.deleteLater()
+        
+        self.grid_cells.pop(row_index)
+
+        for i in range(row_index, len(self.grid_cells)):  
+            for j in range(len(self.grid_cells[i])):
+                widget = self.grid_cells[i][j]
+                widget.row = i # updates the row index for every widget
+                self.right_layout.addWidget(widget, i, j)
+
+        self.reconnect_signals()
+        self.update() 
+    
+    def remove_col(self, col_index):
+        '''Removes the column of the cell you right-click on. '''
+
+        if col_index < 0 or col_index >= len(self.grid_cells[0]):
+            print("There's no column here")
+            return
+    
+        if len(self.grid_cells[0]) < 3:
+            print("Default grid; can't remove this column.")
+            return
+
+        for i in range(len(self.grid_cells)): 
+            widget_to_remove = self.grid_cells[i][col_index]
+            widget_to_remove.dropEventSignal.disconnect()
+            print(f'signal disconnected for row {i} in column {col_index}')
+            self.right_layout.removeWidget(widget_to_remove) 
+            widget_to_remove.deleteLater()  
+            self.grid_cells[i].pop(col_index)
+
+        for i in range(len(self.grid_cells)):
+            for j in range(col_index, len(self.grid_cells[i])):
+                widget = self.grid_cells[i][j]
+                widget.col = j # updates the col index for every widget
+                self.right_layout.addWidget(widget, i, j) 
+        
+        self.reconnect_signals()
+        self.update() 
+
+    def reconnect_signals(self):
+        '''Reconnects the drop event signals for all cells in the grid.'''
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                    widget = self.grid_cells[i][j]
+                    if j > 0:  
+                        widget.dropEventSignal.connect(self.grid_cells[i][j - 1].dropEventSignal)
+                        print(f"Connect cell [{i},{j}] to left cell at column {j - 1}")
+                    else:
+                        print(f"no left neighbour for [{i},{j}]")
+                    if i > 0:
+                        widget.dropEventSignal.connect(self.grid_cells[i - 1][j].dropEventSignal)
+                        print(f"Connect cell [{i},{j}] to above cell at row {i - 1}")
+                    else:
+                        print(f"no top neighbour for [{i},{j}]")
+                
+
+class GridCell(ZoomableView):
     dropEventSignal = pyqtSignal(int, int, int)
 
-    def __init__(self, row: int, col: int):
+    def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
 
+        self.displayed_image_index = None
+        self.remove_col_action = None
+        self.remove_row_action = None
+        self.add_col_action = None
+        self.add_row_action = None
+        self.add_rowcol_menu = None
         self.row = row  # row index
         self.col = col  # col index
+        self.parent_layout = parent_layout # reference to the parent layout
 
         # pixmap graphics
         self.scene = QGraphicsScene(self)
@@ -70,6 +212,8 @@ class GridCell(QGraphicsView):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.contextMenuEvent)
 
         self.displayed_image = None
         self.acquired_series = None
@@ -77,54 +221,53 @@ class GridCell(QGraphicsView):
 
         self.setAcceptDrops(True)
 
-        # zoom controls
-        self.mouse_pressed = False
-        self.last_mouse_pos = None
-        self.zoom_sensitivity = 0.005
+        self.line_item = QGraphicsLineItem()
+        self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
+        self.scene.addItem(self.line_item)
 
-    # start zoom when pressed
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.mouse_pressed = True
-            self.last_mouse_pos = event.pos()
+        self.text_item = QGraphicsTextItem()
+        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.scene.addItem(self.text_item)
 
-    # stop zoom when released
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.mouse_pressed = False
-            self.last_mouse_pos = None
+        self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
-    def mouseMoveEvent(self, event):
-        """Handle zoom when the mouse is being dragged."""
-        if self.mouse_pressed and self.last_mouse_pos is not None:
+    def add_row(self):
+        """Trigger add_row method of the parent."""
+        self.parent_layout.add_row()
 
-            max_zoom_out = 0.1
-            max_zoom_in = 10
-            current_pos = event.pos()
-            delta_y = current_pos.y() - self.last_mouse_pos.y()
+    def add_column(self):
+        """Trigger add_column method of the parent."""
 
-            # cursor_pos = self.mapToScene(current_pos)
-            zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+        self.parent_layout.add_column()
 
-            # get current zoom level (scaling factor)
-            current_zoom = self.transform().m11()
+    def remove_row(self):
+        self.parent_layout.remove_row(self.row)
 
-            new_zoom = current_zoom * zoom_factor
-            if max_zoom_out <= new_zoom <= max_zoom_in:
-                self.scale(zoom_factor, zoom_factor)
+    def remove_col(self):
+        self.parent_layout.remove_col(self.row)
 
-            self.scale(zoom_factor, zoom_factor)
-            self.centerOn(self.mapToScene(current_pos))
-            self.last_mouse_pos = current_pos
+    def contextMenuEvent(self, position):
+        """Context menu for adding a row or column."""
 
-    def zoom_in(self, center_point):
-        if self.transform().m11() < self.max_zoom_in:
-            self.scale(self.zoom_factor, self.zoom_factor)
+        # Initialize add row/col actions in the context menu
+        self.add_rowcol_menu = QMenu(self)
+        self.add_row_action = QAction("Add row")
+        self.add_rowcol_menu.addAction(self.add_row_action)
+        self.add_col_action = QAction("Add column")
+        self.add_rowcol_menu.addAction(self.add_col_action)
+        self.remove_row_action = QAction("Remove row")
+        self.add_rowcol_menu.addAction(self.remove_row_action)
+        self.remove_col_action = QAction("Remove column")
+        self.add_rowcol_menu.addAction(self.remove_col_action)
 
-    def zoom_out(self, center_point):
-        if self.transform().m11() > self.max_zoom_out:
-            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-            self.centerOn(center_point)
+        # Actions trigger the methods from this class which trigger the methods in the parent
+        self.add_row_action.triggered.connect(lambda: self.add_row())
+        self.add_col_action.triggered.connect(lambda: self.add_column())
+        self.remove_row_action.triggered.connect(lambda: self.remove_row())
+        self.remove_col_action.triggered.connect(lambda: self.remove_col())
+
+        #self.add_rowcol_menu.exec(event.globalPos())
+        self.add_rowcol_menu.exec(self.mapToGlobal(position)) #shows menu at the cursor position
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized.
@@ -135,7 +278,6 @@ class GridCell(QGraphicsView):
         self.centerOn(self.pixmap_item)
 
     def _displayArray(self):
-        width, height = 0, 0
         if self.array is not None:
 
             # Normalize the slice values for display
@@ -179,8 +321,6 @@ class GridCell(QGraphicsView):
 
             self.setDisplayedImage(
                 self.acquired_series.list_acquired_images[self.displayed_image_index],
-                self.acquired_series.scan_plane,
-                self.acquired_series.series_name,
             )
         else:
             self.acquired_series = None
@@ -189,7 +329,7 @@ class GridCell(QGraphicsView):
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
 
-    def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
+    def setDisplayedImage(self, image):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data

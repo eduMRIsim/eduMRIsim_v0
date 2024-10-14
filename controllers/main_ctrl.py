@@ -31,6 +31,8 @@ class MainController:
     """
 
     def __init__(self, scanner: Scanner, ui: Ui_MainWindow) -> None:
+        self.new_examination_dialog_ui = None
+        self.load_examination_dialog_ui = None
         self.scanner: Scanner = scanner
         self.ui: Ui_MainWindow = ui
         self.ui_signals()
@@ -321,10 +323,13 @@ class MainController:
 
     def handle_dropped_cells(self, row: int, col: int, selected_index: int):
         grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
-        scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
-        acquired_series = scanlist_element.acquired_data
-        grid_cell.setAcquiredSeries(acquired_series)
-        self.update_scanlistListWidget(self.scanner.scanlist)
+        if grid_cell is not None:
+            scanlist_element = self.scanner.scanlist.scanlist_elements[selected_index]
+            acquired_series = scanlist_element.acquired_data
+            grid_cell.setAcquiredSeries(acquired_series)
+            self.update_scanlistListWidget(self.scanner.scanlist)
+        else:
+            print("This cell doesn't exist")
 
     def connect_drop_signals(self):
         # Connect the drop event signals from the grid cells to the handle_dropped_cells method
