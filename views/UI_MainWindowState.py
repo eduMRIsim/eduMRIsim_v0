@@ -77,6 +77,23 @@ class BeingModifiedState(ExamState):
         context.scanParametersResetButton.setEnabled(True)
         context.scanParametersSaveChangesButton.setEnabled(True)
 
+class BeingScannedState(ExamState):
+    name = "BeingScannedState"
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.scanningModeButton.setEnabled(False)
+        context.viewingModeButton.setEnabled(False)
+        context.scanlistListWidget.setEnabled(False)
+        context.addScanItemButton.setEnabled(False)
+        context.startScanButton.setEnabled(True)
+        context.stopScanButton.setEnabled(False)
+        context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersCancelChangesButton.setEnabled(False)
+        context.scanParametersResetButton.setEnabled(False)
+        context.scanParametersSaveChangesButton.setEnabled(False)
+
+
 
 class InvalidParametersState(ExamState):
     name = "InvalidParametersState"
