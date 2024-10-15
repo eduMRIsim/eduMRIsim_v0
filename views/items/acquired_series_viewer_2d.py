@@ -35,7 +35,7 @@ from utils.logger import log
 from views.items.custom_polygon_item import CustomPolygonItem
 from views.items.measurement_tool import MeasurementTool
 from views.items.middle_line_item import MiddleLineItem
-from views.items.stacks_item import StacksItem
+from views.items.stacks_item import SlicecItem
 from views.items.zoomin import ZoomableView
 from views.items.stacks_item import SlicecItem
 from views.ui.scanlist_ui import ScanlistListWidget
@@ -174,84 +174,75 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.testSignal.emit(0)
 
     # start zoom when pressed
-    def mousePressEvent(self, event):
-        # TODO the user should not be able to zoom in and out when the measuring tool is active
-        if self.zooming_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.mouse_pressed = True
-                self.last_mouse_pos = event.pos()
-        elif self.measuring_enabled:
-            self.measure.start_measurement(self.mapToScene(event.pos()))
-            self.measure.show_items()
-        elif self.leveling_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.last_mouse_pos = event.pos()
-        else:
-            super().mousePressEvent(event)
+    # def mousePressEvent(self, event):
+    #     # TODO the user should not be able to zoom in and out when the measuring tool is active
+    #     if self.zooming_enabled:
+    #         if event.button() == Qt.MouseButton.LeftButton:
+    #             self.mouse_pressed = True
+    #             self.last_mouse_pos = event.pos()
+    #     elif self.measuring_enabled:
+    #         self.measure.start_measurement(self.mapToScene(event.pos()))
+    #         self.measure.show_items()
+    #     elif self.leveling_enabled:
+    #         if event.button() == Qt.MouseButton.LeftButton:
+    #             self.last_mouse_pos = event.pos()
+    #     else:
+    #         super().mousePressEvent(event)
 
     # stop zoom when released
-    def mouseReleaseEvent(self, event):
-        if self.zooming_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.mouse_pressed = False
-                self.last_mouse_pos = None
-        elif self.measuring_enabled:
-            self.measure.end_measurement()
-        elif self.leveling_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.last_mouse_pos = None
-        else:
-            super().mouseReleaseEvent(event)
+    # def mouseReleaseEvent(self, event):
+    #     if self.zooming_enabled:
+    #         if event.button() == Qt.MouseButton.LeftButton:
+    #             self.mouse_pressed = False
+    #             self.last_mouse_pos = None
+    #     elif self.measuring_enabled:
+    #         self.measure.end_measurement()
+    #     elif self.leveling_enabled:
+    #         if event.button() == Qt.MouseButton.LeftButton:
+    #             self.last_mouse_pos = None
+    #     else:
+    #         super().mouseReleaseEvent(event)
 
-    def mouseMoveEvent(self, event):
-        if self.zooming_enabled:
-            """Handle zoom when the mouse is being dragged."""
-            if self.mouse_pressed and self.last_mouse_pos is not None:
-
-                max_zoom_out = 0.5
-                max_zoom_in = 10
-                current_pos = event.pos()
-                delta_y = current_pos.y() - self.last_mouse_pos.y()
-
-                # cursor_pos = self.mapToScene(current_pos)
-                zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
-
-                # get current zoom level (scaling factor)
-                current_zoom = self.transform().m11()
-
-                new_zoom = current_zoom * zoom_factor
-                if max_zoom_out <= new_zoom <= max_zoom_in:
-                    self.scale(zoom_factor, zoom_factor)
-
-                # update the last mouse position
-                self.last_mouse_pos = current_pos
-        elif self.measuring_enabled and self.measure.is_measuring:
-            self.measure.update_measurement(self.mapToScene(event.pos()))
-        elif self.leveling_enabled:
-            if self.window_center is None or self.window_width is None:
-                return
-
-            if self.last_mouse_pos is not None:
-                delta = event.pos() - self.last_mouse_pos
-                self.last_mouse_pos = event.pos()
-
-                self.window_center += delta.y()  # Adjust level (vertical movement)
-                self.window_width += delta.x()  # Adjust window (horizontal movement)
-
-                self.window_width = max(1, self.window_width)
-
-                self._displayArray(self.window_center, self.window_width)
-        else:
-            super().mouseMoveEvent(event)
-
-    def zoom_in(self, center_point):
-        if self.transform().m11() < self.max_zoom_in:
-            self.scale(self.zoom_factor, self.zoom_factor)
-
-    def zoom_out(self, center_point):
-        if self.transform().m11() > self.max_zoom_out:
-            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-            self.centerOn(center_point)
+    # def mouseMoveEvent(self, event):
+    #     if self.zooming_enabled:
+    #         """Handle zoom when the mouse is being dragged."""
+    #         if self.mouse_pressed and self.last_mouse_pos is not None:
+    #
+    #             max_zoom_out = 0.5
+    #             max_zoom_in = 10
+    #             current_pos = event.pos()
+    #             delta_y = current_pos.y() - self.last_mouse_pos.y()
+    #
+    #             # cursor_pos = self.mapToScene(current_pos)
+    #             zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
+    #
+    #             # get current zoom level (scaling factor)
+    #             current_zoom = self.transform().m11()
+    #
+    #             new_zoom = current_zoom * zoom_factor
+    #             if max_zoom_out <= new_zoom <= max_zoom_in:
+    #                 self.scale(zoom_factor, zoom_factor)
+    #
+    #             # update the last mouse position
+    #             self.last_mouse_pos = current_pos
+    #     elif self.measuring_enabled and self.measure.is_measuring:
+    #         self.measure.update_measurement(self.mapToScene(event.pos()))
+    #     elif self.leveling_enabled:
+    #         if self.window_center is None or self.window_width is None:
+    #             return
+    #
+    #         if self.last_mouse_pos is not None:
+    #             delta = event.pos() - self.last_mouse_pos
+    #             self.last_mouse_pos = event.pos()
+    #
+    #             self.window_center += delta.y()  # Adjust level (vertical movement)
+    #             self.window_width += delta.x()  # Adjust window (horizontal movement)
+    #
+    #             self.window_width = max(1, self.window_width)
+    #
+    #             self._displayArray(self.window_center, self.window_width)
+    #     else:
+    #         super().mouseMoveEvent(event)
 
     def update_buttons_visibility(self):
         if self.acquired_series is None:
@@ -319,6 +310,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
     def eventFilter(self, source, event):
         if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
             # print("HEREEE")
+            super().eventFilter(source, event)
             return True
 
         if event.type() == QEvent.Type.GraphicsSceneMouseMove:
@@ -360,7 +352,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
         return super().eventFilter(source, event)
 
     def get_stack_for_stack_id(self, stack_index):
-        print("STACKS " + str(self.stacks))
+        # print("STACKS " + str(self.stacks))
         for stack in self.stacks:
             if stack.stack_index == stack_index:
                 return stack
@@ -404,10 +396,10 @@ class AcquiredSeriesViewer2D(ZoomableView):
             return
       
       if self.array is not None:
-            array_norm = (self.array[:, :] - np.min(self.array)) / (
-                np.max(self.array) - np.min(self.array)
-            )
-            array_8bit = (array_norm * 255).astype(np.uint8)
+        array_norm = (self.array[:, :] - np.min(self.array)) / (
+            np.max(self.array) - np.min(self.array)
+        )
+        array_8bit = (array_norm * 255).astype(np.uint8)
 
         if window_center is None or window_width is None:
             window_center = np.mean(self.array)

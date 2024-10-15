@@ -9,6 +9,8 @@ class ZoomableView(QGraphicsView):
     def __init__(self):
         super().__init__()
         # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually.
+        self.window_width = None
+        self.window_center = None
         self.scene = QGraphicsScene(self)
 
         self.mouse_pressed = False
@@ -24,6 +26,8 @@ class ZoomableView(QGraphicsView):
         self.max_zoom_in = 10
         self.zoom_factor = None
 
+        self.leveling_enabled = False
+
         # needs to be overriden in the child class
         self.measure = None
 
@@ -33,8 +37,11 @@ class ZoomableView(QGraphicsView):
                 self.mouse_pressed = True
                 self.panning_mouse_pressed = True
                 self.last_mouse_pos = event.pos()
-        if self.measuring_enabled:
+        elif self.measuring_enabled and not self.leveling_enabled:
             self.measure.start_measurement(self.mapToScene(event.pos()))
+        elif self.leveling_enabled and not self.measuring_enabled:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.last_mouse_pos = event.pos()
         else:
             super().mousePressEvent(event)
 
@@ -46,25 +53,27 @@ class ZoomableView(QGraphicsView):
             elif event.button() == Qt.MouseButton.RightButton:
                 self.panning_mouse_pressed = False
                 self.last_mouse_pos = None
-        elif self.measure.is_measuring:
+        elif self.measure.is_measuring and not self.leveling_enabled:
             self.measure.end_measurement()
+        elif self.leveling_enabled and not self.measure.is_measuring:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.last_mouse_pos = None
         else:
             super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent):
-        if (
-            self.zooming_enabled
-            and not self.measuring_enabled
-        ):
-            if event.key() == Qt.Key.Key_Z:
-                self.zoom_key_pressed = True
-            elif event.key() == Qt.Key.Key_P:
-                self.panning_key_pressed = True
+        # if (
+        #     self.zooming_enabled
+        # ):
+        if event.key() == Qt.Key.Key_Z:
+            self.zoom_key_pressed = True
+        elif event.key() == Qt.Key.Key_P:
+            self.panning_key_pressed = True
         elif event.key() == Qt.Key.Key_M and self.measure.is_measuring:
-            log.debug(f"{self.__class__.__name__} - Measuring tool disabled")
+            log.warn(f"{self.__class__.__name__} - Measuring tool disabled")
             self.measure.end_measurement()
         elif event.key() == Qt.Key.Key_M and not self.measure.is_measuring:
-            log.debug(f"{self.__class__.__name__} - Measuring tool enabled")
+            log.warn(f"{self.__class__.__name__} - Measuring tool enabled")
             # The keypress event is registered but move the measuring tool is not started
             cursor_pos = QCursor.pos()
             scene_pos = self.mapToScene(self.mapFromGlobal(cursor_pos))
@@ -74,14 +83,10 @@ class ZoomableView(QGraphicsView):
             super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        if (
-            self.zooming_enabled
-            and self.measuring_enabled == False
-        ):
-            if event.key() == Qt.Key.Key_Z:
-                self.zoom_key_pressed = False
-            elif event.key() == Qt.Key.Key_P:
-                self.panning_key_pressed = False
+        if event.key() == Qt.Key.Key_Z:
+            self.zoom_key_pressed = False
+        elif event.key() == Qt.Key.Key_P:
+            self.panning_key_pressed = False
         if event.key() == Qt.Key.Key_M:
             self.measuring_key_pressed = False
         else:
@@ -89,8 +94,7 @@ class ZoomableView(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         if (
-            self.zooming_enabled
-            and not self.measuring_enabled
+            not self.measure.is_measuring and not self.leveling_enabled
         ):
             # handle zoom
             if self.zoom_key_pressed and self.mouse_pressed and self.last_mouse_pos is not None:
@@ -116,7 +120,24 @@ class ZoomableView(QGraphicsView):
                 self.last_mouse_pos = event.pos()
 
         # handle measuring tool
-        elif self.measure.is_measuring:
+        elif self.measure.is_measuring and not self.leveling_enabled:
+            log.warn(f"{self.__class__.__name__} - Measuring tool updating")
             self.measure.update_measurement(self.mapToScene(event.pos()))
+        elif self.leveling_enabled and not self.measure.is_measuring:
+            if self.window_center is None or self.window_width is None:
+                return
+
+            if self.last_mouse_pos is not None:
+                delta = event.pos() - self.last_mouse_pos
+                self.last_mouse_pos = event.pos()
+
+                self.window_center += delta.y()  # Adjust level (vertical movement)
+                self.window_width += delta.x()  # Adjust window (horizontal movement)
+
+                self.window_width = max(1, self.window_width)
+
+                self._displayArray(self.window_center, self.window_width)
         else:
             super().mouseMoveEvent(event)
+
+

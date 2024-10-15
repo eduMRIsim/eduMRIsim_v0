@@ -14,7 +14,7 @@ from simulator.scanlist import AcquiredSeries
 from views.items.measurement_tool import MeasurementTool
 from views.items.zoomin import ZoomableView
 from views.ui.scanlist_ui import ScanlistListWidget
-
+from utils.logger import log
 
 class gridViewingWindowLayout(QFrame):
     def __init__(self):
@@ -47,7 +47,7 @@ class gridViewingWindowLayout(QFrame):
         if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
             return self.grid_cells[i][j]
         else:
-            print(f"Invalid cell access: row {i}, column {j}.")
+            (f"Invalid cell access: row {i}, column {j}.")
             return None
     
     def add_row(self):
@@ -77,7 +77,7 @@ class gridViewingWindowLayout(QFrame):
                    # new_cell.dropEventSignal.connect(self.grid_cells[row_index - 1][j].dropEventSignal)
             
         else:
-            print("Row limit reached!")
+            ("Row limit reached!")
 
     def add_column(self):
         """Adds a new column of GridCell instances into the grid. """
@@ -108,17 +108,17 @@ class gridViewingWindowLayout(QFrame):
                 if col_index > 0:
                     new_col[i].dropEventSignal.connect(self.grid_cells[i][col_index - 1].dropEventSignal)
         else:
-            print("Column limit reached!")
+            log.error("Column limit reached!")
 
     def remove_row(self, row_index):
         """Removes the row of the cell you right-click on. """
 
         if row_index < 0 or row_index >= len(self.grid_cells):
-            print("There's no row here")
+            log.error("There's no row here")
             return
     
         if len(self.grid_cells) < 3:
-            print("Default grid; can't remove this row.")
+            log.error("Default grid; can't remove this row.")
             return
 
         for j in range(len(self.grid_cells[row_index])): 
@@ -142,17 +142,17 @@ class gridViewingWindowLayout(QFrame):
         '''Removes the column of the cell you right-click on. '''
 
         if col_index < 0 or col_index >= len(self.grid_cells[0]):
-            print("There's no column here")
+            log.error("There's no column here")
             return
     
         if len(self.grid_cells[0]) < 3:
-            print("Default grid; can't remove this column.")
+            log.error("Default grid; can't remove this column.")
             return
 
         for i in range(len(self.grid_cells)): 
             widget_to_remove = self.grid_cells[i][col_index]
             widget_to_remove.dropEventSignal.disconnect()
-            print(f'signal disconnected for row {i} in column {col_index}')
+            log.debug(f'signal disconnected for row {i} in column {col_index}')
             self.right_layout.removeWidget(widget_to_remove) 
             widget_to_remove.deleteLater()  
             self.grid_cells[i].pop(col_index)
@@ -173,14 +173,14 @@ class gridViewingWindowLayout(QFrame):
                     widget = self.grid_cells[i][j]
                     if j > 0:  
                         widget.dropEventSignal.connect(self.grid_cells[i][j - 1].dropEventSignal)
-                        print(f"Connect cell [{i},{j}] to left cell at column {j - 1}")
+                        log.debug(f"Connect cell [{i},{j}] to left cell at column {j - 1}")
                     else:
-                        print(f"no left neighbour for [{i},{j}]")
+                        log.warn(f"no left neighbour for [{i},{j}]")
                     if i > 0:
                         widget.dropEventSignal.connect(self.grid_cells[i - 1][j].dropEventSignal)
-                        print(f"Connect cell [{i},{j}] to above cell at row {i - 1}")
+                        log.debug(f"Connect cell [{i},{j}] to above cell at row {i - 1}")
                     else:
-                        print(f"no top neighbour for [{i},{j}]")
+                        log.warn(f"no top neighbour for [{i},{j}]")
                 
 
 class GridCell(ZoomableView):
