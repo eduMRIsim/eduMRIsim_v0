@@ -1,3 +1,5 @@
+from PyQt5.QtGui import QColor
+
 from utils.logger import log
 import math
 
@@ -22,6 +24,8 @@ class MeasurementTool:
         self.scene.addItem(self.end_dot)
         self.start_dot.setBrush(QBrush(Qt.GlobalColor.red))
         self.end_dot.setBrush(QBrush(Qt.GlobalColor.red))
+        # self.start_dot.setPen(QPen(QColor(255, 165, 0), 1))
+        # self.end_dot.setPen(QPen(QColor(255, 165, 0), 1))
 
         self.hide_items()
 
@@ -56,7 +60,7 @@ class MeasurementTool:
                 self.end_point.x(),
                 self.end_point.y(),
             )
-            self.line_item.setPen(QPen(Qt.GlobalColor.red, 1))  # Make the line thinner
+            self.line_item.setPen(QColor(255, 165, 0), 1)
 
             distance = self.calculate_distance(self.start_point, self.end_point)
             self.text_item.setPlainText(f"{distance:.2f} mm")

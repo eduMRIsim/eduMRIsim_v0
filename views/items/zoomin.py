@@ -93,6 +93,7 @@ class ZoomableView(QGraphicsView):
             super().keyReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
         if (
             not self.measure.is_measuring and not self.leveling_enabled
         ):
