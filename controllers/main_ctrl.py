@@ -102,6 +102,7 @@ class MainController:
             self.handle_scanPlanningWindow3_dropped
         )
         self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+        self.ui.gridViewingWindow.gridUpdated.connect(self.handle_update_grid)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(
@@ -334,6 +335,10 @@ class MainController:
     def connect_drop_signals(self):
         # Connect the drop event signals from the grid cells to the handle_dropped_cells method
         self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+
+    def handle_update_grid(self):
+        # used to reconnect all cells to accept drops
+        self.ui.gridViewingWindow.reconnect_all_signals(self.handle_dropped_cells)
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED

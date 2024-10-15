@@ -35,7 +35,7 @@ from utils.logger import log
 from views.items.custom_polygon_item import CustomPolygonItem
 from views.items.measurement_tool import MeasurementTool
 from views.items.middle_line_item import MiddleLineItem
-from views.items.stacks_item import StacksItem
+from views.items.stacks_item import SlicecItem
 from views.items.zoomin import ZoomableView
 from views.items.stacks_item import SlicecItem
 from views.ui.scanlist_ui import ScanlistListWidget
@@ -400,10 +400,10 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
 
     def _displayArray(self, window_center=None, window_width=None):
-      if self.array is None:
+        if self.array is None:
             return
       
-      if self.array is not None:
+        if self.array is not None:
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
             )

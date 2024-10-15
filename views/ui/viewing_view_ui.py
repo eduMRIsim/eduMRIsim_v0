@@ -17,6 +17,8 @@ from views.ui.scanlist_ui import ScanlistListWidget
 
 
 class gridViewingWindowLayout(QFrame):
+    gridUpdated = pyqtSignal() # signal to notify row/column removal
+
     def __init__(self):
         super().__init__()
 
@@ -27,7 +29,7 @@ class gridViewingWindowLayout(QFrame):
         # creates default 2x2 grid
         self.right_layout = QGridLayout()
         for i in range(2):
-            rows = []  # list of elements in each row
+            rows = [] 
             for j in range(2):
                 empty_widget = GridCell(self, i, j)
                 rows.append(empty_widget)
@@ -38,10 +40,22 @@ class gridViewingWindowLayout(QFrame):
         self.setLayout(rightLayout)
 
     def connect_drop_signals(self, drop_handler):
+        self.drop_handler = drop_handler
+        self.reconnect_all_signals(drop_handler)
+    
+    def reconnect_all_signals(self, drop_handler):
+        if self.drop_handler is None:
+            print("Drop handler is not set.")
+            return
+         
         for i in range(len(self.grid_cells)):
             for j in range(len(self.grid_cells[i])):
-                grid_cell = self.grid_cells[i][j]
-                grid_cell.dropEventSignal.connect(drop_handler)
+                self.grid_cell = self.grid_cells[i][j]
+                try:
+                    self.grid_cell.dropEventSignal.disconnect()
+                except Exception as e:
+                    print(f"Warning: Unable to disconnect dropEventSignal: {e}")
+                self.grid_cell.dropEventSignal.connect(drop_handler)
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
         if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
@@ -69,12 +83,6 @@ class gridViewingWindowLayout(QFrame):
                 self.right_layout.addWidget(new_cell, row_index, j)
 
             self.grid_cells.append(new_row)
-            #self.reconnect_signals()
-
-            # reconnect signals
-            #for j in range(nr_columns):
-               #if row_index > 0:
-                   # new_cell.dropEventSignal.connect(self.grid_cells[row_index - 1][j].dropEventSignal)
             
         else:
             print("Row limit reached!")
@@ -102,16 +110,13 @@ class gridViewingWindowLayout(QFrame):
                     self.grid_cells.append([])
                 self.grid_cells[i].append(new_col[i])
 
-            #self.reconnect_signals()
-            # reconnect signals
-            for i in range(nr_rows):
-                if col_index > 0:
-                    new_col[i].dropEventSignal.connect(self.grid_cells[i][col_index - 1].dropEventSignal)
         else:
             print("Column limit reached!")
 
     def remove_row(self, row_index):
         """Removes the row of the cell you right-click on. """
+
+        print("remove_row is called")
 
         if row_index < 0 or row_index >= len(self.grid_cells):
             print("There's no row here")
@@ -121,22 +126,32 @@ class gridViewingWindowLayout(QFrame):
             print("Default grid; can't remove this row.")
             return
 
+        # remove and disconnect cells on row row_index
         for j in range(len(self.grid_cells[row_index])): 
             widget_to_remove = self.grid_cells[row_index][j]
-            widget_to_remove.dropEventSignal.disconnect()
+            print(f"Removing widget at ({row_index}, {j})")
+            try:
+                widget_to_remove.dropEventSignal.disconnect()
+            except Exception as e:
+                print(f"Warning: Unable to disconnect dropEventSignal: {e}")
             self.right_layout.removeWidget(widget_to_remove) 
             widget_to_remove.deleteLater()
         
         self.grid_cells.pop(row_index)
+        print(f"Row {row_index} removed. Remaining rows: {len(self.grid_cells)}")
 
+        # rearrange the cells
         for i in range(row_index, len(self.grid_cells)):  
             for j in range(len(self.grid_cells[i])):
                 widget = self.grid_cells[i][j]
                 widget.row = i # updates the row index for every widget
+                widget.col = j
                 self.right_layout.addWidget(widget, i, j)
 
-        self.reconnect_signals()
+        self.right_layout.update()
         self.update() 
+
+        self.gridUpdated.emit() # signals that the grid needs to be updated
     
     def remove_col(self, col_index):
         '''Removes the column of the cell you right-click on. '''
@@ -149,42 +164,33 @@ class gridViewingWindowLayout(QFrame):
             print("Default grid; can't remove this column.")
             return
 
+        # remove and disconnect cells in column col_index
         for i in range(len(self.grid_cells)): 
             widget_to_remove = self.grid_cells[i][col_index]
-            widget_to_remove.dropEventSignal.disconnect()
-            print(f'signal disconnected for row {i} in column {col_index}')
+            try:
+                widget_to_remove.dropEventSignal.disconnect()
+            except Exception as e:
+                print(f"Warning: Unable to disconnect dropEventSignal: {e}")
             self.right_layout.removeWidget(widget_to_remove) 
             widget_to_remove.deleteLater()  
             self.grid_cells[i].pop(col_index)
 
+        # rearrange cells in the grid
         for i in range(len(self.grid_cells)):
             for j in range(col_index, len(self.grid_cells[i])):
                 widget = self.grid_cells[i][j]
-                widget.col = j # updates the col index for every widget
+                widget.row = i
+                widget.col = j # columns
                 self.right_layout.addWidget(widget, i, j) 
         
-        self.reconnect_signals()
         self.update() 
 
-    def reconnect_signals(self):
-        '''Reconnects the drop event signals for all cells in the grid.'''
-        for i in range(len(self.grid_cells)):
-            for j in range(len(self.grid_cells[i])):
-                    widget = self.grid_cells[i][j]
-                    if j > 0:  
-                        widget.dropEventSignal.connect(self.grid_cells[i][j - 1].dropEventSignal)
-                        print(f"Connect cell [{i},{j}] to left cell at column {j - 1}")
-                    else:
-                        print(f"no left neighbour for [{i},{j}]")
-                    if i > 0:
-                        widget.dropEventSignal.connect(self.grid_cells[i - 1][j].dropEventSignal)
-                        print(f"Connect cell [{i},{j}] to above cell at row {i - 1}")
-                    else:
-                        print(f"no top neighbour for [{i},{j}]")
-                
+        self.gridUpdated.emit()
+
 
 class GridCell(ZoomableView):
     dropEventSignal = pyqtSignal(int, int, int)
+    rowRemoveSignal = pyqtSignal(int)  # signal for removed rows
 
     def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
@@ -237,11 +243,11 @@ class GridCell(ZoomableView):
 
     def add_column(self):
         """Trigger add_column method of the parent."""
-
         self.parent_layout.add_column()
 
     def remove_row(self):
         self.parent_layout.remove_row(self.row)
+        
 
     def remove_col(self):
         self.parent_layout.remove_col(self.row)
@@ -266,7 +272,6 @@ class GridCell(ZoomableView):
         self.remove_row_action.triggered.connect(lambda: self.remove_row())
         self.remove_col_action.triggered.connect(lambda: self.remove_col())
 
-        #self.add_rowcol_menu.exec(event.globalPos())
         self.add_rowcol_menu.exec(self.mapToGlobal(position)) #shows menu at the cursor position
 
     def resizeEvent(self, event: QResizeEvent):
