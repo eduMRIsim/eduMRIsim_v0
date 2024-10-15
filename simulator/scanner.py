@@ -17,6 +17,7 @@ import datetime
 
 class Scanner(QObject):
     scan_progress = pyqtSignal(float)
+    scan_completed = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -71,6 +72,8 @@ class Scanner(QObject):
             acquired_series = self._perform_scan()
             # Set scan item status to COMPLETE
             self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
+            # Emit scan completed signal
+            self.scan_completed.emit()
 
     def _perform_scan(self) -> AcquiredSeries:
         """Perform the actual scanning and return the acquired series."""
