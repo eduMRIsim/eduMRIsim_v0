@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QGraphicsScene,
     QGraphicsPixmapItem,
     QSizePolicy, QGraphicsLineItem, QGraphicsTextItem, QMenu,
+    QSizePolicy
 )
 
 from simulator.scanlist import AcquiredSeries
