@@ -308,15 +308,15 @@ class AcquiredSeriesViewer2D(ZoomableView):
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
-        if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
-            # print("HEREEE")
-            super().eventFilter(source, event)
-            return True
+        # if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
+        #     # print("HEREEE")
+        #     super().eventFilter(source, event)
+        #     return True
 
-        if event.type() == QEvent.Type.GraphicsSceneMouseMove:
+        if event.type() == QEvent.Type.GraphicsSceneMouseMove and self.get_stack_for_stack_id(self.selected_stack_indx) is not None:
             # check if the stack is non
-            if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
-                return RuntimeError("No stack found for selected stack index")
+            # if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
+            #     return RuntimeError("No stack found for selected stack index")
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if self.get_stack_for_stack_id(self.selected_stack_indx).volume_display and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_rotating:
                 # self.scan_volume_display.handle_scene_mouse_move(event)
@@ -333,7 +333,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
                 # self.scan_volume_display.scale_handle_move_event_handler(event)
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.scale_handle_move_event_handler(event)
                 return True
-        elif event.type() == QEvent.Type.GraphicsSceneMouseRelease:
+        elif event.type() == QEvent.Type.GraphicsSceneMouseRelease and self.get_stack_for_stack_id(self.selected_stack_indx) is not None:
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if self.get_stack_for_stack_id(self.selected_stack_indx).volume_display and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_rotating:
                 # self.scan_volume_display.handle_scene_mouse_release(event)
