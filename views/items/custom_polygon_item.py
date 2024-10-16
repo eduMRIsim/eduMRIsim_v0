@@ -91,6 +91,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the initial position of the scale handles.
         self.update_scale_handle_positions()
 
+        # Create and set the (initial) position of the middle point of the scan volume
         self.middle_point = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
         self.middle_point.setPen(Qt.GlobalColor.yellow)
         self.middle_point.setVisible(False)
@@ -219,7 +220,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
             self.scale_handles[i].setVisible(False)
 
-    def update_middle_point_position(self):
+    def update_middle_point_position(self) -> None:
+        """
+        Update the position of the middle point of the polygon.
+
+        This method calculates the centroid of the polygon and sets the middle point
+        to this position. If the polygon is not visible or is empty, the middle point
+        is hidden.
+        """
         polygon = self.polygon()
         if not self.isVisible() or polygon.isEmpty():
             self.middle_point.setVisible(False)
@@ -522,7 +530,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         n_points = len(polygon_in_polygon_coords)
-        # If the polygon is empty, clear the rotation and scaling handles, and exit early. This check prevents a crash
+        # If the polygon is empty, clear the rotation and scaling handles, as well as the middle point, and exit early.
+        # This check prevents a crash.
         if n_points == 0:
             super().setPolygon(polygon_in_polygon_coords)
             for handle in self.rotation_handles:
@@ -567,6 +576,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         self.update_scale_handle_positions()
 
+        # Update the middle point position
         self.update_middle_point_position()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
