@@ -91,6 +91,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the initial position of the scale handles.
         self.update_scale_handle_positions()
 
+        self.middle_point = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
+        self.middle_point.setPen(Qt.GlobalColor.yellow)
+        self.middle_point.setVisible(False)
+        self.update_middle_point_position()
+
     def set_movability(self, isMovable: bool):
         if isMovable:
             # print("make movable")
@@ -213,6 +218,15 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Hide the remaining handles.
         for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
             self.scale_handles[i].setVisible(False)
+
+    def update_middle_point_position(self):
+        polygon = self.polygon()
+        if not self.isVisible() or polygon.isEmpty():
+            self.middle_point.setVisible(False)
+            return
+        new_middle_point = QPointF(sum(point.x() for point in polygon) / len(polygon), sum(point.y() for point in polygon) / len(polygon))
+        self.middle_point.setPos(new_middle_point)
+        self.middle_point.setVisible(True)
 
     def scale_handle_press_event_handler(self, event: QGraphicsSceneMouseEvent, handle):
         """
@@ -517,6 +531,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             for handle in self.scale_handles:
                 handle.setVisible(False)
             self.scale_handle_offsets = []
+            self.middle_point.setVisible(False)
             return
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
@@ -551,6 +566,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             self.scale_handle_offsets.append(offset)
 
         self.update_scale_handle_positions()
+
+        self.update_middle_point_position()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
         print(" SET POSITION FROM COORDINATES " + str(polygon_in_pixmap_coords))
