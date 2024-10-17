@@ -718,7 +718,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
         super().contextMenuEvent(event)
 
-        # Enable the export button only if we have a displayed image that can be exported.
+        # Enable the export actions only if we have a displayed image that can be exported.
         if self.displayed_image is not None:
             self.export_action.setEnabled(True)
             self.export_dicomdir_action.setEnabled(True)
