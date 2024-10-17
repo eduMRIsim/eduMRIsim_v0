@@ -41,7 +41,7 @@ class MainController:
 
     def handle_startScanButton_clicked(self):
         if self.scanner.scan_started:
-            # Scanning is already in progress, fast forward
+            #Scanning is already in progress, fast forward
             self.scanner.scan()
             return
         selected_items = self.ui.scanlistListWidget.selectedItems()
