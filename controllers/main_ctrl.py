@@ -72,6 +72,11 @@ class MainController:
             log.info("All scans completed.")
 
     def handle_scan_completed(self):
+        # Unselect the scanned item
+        if self.current_scan_index > 0:
+            index = self.scan_indices_queue[self.current_scan_index - 1]
+            item = self.ui.scanlistListWidget.item(index)
+            item.setSelected(False)
         # Start the next scan if any
         self.scan_next_item()
     
