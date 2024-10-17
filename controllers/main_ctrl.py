@@ -36,10 +36,58 @@ class MainController:
         self.scanner: Scanner = scanner
         self.ui: Ui_MainWindow = ui
         self.ui_signals()
+        self.scan_indices_queue = []
+        self.current_scan_index = 0
+
+    def handle_startScanButton_clicked(self):
+        if self.scanner.scan_started:
+            # Scanning is already in progress, fast forward
+            self.scanner.scan()
+            return
+        selected_items = self.ui.scanlistListWidget.selectedItems()
+        if not selected_items:
+            # No items selected
+            log.info("No scan items selected")
+            return
+        else:
+            # Get indices of selected items
+            self.scan_indices_queue = [
+                self.ui.scanlistListWidget.row(item) for item in selected_items
+            ]
+            self.current_scan_index = 0
+            # Start scanning
+            self.scan_next_item()
+
+    def scan_next_item(self):
+        if self.current_scan_index < len(self.scan_indices_queue):
+            index = self.scan_indices_queue[self.current_scan_index]
+            # Set the active scan item to this index
+            self.scanner.scanlist.active_idx = index
+            # Start the scan
+            self.scanner.scan()
+            # Increment the current_scan_index for next scan item
+            self.current_scan_index += 1
+        else:
+            # All scans completed, clear the scan indices queue
+            self.scan_indices_queue = []
+            self.current_scan_index = 0
+            log.info("All scans completed.")
+
+    def handle_scan_completed(self):
+        # Unselect the scanned item
+        if self.current_scan_index > 0:
+            index = self.scan_indices_queue[self.current_scan_index - 1]
+            item = self.ui.scanlistListWidget.item(index)
+            item.setSelected(False)
+        # Start the next scan if any
+        self.scan_next_item()
 
     def ui_signals(self):
         self.load_examination_dialog_ui = LoadExaminationDialog()
         self.new_examination_dialog_ui = NewExaminationDialog()
+
+        self.ui.startScanButton.clicked.connect(self.handle_startScanButton_clicked)
+        self.scanner.scan_completed.connect(self.handle_scan_completed)
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
@@ -69,9 +117,7 @@ class MainController:
         self.ui.parameterFormLayout.formActivatedSignal.connect(
             self.handle_parameterFormLayout_activated
         )
-        self.ui.parameterFormLayout.stackSignal.connect(
-            self.handle_stack_action
-        )
+        self.ui.parameterFormLayout.stackSignal.connect(self.handle_stack_action)
         self.ui.scanParametersCancelChangesButton.clicked.connect(
             self.handle_scanParametersCancelChangesButton_clicked
         )
@@ -83,7 +129,7 @@ class MainController:
         )
 
         # Signals related to scanning
-        self.ui.startScanButton.clicked.connect(self.scanner.scan)
+        # self.ui.startScanButton.clicked.connect(self.scanner.scan)
 
         # Connect scanner signals to slots
         self.scanner.scan_progress.connect(self.update_scan_progress)
@@ -318,8 +364,12 @@ class MainController:
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
-        self.scanner.scanlist.active_scan_item.validate_scan_parameters_single(scan_parameters)
-        self.scanner.scanlist.active_scan_item.perform_rotation_check_single(scan_parameters)
+        self.scanner.scanlist.active_scan_item.validate_scan_parameters_single(
+            scan_parameters
+        )
+        self.scanner.scanlist.active_scan_item.perform_rotation_check_single(
+            scan_parameters
+        )
         # self.scanner.scanlist.active_scan_item.validate_scan_parameters(scan_parameters)
         # self.scanner.scanlist.active_scan_item.perform_rotation_check(scan_parameters)
 
@@ -508,7 +558,7 @@ class MainController:
 
                 # If both the image data and all the geometry parameters match, we have found (acquired) image that we were looking for
                 found = True
-                parameters = scanlist_element.scan_item.scan_parameters
+                parameters = scanlist_element.scan_item.scan_parameters[0]
                 break
 
             # If we found the image that we were looking for, break out of the scan list element loop
@@ -581,5 +631,7 @@ class MainController:
         if event == EventEnum.SCAN_ITEM_PARAMETERS_CHANGED:
             # self._scan_vo
             # self.scanner.active_scan_item.scan_volume.clamp_to_scanner_dimensions()
-            self.scanner.active_scan_item.find_scan_volume_with_stack_index(self.scanner.active_scan_item.selected_stack_index).clamp_to_scanner_dimensions()
+            self.scanner.active_scan_item.find_scan_volume_with_stack_index(
+                self.scanner.active_scan_item.selected_stack_index
+            ).clamp_to_scanner_dimensions()
             self.populate_parameterFormLayout(self.scanner.active_scan_item)

@@ -39,7 +39,7 @@ class ScanlistListWidget(QListWidget):
         super().__init__()
         self.setStyleSheet("border: none;")
         self.setDragDropMode(self.DragDropMode.DragDrop)
-        self.setSelectionMode(self.SelectionMode.SingleSelection)
+        self.setSelectionMode(self.SelectionMode.ExtendedSelection)
         self.setAcceptDrops(True)
 
     def mouseDoubleClickEvent(self, event):

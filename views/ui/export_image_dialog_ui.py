@@ -123,6 +123,9 @@ class ExportImageDialog(QDialog):
 
         Args:
             image: The acquired image to save to the DICOM file.
+            series: The acquired series to which the image belongs.
+            study: The examination study to which the series belongs.
+            parameters: The scan parameters of the acquired image.
         """
         # Open a directory dialog so that the user can choose a directory to save the DICOM folder in.
         # If a folder is selected that contains a valid DICOM folder, the existing DICOM folder is used instead of a new one.

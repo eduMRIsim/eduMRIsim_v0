@@ -178,12 +178,13 @@ class ParameterFormLayout(QVBoxLayout):
 
             # Store the editor widget in the dictionary for later access.
             self.editors[parameter_key] = editor
-        
+
         add_stack_button = PrimaryActionButton("Add stack")
-        add_stack_button.clicked.connect(lambda: self.handle_add_new_stack_btn_clicked())
+        add_stack_button.clicked.connect(
+            lambda: self.handle_add_new_stack_btn_clicked()
+        )
         self.addWidget(add_stack_button)
 
-    
     def handle_add_new_stack_btn_clicked(self):
         # print("ADD PRESS")
         self.stackSignal.emit({"event": "ADD"})
