@@ -24,7 +24,7 @@ class Section:
         self.actions = {}
         self.action_group = None
 
-    def add_action(self, action_name, triggered_function, checkable=False) -> QAction:
+    def add_action(self, action_name, triggered_function, checkable=False):
         """Adds a regular action to the section."""
         action = QAction(action_name, self.menu)
 
@@ -36,8 +36,6 @@ class Section:
         self.actions[action_name] = action
         self.menu.addAction(action)
 
-        return action
-
     def add_mode_action_group(self):
         """Creates an action group for mutually exclusive mode actions."""
         self.action_group = QActionGroup(self.menu)
@@ -45,7 +43,7 @@ class Section:
             True
         )  # Ensure only one action can be checked at a time
 
-    def add_mode_action(self, action_name, triggered_function, checked=False) -> QAction:
+    def add_mode_action(self, action_name, triggered_function, checked=False):
         """Adds an action to the manual mode group without any checked state."""
         if self.action_group is None:
             raise Exception("Call add_mode_action_group before adding mode actions.")
@@ -63,5 +61,3 @@ class Section:
             action.setChecked(True)
         else:
             action.setChecked(False)
-
-        return action
