@@ -41,38 +41,32 @@ class MainController:
 
     def handle_startScanButton_clicked(self):
         if self.scanner.scan_started:
-            # Scanning is already in progress
-            log.info("Scan is already in progress.")
+            # Scanning is already in progress, fast forward
+            self.scanner.scan()
             return
         selected_items = self.ui.scanlistListWidget.selectedItems()
         if not selected_items:
-            # No items selected, perhaps scan the active item as before
-            log.info("No scan items selected. Please select scan items to proceed.")
+            # No items selected
+            log.info("No scan items selected")
             return
         else:
             # Get indices of selected items
             self.scan_indices_queue = [self.ui.scanlistListWidget.row(item) for item in selected_items]
             self.current_scan_index = 0
-            # Start scanning the first item
+            # Start scanning
             self.scan_next_item()
 
     def scan_next_item(self):
-        if self.current_scan_index == 0:
-            # Disable the scan button
-            self.ui.startScanButton.setEnabled(False)
         if self.current_scan_index < len(self.scan_indices_queue):
             index = self.scan_indices_queue[self.current_scan_index]
             # Set the active scan item to this index
             self.scanner.scanlist.active_idx = index
             # Start the scan
             self.scanner.scan()
-            # Increment the current_scan_index for next time
+            # Increment the current_scan_index for next scan item
             self.current_scan_index += 1
         else:
-            # All scans completed
-            # Re-enable the scan button
-            self.ui.startScanButton.setEnabled(True)
-            # Clear the scan indices queue
+            # All scans completed, clear the scan indices queue
             self.scan_indices_queue = []
             self.current_scan_index = 0
             log.info("All scans completed.")
