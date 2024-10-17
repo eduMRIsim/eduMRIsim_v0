@@ -60,7 +60,7 @@ class gridViewingWindowLayout(QFrame):
     def reconnect_all_signals(self, drop_handler):
         """Reconnects all GridCell instances in the grid to accept drops. """
         if self.drop_handler is None:
-            print("Drop handler is not set.")
+            log.error("Drop handler is not set.")
             return
 
         for i in range(len(self.grid_cells)):
@@ -69,7 +69,7 @@ class gridViewingWindowLayout(QFrame):
                 try:
                     self.grid_cell.dropEventSignal.disconnect()
                 except Exception as e:
-                    print(f"Warning: Unable to disconnect dropEventSignal: {e}")
+                    log.warn(f"Unable to disconnect dropEventSignal: {e}")
                 self.grid_cell.dropEventSignal.connect(drop_handler)
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
@@ -77,7 +77,7 @@ class gridViewingWindowLayout(QFrame):
         if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
             return self.grid_cells[i][j]
         else:
-            print(f"Invalid cell access: row {i}, column {j}.")
+            log.error(f"Invalid cell access: row {i}, column {j}.")
             return None
 
     def add_row(self):
@@ -136,7 +136,7 @@ class gridViewingWindowLayout(QFrame):
     def remove_row(self, row_index):
         """Removes the row of the cell you right-click on."""
 
-        print("remove_row is called")
+        log.debug("remove_row is called")
 
         if row_index < 0 or row_index >= len(self.grid_cells):
             log.error("There's no row here")
