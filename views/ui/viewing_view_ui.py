@@ -41,10 +41,12 @@ class gridViewingWindowLayout(QFrame):
         self.setLayout(rightLayout)
 
     def connect_drop_signals(self, drop_handler):
+        """Connects all GridCell instances in the grid to accept drops. """
         self.drop_handler = drop_handler
         self.reconnect_all_signals(drop_handler)
     
     def reconnect_all_signals(self, drop_handler):
+        """Reconnects all GridCell instances in the grid to accept drops. """
         if self.drop_handler is None:
             print("Drop handler is not set.")
             return
@@ -59,6 +61,7 @@ class gridViewingWindowLayout(QFrame):
                 self.grid_cell.dropEventSignal.connect(drop_handler)
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
+        """Retrieves an instance of the GridCell. """
         if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
             return self.grid_cells[i][j]
         else:
@@ -130,7 +133,6 @@ class gridViewingWindowLayout(QFrame):
         # remove and disconnect cells on row row_index
         for j in range(len(self.grid_cells[row_index])): 
             widget_to_remove = self.grid_cells[row_index][j]
-            print(f"Removing widget at ({row_index}, {j})")
             try:
                 widget_to_remove.dropEventSignal.disconnect()
             except Exception as e:
@@ -139,20 +141,19 @@ class gridViewingWindowLayout(QFrame):
             widget_to_remove.deleteLater()
         
         self.grid_cells.pop(row_index)
-        print(f"Row {row_index} removed. Remaining rows: {len(self.grid_cells)}")
 
         # rearrange the cells
         for i in range(row_index, len(self.grid_cells)):  
             for j in range(len(self.grid_cells[i])):
                 widget = self.grid_cells[i][j]
-                widget.row = i # updates the row index for every widget
+                widget.row = i
                 widget.col = j
                 self.right_layout.addWidget(widget, i, j)
 
         self.right_layout.update()
         self.update() 
 
-        self.gridUpdated.emit() # signals that the grid needs to be updated
+        self.gridUpdated.emit() # signals that the grid needs to be reconnected
     
     def remove_col(self, col_index):
         '''Removes the column of the cell you right-click on. '''
@@ -181,12 +182,12 @@ class gridViewingWindowLayout(QFrame):
             for j in range(col_index, len(self.grid_cells[i])):
                 widget = self.grid_cells[i][j]
                 widget.row = i
-                widget.col = j # columns
+                widget.col = j 
                 self.right_layout.addWidget(widget, i, j) 
         
         self.update() 
 
-        self.gridUpdated.emit()
+        self.gridUpdated.emit() # signals that the grid needs to be reconnected
 
 
 class GridCell(ZoomableView):
@@ -212,8 +213,6 @@ class GridCell(ZoomableView):
         self.scene.addItem(self.pixmap_item)
         self.setScene(self.scene)
         self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-
-        # Set the background color to black
         self.setBackgroundBrush(QColor(0, 0, 0))
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -247,16 +246,17 @@ class GridCell(ZoomableView):
         self.parent_layout.add_column()
 
     def remove_row(self):
+        """Trigger remove_row method of the parent."""
         self.parent_layout.remove_row(self.row)
         
-
     def remove_col(self):
+        """Trigger remove_col method of the parent."""
         self.parent_layout.remove_col(self.row)
 
     def contextMenuEvent(self, position):
-        """Context menu for adding a row or column."""
+        """Context menu for adding or removing rows and columns."""
 
-        # Initialize add row/col actions in the context menu
+        # Initialize add/remove row/col actions in the context menu
         self.add_rowcol_menu = QMenu(self)
         self.add_row_action = QAction("Add row")
         self.add_rowcol_menu.addAction(self.add_row_action)
@@ -267,7 +267,6 @@ class GridCell(ZoomableView):
         self.remove_col_action = QAction("Remove column")
         self.add_rowcol_menu.addAction(self.remove_col_action)
 
-        # Actions trigger the methods from this class which trigger the methods in the parent
         self.add_row_action.triggered.connect(lambda: self.add_row())
         self.add_col_action.triggered.connect(lambda: self.add_column())
         self.remove_row_action.triggered.connect(lambda: self.remove_row())
