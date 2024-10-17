@@ -15,6 +15,7 @@ from utils.logger import log, qt_message_handler, numpy_handler
 from views.main_view_ui import Ui_MainWindow
 from views.ui.menu_bar_ui import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
+from views.ui.shortcut_dialog_ui import ShortcutDialog
 
 
 class App(QApplication):
@@ -147,6 +148,12 @@ class App(QApplication):
         tools_section.add_action("Measure Area", self.test_action, checkable=False)
         measure_area_shortcut = QShortcut("Ctrl+A", self.main_view)
         measure_area_shortcut.activated.connect(self.test_action)
+
+        # Help section
+        help_section = menu_bar.add_section("Help")
+        help_section.add_action("Keyboard Shortcuts", lambda: ShortcutDialog().exec())
+        help_shortcut = QShortcut("Ctrl+H", self.main_view)
+        help_shortcut.activated.connect(lambda: ShortcutDialog().exec())
 
     def test_action(self):
         pass
