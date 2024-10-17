@@ -721,8 +721,10 @@ class AcquiredSeriesViewer2D(ZoomableView):
         # Enable the export button only if we have a displayed image that can be exported.
         if self.displayed_image is not None:
             self.export_action.setEnabled(True)
+            self.export_dicomdir_action.setEnabled(True)
         else:
             self.export_action.setEnabled(False)
+            self.export_dicomdir_action.setEnabled(False)
 
         # Execute and open the menu.
         action_performed = self.right_click_menu.exec(self.mapToGlobal(event.pos()))
