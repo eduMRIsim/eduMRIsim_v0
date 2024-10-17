@@ -94,11 +94,13 @@ class ZoomableView(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
-        if (
-            not self.measure.is_measuring and not self.leveling_enabled
-        ):
+        if not self.measure.is_measuring and not self.leveling_enabled:
             # handle zoom
-            if self.zoom_key_pressed and self.mouse_pressed and self.last_mouse_pos is not None:
+            if (
+                self.zoom_key_pressed
+                and self.mouse_pressed
+                and self.last_mouse_pos is not None
+            ):
                 current_pos = event.pos()
 
                 delta_y = current_pos.y() - self.last_mouse_pos.y()
@@ -112,11 +114,19 @@ class ZoomableView(QGraphicsView):
 
                 self.last_mouse_pos = current_pos
             # handle pan
-            if self.panning_key_pressed and self.panning_mouse_pressed and self.last_mouse_pos is not None:
+            if (
+                self.panning_key_pressed
+                and self.panning_mouse_pressed
+                and self.last_mouse_pos is not None
+            ):
                 delta = event.pos() - self.last_mouse_pos
 
-                self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
-                self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
+                self.horizontalScrollBar().setValue(
+                    self.horizontalScrollBar().value() - delta.x()
+                )
+                self.verticalScrollBar().setValue(
+                    self.verticalScrollBar().value() - delta.y()
+                )
 
                 self.last_mouse_pos = event.pos()
 
@@ -140,5 +150,3 @@ class ZoomableView(QGraphicsView):
                 self._displayArray(self.window_center, self.window_width)
         else:
             super().mouseMoveEvent(event)
-
-

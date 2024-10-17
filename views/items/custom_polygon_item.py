@@ -105,7 +105,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         else:
             self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
             self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
-    
+
     def set_color(self, color):
         self.setPen(color)
 
@@ -154,7 +154,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.rotation_handles[i]
             handle_pos_local = centroid_local + offset
             handle.setPos(handle_pos_local)
-            if (self.is_active_stack):
+            if self.is_active_stack:
                 handle.setVisible(True)
 
         # Hide any extra handles
@@ -213,7 +213,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.scale_handles[i]
             handle_pos_local = local_center + offset
             handle.setPos(handle_pos_local)
-            if (self.is_active_stack):
+            if self.is_active_stack:
                 handle.setVisible(True)
 
         # Hide the remaining handles.
@@ -232,7 +232,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         if not self.isVisible() or polygon.isEmpty():
             self.middle_point.setVisible(False)
             return
-        new_middle_point = QPointF(sum(point.x() for point in polygon) / len(polygon), sum(point.y() for point in polygon) / len(polygon))
+        new_middle_point = QPointF(
+            sum(point.x() for point in polygon) / len(polygon),
+            sum(point.y() for point in polygon) / len(polygon),
+        )
         self.middle_point.setPos(new_middle_point)
         self.middle_point.setVisible(True)
 
@@ -490,7 +493,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.viewer._update_scan_volume_display_for_active_stack_item()
         self.viewer.viewport().update()
         # QApplication.processEvents()
-
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
