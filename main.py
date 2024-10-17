@@ -87,32 +87,24 @@ class App(QApplication):
 
         # Session section
         session_section = menu_bar.add_section("Session")
-        save_session_action = session_section.add_action(
+        session_section.add_action(
             "Save session", self.main_controller.export_examination
         )
 
-        load_session_action = session_section.add_action(
+        session_section.add_action(
             "Load session", self.load_examination
         )
 
         save_session_shortcut = QShortcut("Ctrl+S", self.main_view)
         save_session_shortcut.activated.connect(self.main_controller.export_examination)
-        save_session_action.setShortcut(save_session_shortcut.key())
 
         load_session_shortcut = QShortcut("Ctrl+L", self.main_view)
         load_session_shortcut.activated.connect(self.load_examination)
-        load_session_action.setShortcut(load_session_shortcut.key())
 
         # Mode section
         mode_section = menu_bar.add_section("Mode")
         mode_section.add_mode_action_group()
-        switch_modes_action = mode_section.add_mode_action(
-            "Switch between modes:",
-            lambda: self.main_view._stackedLayout.setCurrentIndex(
-                1 if self.main_view._stackedLayout.currentIndex() == 0 else 0
-            )
-        )
-        switch_modes_action.setEnabled(False)
+
         mode_section.add_mode_action(
             "Scanning Mode",
             lambda: self.main_view._stackedLayout.setCurrentIndex(0),
@@ -124,7 +116,6 @@ class App(QApplication):
 
         switch_modes_shortcut = QShortcut("Ctrl+M", self.main_view)
         switch_modes_shortcut.activated.connect(lambda: self.main_view._stackedLayout.setCurrentIndex(1 if self.main_view._stackedLayout.currentIndex() == 0 else 0))
-        switch_modes_action.setShortcut(switch_modes_shortcut.key())
 
         # Tools section
         tools_section = menu_bar.add_section("Tools")
