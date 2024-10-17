@@ -548,7 +548,7 @@ class MainController:
 
                 # If both the image data and all the geometry parameters match, we have found (acquired) image that we were looking for
                 found = True
-                parameters = scanlist_element.scan_item.scan_parameters
+                parameters = scanlist_element.scan_item.scan_parameters[0]
                 break
 
             # If we found the image that we were looking for, break out of the scan list element loop

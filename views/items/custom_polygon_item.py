@@ -93,7 +93,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         # Create and set the (initial) position of the middle point of the scan volume
         self.middle_point = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
-        self.middle_point.setPen(Qt.GlobalColor.yellow)
+        self.middle_point.setBrush(Qt.GlobalColor.yellow)
         self.middle_point.setVisible(False)
         self.update_middle_point_position()
 
