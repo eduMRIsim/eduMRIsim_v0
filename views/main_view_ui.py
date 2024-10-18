@@ -158,6 +158,10 @@ class Ui_MainWindow(QMainWindow):
         return self._scanParametersWidget.scanParametersSaveChangesButton
 
     @property
+    def scanParametersExportButton(self):
+        return self._scanParametersWidget.scanParametersExportButton
+
+    @property
     def scanParametersCancelChangesButton(self):
         return self._scanParametersWidget.scanParametersCancelChangesButton
 
