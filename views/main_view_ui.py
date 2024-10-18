@@ -130,6 +130,10 @@ class Ui_MainWindow(QMainWindow):
         return self._scanlistInfoFrame.addScanItemButton
 
     @property
+    def importScanItemButton(self):
+        return self._scanlistInfoFrame.importScanItemButton
+
+    @property
     def scanlistListWidget(self):
         return self._scanlistInfoFrame.scanlistListWidget
 
