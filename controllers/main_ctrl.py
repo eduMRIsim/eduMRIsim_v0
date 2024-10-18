@@ -149,7 +149,7 @@ class MainController:
         )
         # Signals for grid in viewing mode
         self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
-        self.ui.gridViewingWindow.gridUpdated.connect(self.handle_update_grid) 
+        self.ui.gridViewingWindow.gridUpdated.connect(self.handle_update_grid)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(
@@ -331,7 +331,7 @@ class MainController:
             grid_cell.setAcquiredSeries(acquired_series)
             self.update_scanlistListWidget(self.scanner.scanlist)
         else:
-            print("This cell doesn't exist")
+            log.error("This cell doesn't exist")
 
     def connect_drop_signals(self):
         # Connect the drop event signals from the grid cells to the handle_dropped_cells method
@@ -362,7 +362,6 @@ class MainController:
 
     def handle_stack_action(self, act):
         if act["event"] == "ADD":
-            # print("HERE111111111")
             self.scanner.active_scan_item.add_stack()
             self.ui.scanPlanningWindow1.setScanVolumes(
                 self.scanner.active_scan_item.scan_volumes

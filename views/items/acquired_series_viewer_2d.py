@@ -162,86 +162,16 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.scene.addItem(self.line_item)
 
         self.text_item = QGraphicsTextItem()
-        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.text_item.setDefaultTextColor(QColor(255, 165, 0))
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
         self.only_display_image = False
+        self.view_only_instance = False
 
     def sendTestSignal(self):
         self.testSignal.emit(0)
-
-    # start zoom when pressed
-    # def mousePressEvent(self, event):
-    #     # TODO the user should not be able to zoom in and out when the measuring tool is active
-    #     if self.zooming_enabled:
-    #         if event.button() == Qt.MouseButton.LeftButton:
-    #             self.mouse_pressed = True
-    #             self.last_mouse_pos = event.pos()
-    #     elif self.measuring_enabled:
-    #         self.measure.start_measurement(self.mapToScene(event.pos()))
-    #         self.measure.show_items()
-    #     elif self.leveling_enabled:
-    #         if event.button() == Qt.MouseButton.LeftButton:
-    #             self.last_mouse_pos = event.pos()
-    #     else:
-    #         super().mousePressEvent(event)
-
-    # stop zoom when released
-    # def mouseReleaseEvent(self, event):
-    #     if self.zooming_enabled:
-    #         if event.button() == Qt.MouseButton.LeftButton:
-    #             self.mouse_pressed = False
-    #             self.last_mouse_pos = None
-    #     elif self.measuring_enabled:
-    #         self.measure.end_measurement()
-    #     elif self.leveling_enabled:
-    #         if event.button() == Qt.MouseButton.LeftButton:
-    #             self.last_mouse_pos = None
-    #     else:
-    #         super().mouseReleaseEvent(event)
-
-    # def mouseMoveEvent(self, event):
-    #     if self.zooming_enabled:
-    #         """Handle zoom when the mouse is being dragged."""
-    #         if self.mouse_pressed and self.last_mouse_pos is not None:
-    #
-    #             max_zoom_out = 0.5
-    #             max_zoom_in = 10
-    #             current_pos = event.pos()
-    #             delta_y = current_pos.y() - self.last_mouse_pos.y()
-    #
-    #             # cursor_pos = self.mapToScene(current_pos)
-    #             zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
-    #
-    #             # get current zoom level (scaling factor)
-    #             current_zoom = self.transform().m11()
-    #
-    #             new_zoom = current_zoom * zoom_factor
-    #             if max_zoom_out <= new_zoom <= max_zoom_in:
-    #                 self.scale(zoom_factor, zoom_factor)
-    #
-    #             # update the last mouse position
-    #             self.last_mouse_pos = current_pos
-    #     elif self.measuring_enabled and self.measure.is_measuring:
-    #         self.measure.update_measurement(self.mapToScene(event.pos()))
-    #     elif self.leveling_enabled:
-    #         if self.window_center is None or self.window_width is None:
-    #             return
-    #
-    #         if self.last_mouse_pos is not None:
-    #             delta = event.pos() - self.last_mouse_pos
-    #             self.last_mouse_pos = event.pos()
-    #
-    #             self.window_center += delta.y()  # Adjust level (vertical movement)
-    #             self.window_width += delta.x()  # Adjust window (horizontal movement)
-    #
-    #             self.window_width = max(1, self.window_width)
-    #
-    #             self._displayArray(self.window_center, self.window_width)
-    #     else:
-    #         super().mouseMoveEvent(event)
 
     def update_buttons_visibility(self):
         if self.acquired_series is None:
@@ -307,8 +237,12 @@ class AcquiredSeriesViewer2D(ZoomableView):
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
+        # If this instance is only for displaying images, do not allow any interaction with the CustomPolygonItem
+        # instead, the events are passed to the ZoomableView to enable measurements and zooming mouse events etc.
+        if self.view_only_instance:
+            return super().eventFilter(source, event)
+
         if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
-            # print("HEREEE")
             super().eventFilter(source, event)
             return True
 
@@ -316,22 +250,17 @@ class AcquiredSeriesViewer2D(ZoomableView):
             # check if the stack is non
             if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
                 return RuntimeError("No stack found for selected stack index")
-            # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 and self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.is_rotating
             ):
-                # self.scan_volume_display.handle_scene_mouse_move(event)
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.handle_scene_mouse_move(event)
                 return True
-            # if (
-            #     self.scan_volume_display is not None
-            #     and self.scan_volume_display.is_being_scaled
-            # ):
+
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 is not None
@@ -339,27 +268,20 @@ class AcquiredSeriesViewer2D(ZoomableView):
                     self.selected_stack_indx
                 ).volume_display.is_being_scaled
             ):
-                # self.scan_volume_display.scale_handle_move_event_handler(event)
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.scale_handle_move_event_handler(event)
                 return True
         elif event.type() == QEvent.Type.GraphicsSceneMouseRelease:
-            # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 and self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.is_rotating
             ):
-                # self.scan_volume_display.handle_scene_mouse_release(event)
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.handle_scene_mouse_release(event)
-            # if (
-            #     self.scan_volume_display is not None
-            #     and self.scan_volume_display.is_being_scaled
-            # ):
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 is not None
@@ -367,7 +289,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
                     self.selected_stack_indx
                 ).volume_display.is_being_scaled
             ):
-                # self.scan_volume_display.scale_handle_release_event_handler()
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.scale_handle_release_event_handler()
@@ -455,9 +376,9 @@ class AcquiredSeriesViewer2D(ZoomableView):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
         if self.leveling_enabled:
-            print("Window-level mode enabled")
+            log.info("Window-level mode enabled")
         else:
-            print("Window-level mode disabled")
+            log.info("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
@@ -484,7 +405,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.get_scan_volume_for_stack_index(
                 self.selected_stack_indx
             ).clamp_to_scanner_dimensions()
-            print("UPDATE DISPLAY1")
             self._update_scan_volume_display(
                 self.get_stack_for_stack_id(self.selected_stack_indx)
             )
@@ -681,7 +601,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             stack = StackItem(self.pixmap_item, self, scan_vol.stack_index)
             stack.volume_display.set_scan_volume(scan_vol)
             self.stacks.append(stack)
-            print("STACK ADDED")
 
         inx = 0
         for stack in self.stacks:
@@ -752,7 +671,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             scan_item_volume = self.get_scan_volume_for_stack_index(
                 stack_item.stack_index
             )
-            print("SCAN VOLUME AP " + str(scan_item_volume.origin_LPS))
             (
                 intersection_volume_edges_in_pixmap_coords,
                 intersection_middle_edges_in_pixamp_coords,
@@ -869,7 +787,6 @@ class StackItem:
 
     # clear all the visual elements connected to this stack before removing this stack item
     def __del__(self):
-        print("REMOVED STACK ITEM")
         self.clear_objects()
 
     # show this scan volume in yellow as selected scan volume and hide slices and middle lines, make it movable
@@ -883,7 +800,6 @@ class StackItem:
 
     # unselect this scan volume so set it red and make non-movable
     def set_inactive_settings(self):
-        print("INACTIVE")
         self.activ_stack = False
         self.volume_display.set_color(Qt.GlobalColor.red)
         self.volume_display.set_movability(False)
@@ -901,7 +817,6 @@ class StackItem:
         self, volume_edges, middle_edges, slice_edges
     ):
         self.volume_display.setPolygon(QPolygonF())
-        print("UPDATE VOLUME EDGES " + str(volume_edges))
         self.series_viewer.sendTestSignal()
 
         self.volume_display.setPolygonFromPixmapCoords(volume_edges)
