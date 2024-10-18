@@ -130,6 +130,10 @@ class Ui_MainWindow(QMainWindow):
         return self._scanlistInfoFrame.addScanItemButton
 
     @property
+    def importScanItemButton(self):
+        return self._scanlistInfoFrame.importScanItemButton
+
+    @property
     def scanlistListWidget(self):
         return self._scanlistInfoFrame.scanlistListWidget
 
@@ -156,6 +160,10 @@ class Ui_MainWindow(QMainWindow):
     @property
     def scanParametersSaveChangesButton(self):
         return self._scanParametersWidget.scanParametersSaveChangesButton
+
+    @property
+    def scanParametersExportButton(self):
+        return self._scanParametersWidget.scanParametersExportButton
 
     @property
     def scanParametersCancelChangesButton(self):

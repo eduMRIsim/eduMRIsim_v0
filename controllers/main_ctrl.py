@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 import numpy as np
 from PyQt6.QtGui import QIcon
@@ -17,6 +18,7 @@ from simulator.scanlist import (
 )
 from simulator.scanner import Scanner
 from utils.logger import log
+from views.ui.export_scanitem_dialog_ui import ExportScanItemDialog
 from views.ui.export_image_dialog_ui import ExportImageDialog
 from views.ui.load_examination_dialog_ui import LoadExaminationDialog
 from views.main_view_ui import Ui_MainWindow
@@ -89,6 +91,8 @@ class MainController:
         self.ui.startScanButton.clicked.connect(self.handle_startScanButton_clicked)
         self.scanner.scan_completed.connect(self.handle_scan_completed)
 
+        self.ui.importScanItemButton.clicked.connect(self.handle_importScanItemButton_clicked)
+
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
 
@@ -124,6 +128,11 @@ class MainController:
         self.ui.scanParametersSaveChangesButton.clicked.connect(
             self.handle_scanParametersSaveChangesButton_clicked
         )
+
+        self.ui.scanParametersExportButton.clicked.connect(
+            self.handle_scanParametersExportButton_clicked
+        )
+
         self.ui.scanParametersResetButton.clicked.connect(
             self.handle_scanParametersResetButton_clicked
         )
@@ -164,6 +173,8 @@ class MainController:
 
         # Signals and UIs related to exporting images
         self.export_image_dialog_ui = ExportImageDialog()
+
+        self.export_scanitem_dialog = ExportScanItemDialog()
 
         self.ui.scannedImageWidget.acquiredImageExportButton.clicked.connect(
             lambda: self.handle_viewingPortExport_triggered(0)
@@ -309,6 +320,19 @@ class MainController:
         active_params = scan_item.get_current_active_parameters()
         self.ui.parameterFormLayout.set_parameters(active_params)
 
+    def handle_importScanItemButton_clicked(self):
+        path = self.export_scanitem_dialog.open_file_dialog(save=False)
+
+        # get filename from path
+        filename = path.split("/")[-1].split(".")[0]
+
+        with open(path, 'r') as f:
+            scan_parameters = json.load(f)
+
+        self.scanner.scanlist.add_scanlist_element(filename, scan_parameters[0])
+
+        log.info(f"ScanItem {filename} imported")
+
     def handle_scanningButton_clicked(self):
         rightlayout = self.ui.layout
         scanlist = self.save_complete_scanlist_items(self.scanner.scanlist)
@@ -360,6 +384,15 @@ class MainController:
     def handle_scanParametersCancelChangesButton_clicked(self):
         self.scanner.active_scan_item.cancel_changes()
         self.populate_parameterFormLayout(self.scanner.scanlist.active_scan_item)
+
+    def handle_scanParametersExportButton_clicked(self):
+        params = self.scanner.active_scanlist_element.scan_item.scan_parameters
+        path = self.export_scanitem_dialog.open_file_dialog()
+
+        with open(path, 'w') as f:
+            json.dump(params, f)
+
+        log.info(f"Item {self.scanner.active_scanlist_element.scan_item.name} parameters exported")
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
