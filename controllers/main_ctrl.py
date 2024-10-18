@@ -211,11 +211,11 @@ class MainController:
 
     def export_examination(self):
         default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
-        options = (
-            QFileDialog.FileMode.Options()
-        )  # Use native dialog for a more modern look
+        # options = (
+        #     QFileDialog.FileMode.Options()
+        # )  # Use native dialog for a more modern look
         file_path, _ = QFileDialog.getSaveFileName(
-            self.ui, "Save Session", default_filename, options=options
+            self.ui, "Save Session", default_filename
         )
 
         # If canceled, return without doing anything
