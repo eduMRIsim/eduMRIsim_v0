@@ -91,6 +91,8 @@ class MainController:
         self.ui.startScanButton.clicked.connect(self.handle_startScanButton_clicked)
         self.scanner.scan_completed.connect(self.handle_scan_completed)
 
+        self.ui.importScanItemButton.clicked.connect(self.handle_importScanItemButton_clicked)
+
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
 
@@ -317,6 +319,19 @@ class MainController:
         # self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
         active_params = scan_item.get_current_active_parameters()
         self.ui.parameterFormLayout.set_parameters(active_params)
+
+    def handle_importScanItemButton_clicked(self):
+        path = self.export_scanitem_dialog.open_file_dialog(save=False)
+
+        # get filename from path
+        filename = path.split("/")[-1].split(".")[0]
+
+        with open(path, 'r') as f:
+            scan_parameters = json.load(f)
+
+        self.scanner.scanlist.add_scanlist_element(filename, scan_parameters[0])
+
+        log.info(f"ScanItem {filename} imported")
 
     def handle_scanningButton_clicked(self):
         rightlayout = self.ui.layout
