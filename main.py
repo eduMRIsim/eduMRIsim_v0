@@ -124,8 +124,8 @@ class App(QApplication):
             lambda: self.main_controller.handle_measureDistanceButtonClicked(),
             checkable=True,
         )
-        measure_distance_shortcut = QShortcut("Ctrl+D", self.main_view)
-        measure_distance_shortcut.activated.connect(lambda: self.main_controller.handle_measureDistanceButtonClicked())
+        # measure_distance_shortcut = QShortcut("Ctrl+D", self.main_view)
+        # measure_distance_shortcut.activated.connect(lambda: self.main_controller.handle_measureDistanceButtonClicked())
 
         tools_section.add_action(
             "Window Level Mode",

@@ -19,7 +19,7 @@ class ShortcutDialog(QDialog):
             ("Ctrl+L", "Load session"),
             ("Ctrl+S", "Save session"),
             ("Ctrl+M", "Switch between scanning mode and viewing mode"),
-            ("Ctrl+D", "Measure distance"),
+            # ("Ctrl+D", "Measure distance"),
             ("Ctrl+W", "Toggle window leveling"),
             ("Ctrl+A", "Measure area"),
             ("Ctrl+H", "Show keyboard shortcuts (this dialog)"),
