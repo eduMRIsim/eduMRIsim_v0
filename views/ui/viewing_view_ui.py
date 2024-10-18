@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QMenu,
+    QCheckBox
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -79,6 +80,97 @@ class gridViewingWindowLayout(QFrame):
         else:
             log.error(f"Invalid cell access: row {i}, column {j}.")
             return None
+        
+    def show_checkboxes(self):
+        """Adds checkboxes to all cells in the grid."""
+        for row in self.grid_cells:
+            for cell in row:
+                cell.set_visibility_checkbox(True)
+
+    def hide_checkboxes(self):
+        """Hides checkboxes in all cells."""
+        for row in self.grid_cells:
+            for cell in row:
+                cell.set_visibility_checkbox(False) 
+
+    def get_checked_cells(self):
+        """Stores a list of the checked cells. """
+        checked_cells = []
+
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                cell = self.grid_cells[i][j]
+                if cell.checkbox.isVisible() and cell.checkbox.isChecked():
+                    checked_cells.append((i, j))
+                    print(f"Checkbox is checked in cell [{i},{j}]")
+
+        return checked_cells
+    
+    def start_geometry_linking(self):
+        """Synchronizes zooming and panning for the checked cells. """
+        linked_cells = self.get_checked_cells()
+        self.linked_cells = [self.grid_cells[row][col] for row, col in linked_cells]
+
+        print(f"Geometry linking will be done for cells: {linked_cells}")
+
+        if not linked_cells:
+            log.warn("No cells selected for geometry linking!.")
+            return
+
+        reference_cell = self.grid_cells[linked_cells[0][0]][linked_cells[0][1]]
+
+        # zoom and pan in the cell the others need to copy
+        reference_zoom_level = reference_cell.transform().m11()  # get zoom level
+        reference_h_pan = reference_cell.horizontalScrollBar().value() # get horizontal pan
+        reference_v_pan = reference_cell.verticalScrollBar().value() # get vertical pan
+
+        for cell in self.linked_cells:
+            # connect to zoom and pan signals
+            cell.zoomChanged.connect(self.synchronize_zoom_to_all_cells) 
+            cell.panChanged.connect(self.synchronize_pan_to_all_cells) 
+            # apply the zoom level
+            current_zoom = cell.transform().m11()
+            if current_zoom != reference_zoom_level:
+                cell.resetTransform()
+                zoom_factor = reference_zoom_level / 1.0
+                cell.scale(zoom_factor, zoom_factor)
+
+            # apply pan values 
+            cell.horizontalScrollBar().setValue(reference_h_pan)
+            cell.verticalScrollBar().setValue(reference_v_pan)
+        
+        print(f"Cells {len(linked_cells)} are geometry linked.")
+    
+    def synchronize_zoom_to_all_cells(self, zoom_level):
+        """Synchronizes the zoom level in the linked cells ."""
+        for cell in self.linked_cells:
+            current_zoom = cell.transform().m11()
+            if current_zoom != zoom_level:
+                cell.resetTransform()
+                zoom_factor = zoom_level / 1.0
+                cell.scale(zoom_factor, zoom_factor)
+
+    def synchronize_pan_to_all_cells(self, h_scroll, v_scroll):
+        """Synchronizes panning around in the linked cells."""
+        for cell in self.linked_cells:
+            cell.horizontalScrollBar().setValue(h_scroll)
+            cell.verticalScrollBar().setValue(v_scroll)
+    
+    def stop_geometry_linking(self):
+        """Stops geometry linking for the selected cells."""
+        linked_cells = self.get_checked_cells()
+        
+        if not linked_cells:
+            log.warn("No cells selected for geometry linking!.")
+            return
+
+        for cell in self.linked_cells:
+            cell.zoomChanged.disconnect(self.synchronize_zoom_to_all_cells) # disconnects cells from zoom signal
+            cell.panChanged.disconnect(self.synchronize_zoom_to_all_cells) # disconnects cells from pan signal
+        
+        print(f"Stopped geometry linking for {len(self.linked_cells)} cells.")
+        self.linked_cells = []
+        self.hide_checkboxes()
 
     def add_row(self):
         """Adds a new row of GridCell instances into the grid."""
@@ -252,6 +344,29 @@ class GridCell(ZoomableView):
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
+
+        self.checkbox = QCheckBox("Link", self)
+        self.checkbox.setVisible(False) # invisible by default
+        self.checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_checkbox_position()
+        
+    def set_visibility_checkbox(self, visible):
+        """Show or hide the checkbox."""
+        self.checkbox.setVisible(visible)
+        if visible:
+            self.update_checkbox_position()
+        
+    def update_checkbox_position(self):
+        if self.checkbox.isVisible():
+            checkbox_height = self.checkbox.size().height()
+        else:
+            checkbox_height = 0
+
+        padding = 10
+        x_pos = padding 
+        y_pos = self.height() - checkbox_height - padding 
+        self.checkbox.move(x_pos, y_pos)
+        self.checkbox.adjustSize()
 
     def add_row(self):
         """Trigger add_row method of the parent."""

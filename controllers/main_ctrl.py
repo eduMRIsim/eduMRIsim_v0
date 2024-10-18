@@ -341,6 +341,22 @@ class MainController:
         # Used to reconnect all cells to accept drops after rows/columns have been removed
         self.ui.gridViewingWindow.reconnect_all_signals(self.handle_dropped_cells)
 
+    def handle_show_checkboxes(self, checked):
+        if checked:
+            self.ui.gridViewingWindow.show_checkboxes()
+
+    def handle_hide_checkboxes(self, checked):
+        if checked:
+            self.ui.gridViewingWindow.hide_checkboxes()
+
+    def handle_start_geometryLinkingButtonClicked(self):
+        #pass
+        self.ui.gridViewingWindow.start_geometry_linking()
+
+    def handle_stop_geometryLinkingButtonClicked(self):
+        #pass
+        self.ui.gridViewingWindow.stop_geometry_linking()
+
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 

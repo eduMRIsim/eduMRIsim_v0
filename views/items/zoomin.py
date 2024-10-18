@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 
@@ -6,6 +6,9 @@ from utils.logger import log
 
 
 class ZoomableView(QGraphicsView):
+    zoomChanged = pyqtSignal(float)  # signals for zoom
+    panChanged = pyqtSignal(int, int) # signals for panning 
+
     def __init__(self):
         super().__init__()
         # QGraphicsScene is essentially a container that holds and manages the graphical items you want to display in your QGraphicsView. QGraphicsScene is a container and manager while QGraphicsView is responsible for actually displaying those items visually.
@@ -24,7 +27,8 @@ class ZoomableView(QGraphicsView):
         self.zooming_enabled = True
         self.max_zoom_out = 0.5
         self.max_zoom_in = 10
-        self.zoom_factor = None
+        #self.zoom_factor = None
+        self.zoom_factor = 1.0
 
         self.leveling_enabled = False
 
@@ -111,6 +115,7 @@ class ZoomableView(QGraphicsView):
 
                 if self.max_zoom_out <= new_zoom <= self.max_zoom_in:
                     self.scale(self.zoom_factor, self.zoom_factor)
+                    self.zoomChanged.emit(new_zoom)  # emit signal for the new zoom level
 
                 self.last_mouse_pos = current_pos
             # handle pan
@@ -120,14 +125,13 @@ class ZoomableView(QGraphicsView):
                 and self.last_mouse_pos is not None
             ):
                 delta = event.pos() - self.last_mouse_pos
+                h_pan = self.horizontalScrollBar().value() - delta.x()
+                v_pan = self.verticalScrollBar().value() - delta.y()
 
-                self.horizontalScrollBar().setValue(
-                    self.horizontalScrollBar().value() - delta.x()
-                )
-                self.verticalScrollBar().setValue(
-                    self.verticalScrollBar().value() - delta.y()
-                )
+                self.horizontalScrollBar().setValue(h_pan)
+                self.verticalScrollBar().setValue(v_pan)
 
+                self.panChanged.emit(h_pan, v_pan)
                 self.last_mouse_pos = event.pos()
 
         # handle measuring tool
