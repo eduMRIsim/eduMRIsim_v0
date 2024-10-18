@@ -42,6 +42,7 @@ class ReadyToScanAgainState(ExamState):
         context.startScanButton.setEnabled(True)
         context.stopScanButton.setEnabled(True)
         context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersExportButton.setEnabled(True)
         context.scanParametersResetButton.setEnabled(True)
         context.scanProgressBar.setValue(0)
         context.scannedImageFrame.setAcquiredSeries(None)
@@ -58,6 +59,7 @@ class ReadyToScanState(ExamState):
         context.startScanButton.setEnabled(True)
         context.stopScanButton.setEnabled(True)
         context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersExportButton.setEnabled(True)
         context.scanParametersResetButton.setEnabled(True)
 
 
@@ -74,6 +76,7 @@ class BeingModifiedState(ExamState):
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersCancelChangesButton.setEnabled(True)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(True)
         context.scanParametersSaveChangesButton.setEnabled(True)
 
@@ -91,6 +94,7 @@ class BeingScannedState(ExamState):
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersCancelChangesButton.setEnabled(False)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
 
@@ -101,6 +105,7 @@ class InvalidParametersState(ExamState):
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(True)
 
 
@@ -148,6 +153,7 @@ class IdleState(UI_MainWindowState):
         context.parameterFormLayout.clearForm()
         context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
         context.scanProgressBar.setValue(0)
         context.scannedImageFrame.setAcquiredSeries(None)
