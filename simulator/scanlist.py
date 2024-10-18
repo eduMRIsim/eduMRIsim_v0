@@ -575,7 +575,6 @@ class ScanItem:
         if index_to_replace is not None:
             scan_params_copy[index_to_replace] = scan_params
 
-        print("SET HERE PARAMS")
         self.scan_parameters = scan_params_copy
 
         if self.valid == True:
@@ -597,7 +596,6 @@ class ScanItem:
         """This whole function will need to be deleted or changed. For now I am pretending that the scan parameters are valid."""
         self.valid = True
         self.messages = {}
-        print("HERE SET PARAMS INIT")
         self.scan_parameters = scan_parameters
 
         if self.valid == True:
@@ -829,7 +827,6 @@ class ScanItem:
     def update(self, event):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
             # TODO: update only currently active stack index parameters
-            print("UPDATE HERE")
             changed_parameters = None
             for vol in self.scan_volumes:
                 if vol.stack_index == self.selected_stack_index:
