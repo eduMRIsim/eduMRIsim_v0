@@ -30,7 +30,7 @@ from utils.logger import log
 
 
 class gridViewingWindowLayout(QFrame):
-    gridUpdated = pyqtSignal() # signal to notify row/column removal
+    gridUpdated = pyqtSignal()  # signal to notify row/column removal
 
     def __init__(self):
         super().__init__()
@@ -53,12 +53,12 @@ class gridViewingWindowLayout(QFrame):
         self.setLayout(rightLayout)
 
     def connect_drop_signals(self, drop_handler):
-        """Connects all GridCell instances in the grid to accept drops. """
+        """Connects all GridCell instances in the grid to accept drops."""
         self.drop_handler = drop_handler
         self.reconnect_all_signals(drop_handler)
 
     def reconnect_all_signals(self, drop_handler):
-        """Reconnects all GridCell instances in the grid to accept drops. """
+        """Reconnects all GridCell instances in the grid to accept drops."""
         if self.drop_handler is None:
             log.error("Drop handler is not set.")
             return
@@ -73,7 +73,7 @@ class gridViewingWindowLayout(QFrame):
                 self.grid_cell.dropEventSignal.connect(drop_handler)
 
     def get_grid_cell(self, i: int, j: int) -> "GridCell":
-        """Retrieves an instance of the GridCell. """
+        """Retrieves an instance of the GridCell."""
         if i < len(self.grid_cells) and j < len(self.grid_cells[i]):
             return self.grid_cells[i][j]
         else:
@@ -153,7 +153,7 @@ class gridViewingWindowLayout(QFrame):
                 widget_to_remove.dropEventSignal.disconnect()
             except Exception as e:
                 print(f"Warning: Unable to disconnect dropEventSignal: {e}")
-            self.right_layout.removeWidget(widget_to_remove) 
+            self.right_layout.removeWidget(widget_to_remove)
             widget_to_remove.deleteLater()
 
         self.grid_cells.pop(row_index)
@@ -169,8 +169,8 @@ class gridViewingWindowLayout(QFrame):
         self.right_layout.update()
         self.update()
 
-        self.gridUpdated.emit() # signals that the grid needs to be reconnected
-    
+        self.gridUpdated.emit()  # signals that the grid needs to be reconnected
+
     def remove_col(self, col_index):
         """Removes the column of the cell you right-click on."""
 
@@ -189,8 +189,8 @@ class gridViewingWindowLayout(QFrame):
                 widget_to_remove.dropEventSignal.disconnect()
             except Exception as e:
                 print(f"Warning: Unable to disconnect dropEventSignal: {e}")
-            self.right_layout.removeWidget(widget_to_remove) 
-            widget_to_remove.deleteLater()  
+            self.right_layout.removeWidget(widget_to_remove)
+            widget_to_remove.deleteLater()
             self.grid_cells[i].pop(col_index)
 
         # rearrange cells in the grid
@@ -201,9 +201,9 @@ class gridViewingWindowLayout(QFrame):
                 widget.col = j
                 self.right_layout.addWidget(widget, i, j)
 
-        self.update() 
+        self.update()
 
-        self.gridUpdated.emit() # signals that the grid needs to be reconnected
+        self.gridUpdated.emit()  # signals that the grid needs to be reconnected
 
 
 class GridCell(ZoomableView):
@@ -288,7 +288,9 @@ class GridCell(ZoomableView):
         self.remove_row_action.triggered.connect(lambda: self.remove_row())
         self.remove_col_action.triggered.connect(lambda: self.remove_col())
 
-        self.add_rowcol_menu.exec(self.mapToGlobal(position)) #shows menu at the cursor position
+        self.add_rowcol_menu.exec(
+            self.mapToGlobal(position)
+        )  # shows menu at the cursor position
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized.

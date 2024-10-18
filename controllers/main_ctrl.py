@@ -149,7 +149,7 @@ class MainController:
         )
         # Signals for grid in viewing mode
         self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
-        self.ui.gridViewingWindow.gridUpdated.connect(self.handle_update_grid) 
+        self.ui.gridViewingWindow.gridUpdated.connect(self.handle_update_grid)
 
         # Signals from new examination dialog
         self.new_examination_dialog_ui.newExaminationCancelButton.clicked.connect(
