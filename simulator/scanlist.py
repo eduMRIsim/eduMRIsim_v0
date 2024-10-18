@@ -780,18 +780,16 @@ class ScanVolume:
         z_vector: float,
     ):
 
-        # Parameter validation
-        if x_vector == 0 or y_vector == 0 or z_vector == 0:
-            log.error("Scale vector cannot be zero")
-            raise ValueError("Scale vector cannot be zero")
-        print(x_vector, y_vector, z_vector)
         # Turn LPS to scan_volum
+        log.debug(x_vector, y_vector, z_vector)
         x_scale, y_scale, z_scale = self.LPS_coords_to_scan_volume_mm_coords((x_vector, y_vector, z_vector))
+        #x_scale, y_scale, z_scale = (x_vector, y_vector, z_vector)
         
+        log.debug(x_scale, y_scale, z_scale)
         # Scale the scan volume by the scale vector
-        self.extentX_mm *= x_scale
-        self.extentY_mm *= y_scale
-        self.slice_gap_mm *= z_scale
+        self.extentX_mm += x_scale
+        self.extentY_mm += y_scale
+        self.slice_gap_mm += z_scale
 
         self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
