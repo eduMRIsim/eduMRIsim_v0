@@ -152,7 +152,7 @@ class gridViewingWindowLayout(QFrame):
             try:
                 widget_to_remove.dropEventSignal.disconnect()
             except Exception as e:
-                print(f"Warning: Unable to disconnect dropEventSignal: {e}")
+                log.warn(f"Unable to disconnect dropEventSignal: {e}")
             self.right_layout.removeWidget(widget_to_remove) 
             widget_to_remove.deleteLater()
 
@@ -188,7 +188,7 @@ class gridViewingWindowLayout(QFrame):
             try:
                 widget_to_remove.dropEventSignal.disconnect()
             except Exception as e:
-                print(f"Warning: Unable to disconnect dropEventSignal: {e}")
+                log.warn(f"Unable to disconnect dropEventSignal: {e}")
             self.right_layout.removeWidget(widget_to_remove) 
             widget_to_remove.deleteLater()  
             self.grid_cells[i].pop(col_index)

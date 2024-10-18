@@ -455,9 +455,9 @@ class AcquiredSeriesViewer2D(ZoomableView):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
         if self.leveling_enabled:
-            print("Window-level mode enabled")
+            log.info("Window-level mode enabled")
         else:
-            print("Window-level mode disabled")
+            log.info("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
@@ -484,7 +484,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.get_scan_volume_for_stack_index(
                 self.selected_stack_indx
             ).clamp_to_scanner_dimensions()
-            print("UPDATE DISPLAY1")
             self._update_scan_volume_display(
                 self.get_stack_for_stack_id(self.selected_stack_indx)
             )
@@ -681,7 +680,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             stack = StackItem(self.pixmap_item, self, scan_vol.stack_index)
             stack.volume_display.set_scan_volume(scan_vol)
             self.stacks.append(stack)
-            print("STACK ADDED")
 
         inx = 0
         for stack in self.stacks:
@@ -752,7 +750,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             scan_item_volume = self.get_scan_volume_for_stack_index(
                 stack_item.stack_index
             )
-            print("SCAN VOLUME AP " + str(scan_item_volume.origin_LPS))
             (
                 intersection_volume_edges_in_pixmap_coords,
                 intersection_middle_edges_in_pixamp_coords,
@@ -869,7 +866,6 @@ class StackItem:
 
     # clear all the visual elements connected to this stack before removing this stack item
     def __del__(self):
-        print("REMOVED STACK ITEM")
         self.clear_objects()
 
     # show this scan volume in yellow as selected scan volume and hide slices and middle lines, make it movable
@@ -883,7 +879,6 @@ class StackItem:
 
     # unselect this scan volume so set it red and make non-movable
     def set_inactive_settings(self):
-        print("INACTIVE")
         self.activ_stack = False
         self.volume_display.set_color(Qt.GlobalColor.red)
         self.volume_display.set_movability(False)
@@ -901,7 +896,6 @@ class StackItem:
         self, volume_edges, middle_edges, slice_edges
     ):
         self.volume_display.setPolygon(QPolygonF())
-        print("UPDATE VOLUME EDGES " + str(volume_edges))
         self.series_viewer.sendTestSignal()
 
         self.volume_display.setPolygonFromPixmapCoords(volume_edges)

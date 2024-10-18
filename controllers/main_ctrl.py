@@ -331,7 +331,7 @@ class MainController:
             grid_cell.setAcquiredSeries(acquired_series)
             self.update_scanlistListWidget(self.scanner.scanlist)
         else:
-            print("This cell doesn't exist")
+            log.error("This cell doesn't exist")
 
     def connect_drop_signals(self):
         # Connect the drop event signals from the grid cells to the handle_dropped_cells method

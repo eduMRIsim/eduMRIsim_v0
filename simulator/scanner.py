@@ -257,7 +257,6 @@ class Scanner(QObject):
                 ele.scan_item._scan_parameters
                 for ele in self.examination.scanlist.scanlist_elements
             ]
-            print("SAVE SCAN PARAMS 1 " + str(scnalist_params))
             scanlist_data = [
                 ele.acquired_data for ele in self.examination.scanlist.scanlist_elements
             ]
