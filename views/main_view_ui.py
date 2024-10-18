@@ -272,7 +272,7 @@ class Ui_MainWindow(QMainWindow):
 
         self._scannedImageFrame = AcquiredSeriesViewer2D()
         self._scannedImageFrame.zooming_enabled = True
-        # TODO change back to true
+        self._scannedImageFrame.view_only_instance = True
         self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
         bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
 

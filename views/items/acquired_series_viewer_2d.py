@@ -168,6 +168,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
         self.only_display_image = False
+        self.view_only_instance = False
 
     def sendTestSignal(self):
         self.testSignal.emit(0)
@@ -236,8 +237,12 @@ class AcquiredSeriesViewer2D(ZoomableView):
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
+        # If this instance is only for displaying images, do not allow any interaction with the CustomPolygonItem
+        # instead, the events are passed to the ZoomableView to enable measurements and zooming mouse events etc.
+        if self.view_only_instance:
+            return super().eventFilter(source, event)
+
         if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
-            # print("HEREEE")
             super().eventFilter(source, event)
             return True
 
@@ -245,22 +250,17 @@ class AcquiredSeriesViewer2D(ZoomableView):
             # check if the stack is non
             if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
                 return RuntimeError("No stack found for selected stack index")
-            # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 and self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.is_rotating
             ):
-                # self.scan_volume_display.handle_scene_mouse_move(event)
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.handle_scene_mouse_move(event)
                 return True
-            # if (
-            #     self.scan_volume_display is not None
-            #     and self.scan_volume_display.is_being_scaled
-            # ):
+
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 is not None
@@ -268,27 +268,20 @@ class AcquiredSeriesViewer2D(ZoomableView):
                     self.selected_stack_indx
                 ).volume_display.is_being_scaled
             ):
-                # self.scan_volume_display.scale_handle_move_event_handler(event)
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.scale_handle_move_event_handler(event)
                 return True
         elif event.type() == QEvent.Type.GraphicsSceneMouseRelease:
-            # if self.scan_volume_display and self.scan_volume_display.is_rotating:
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 and self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.is_rotating
             ):
-                # self.scan_volume_display.handle_scene_mouse_release(event)
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.handle_scene_mouse_release(event)
-            # if (
-            #     self.scan_volume_display is not None
-            #     and self.scan_volume_display.is_being_scaled
-            # ):
             if (
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
                 is not None
@@ -296,7 +289,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
                     self.selected_stack_indx
                 ).volume_display.is_being_scaled
             ):
-                # self.scan_volume_display.scale_handle_release_event_handler()
                 self.get_stack_for_stack_id(
                     self.selected_stack_indx
                 ).volume_display.scale_handle_release_event_handler()

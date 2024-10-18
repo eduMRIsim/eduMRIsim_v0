@@ -346,7 +346,6 @@ class MainController:
 
     def handle_stack_action(self, act):
         if act["event"] == "ADD":
-            # print("HERE111111111")
             self.scanner.active_scan_item.add_stack()
             self.ui.scanPlanningWindow1.setScanVolumes(
                 self.scanner.active_scan_item.scan_volumes
