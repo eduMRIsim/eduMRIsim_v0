@@ -131,6 +131,16 @@ class App(QApplication):
         )
         linking_section.menu.aboutToShow.connect(lambda: self.main_controller.handle_show_checkboxes(True))
         
+        # Contrast linking
+        linking_section = menu_bar.add_section("Contrast Linking")
+        linking_section.add_mode_action_group() 
+        linking_section.add_mode_action(
+            "Start linking", lambda: self.main_controller.handle_start_contrastLinkingButtonClicked(), checked = False
+        )
+        linking_section.add_mode_action(
+            "Stop linking", lambda: self.main_controller.handle_stop_contrastLinkingButtonClicked(), checked = False
+        )
+        linking_section.menu.aboutToShow.connect(lambda: self.main_controller.handle_show_checkboxes(True))
 
     def test_action(self):
         pass

@@ -9,6 +9,7 @@ from PyQt6.QtGui import (
     QDropEvent,
     QPen,
     QAction,
+    QWheelEvent # scrolling
 )
 from PyQt6.QtWidgets import (
     QFrame,
@@ -20,7 +21,10 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QMenu,
-    QCheckBox
+    QCheckBox,
+    QLabel, # scan name
+    QPushButton, # scrolling
+    QGraphicsOpacityEffect # scrolling
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -91,6 +95,7 @@ class gridViewingWindowLayout(QFrame):
         """Hides checkboxes in all cells."""
         for row in self.grid_cells:
             for cell in row:
+                cell.checkbox.setChecked(False)
                 cell.set_visibility_checkbox(False) 
 
     def get_checked_cells(self):
@@ -107,19 +112,38 @@ class gridViewingWindowLayout(QFrame):
         return checked_cells
     
     def start_geometry_linking(self):
-        """Synchronizes zooming and panning for the checked cells. """
+        """Synchronizes zooming, panning and scrolling for the checked cells. """
         linked_cells = self.get_checked_cells()
-        self.linked_cells = [self.grid_cells[row][col] for row, col in linked_cells]
-
-        print(f"Geometry linking will be done for cells: {linked_cells}")
+        self.linked_cells = []
+        for i, j in linked_cells:
+            self.linked_cells.append(self.grid_cells[i][j])
+        
+        reference_scan_plane = None
+        for cell in self.linked_cells:
+            # check if the cells have scans
+            if cell.displayed_image is None:
+                print(f"Cell at ({cell.row}, {cell.col}) does not have an image. Cannot link.")
+                return
+            
+            # check if the cells have the same scan plane
+            if reference_scan_plane is None:
+                reference_scan_plane = cell.acquired_series.scan_plane
+            elif cell.acquired_series.scan_plane != reference_scan_plane:
+                print(f"Cells have different scan planes. Cannot link scans.")
+                return
+            
+            # TODO check if the cells have the same rotation
 
         if not linked_cells:
             log.warn("No cells selected for geometry linking!.")
             return
+        else:
+            print(f"Geometry linking will be done for cells: {linked_cells}")
 
+        # [i from the first tuple][j from the first tuple]
         reference_cell = self.grid_cells[linked_cells[0][0]][linked_cells[0][1]]
 
-        # zoom and pan in the cell the others need to copy
+        # zoom and pan in the reference cell
         reference_zoom_level = reference_cell.transform().m11()  # get zoom level
         reference_h_pan = reference_cell.horizontalScrollBar().value() # get horizontal pan
         reference_v_pan = reference_cell.verticalScrollBar().value() # get vertical pan
@@ -128,10 +152,14 @@ class gridViewingWindowLayout(QFrame):
             # connect to zoom and pan signals
             cell.zoomChanged.connect(self.synchronize_zoom_to_all_cells) 
             cell.panChanged.connect(self.synchronize_pan_to_all_cells) 
+            # TODO move scrolling in ZoomableView and add a signal for it
+            cell.scrollChanged.connect(self.synchronize_scroll_buttons)
+
             # apply the zoom level
             current_zoom = cell.transform().m11()
             if current_zoom != reference_zoom_level:
                 cell.resetTransform()
+                cell.updateLabelPosition() # do i need this
                 zoom_factor = reference_zoom_level / 1.0
                 cell.scale(zoom_factor, zoom_factor)
 
@@ -155,6 +183,18 @@ class gridViewingWindowLayout(QFrame):
         for cell in self.linked_cells:
             cell.horizontalScrollBar().setValue(h_scroll)
             cell.verticalScrollBar().setValue(v_scroll)
+
+    def synchronize_scroll_buttons(self, new_index):
+        """Synchronize the up and down button actions across all linked cells."""
+        for cell in self.linked_cells:
+            if cell.displayed_image_index != new_index:  # Only update if necessary
+                cell.displayed_image_index = new_index
+                cell.setDisplayedImage(
+                    cell.acquired_series.list_acquired_images[new_index],
+                    cell.acquired_series.scan_plane,
+                    cell.acquired_series.series_name
+                )
+                cell.update_buttons_visibility()
     
     def stop_geometry_linking(self):
         """Stops geometry linking for the selected cells."""
@@ -166,7 +206,14 @@ class gridViewingWindowLayout(QFrame):
 
         for cell in self.linked_cells:
             cell.zoomChanged.disconnect(self.synchronize_zoom_to_all_cells) # disconnects cells from zoom signal
-            cell.panChanged.disconnect(self.synchronize_zoom_to_all_cells) # disconnects cells from pan signal
+            cell.panChanged.disconnect(self.synchronize_pan_to_all_cells) # disconnects cells from pan signal
+            cell.scrollChanged.disconnect(self.synchronize_scroll_buttons)
+
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                self.grid_cell = self.grid_cells[i][j]
+                self.grid_cell.resetTransform()
+                #self.updateLabelPosition()
         
         print(f"Stopped geometry linking for {len(self.linked_cells)} cells.")
         self.linked_cells = []
@@ -300,7 +347,7 @@ class gridViewingWindowLayout(QFrame):
 
 class GridCell(ZoomableView):
     dropEventSignal = pyqtSignal(int, int, int)
-    rowRemoveSignal = pyqtSignal(int)  # signal for removed rows
+    scrollChanged = pyqtSignal(int) # signal for scrolling # TODO move this to ZoomableView
 
     def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
@@ -343,8 +390,53 @@ class GridCell(ZoomableView):
         self.text_item.setDefaultTextColor(QColor(255, 0, 0))
         self.scene.addItem(self.text_item)
 
+        # TODO move scrolling and scan name/label to ZoomableView
+        #  Display scan plane label
+        self.scan_plane_label = QLabel(self)
+        self.scan_plane_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.scan_plane_label.setStyleSheet("padding: 5px;")
+        self.scan_plane_label.resize(100, 100)
+        self.scan_plane_label.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents, True
+        )
+        self.updateLabelPosition()
+
+        # Display scan name
+        self.series_name_label = QLabel(self)
+        self.series_name_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.series_name_label.setStyleSheet(
+            "color: white; font-size: 14px; padding: 5px;"
+        )
+        self.series_name_label.resize(200, 50)
+        self.series_name_label.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents, True
+        )
+        self.series_name_label.move(0, 0)
+
+        # scrolling
+        self.scroll_amount = 0
+        self.up_button = QPushButton("▲")
+        self.down_button = QPushButton("▼")
+        self.up_button.setFixedSize(30, 30)
+        self.down_button.setFixedSize(30, 30)
+        self.up_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.down_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button_layout = QVBoxLayout()
+        button_layout.addWidget(self.up_button)
+        button_layout.addWidget(self.down_button)
+        button_layout.setSpacing(8)
+        button_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
+        )
+        self.up_button.clicked.connect(self.go_up)
+        self.down_button.clicked.connect(self.go_down)
+        self.setLayout(button_layout)
+        self.update_buttons_visibility()
+
+        # measurement tool 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
+        # checkboxes for geometry linking
         self.checkbox = QCheckBox("Link", self)
         self.checkbox.setVisible(False) # invisible by default
         self.checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -456,9 +548,12 @@ class GridCell(ZoomableView):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
+            self.update_buttons_visibility()
 
             self.setDisplayedImage(
                 self.acquired_series.list_acquired_images[self.displayed_image_index],
+                self.acquired_series.scan_plane,
+                self.acquired_series.series_name,
             )
         else:
             self.acquired_series = None
@@ -467,15 +562,115 @@ class GridCell(ZoomableView):
     def set_displayed_image(self, displayed_image):
         self.displayed_image = displayed_image
 
-    def setDisplayedImage(self, image):
+    def updateLabelPosition(self):
+        if self.scan_plane_label.pixmap() is not None:
+            label_width = self.scan_plane_label.pixmap().width()
+            label_height = self.scan_plane_label.pixmap().height()
+        else:
+            label_width = 0
+            label_height = 0
+
+        padding = 10
+        x_pos = self.width() - label_width - padding
+        y_pos = self.height() - label_height - padding
+        self.scan_plane_label.move(x_pos, y_pos)
+        self.scan_plane_label.adjustSize()
+        self.scan_plane_label.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+
+    def setDisplayedImage(self, image,  scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
             self.set_displayed_image(image)
+
+            # Determine the scan plane
+            icon_path = f"resources/icons/plane_orientation/{scan_plane.lower()}.svg"
+            pixmap = QPixmap(icon_path)
+            scaled_pixmap = pixmap.scaled(
+                100,
+                100,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self.scan_plane_label.setPixmap(scaled_pixmap)
+            self.scan_plane_label.resize(scaled_pixmap.width(), scaled_pixmap.height())
+
+            # Set the scan name
+            scan_number = self.displayed_image_index + 1
+            self.series_name_label.setText(f"{series_name} ({scan_number}) ")
+
+            self.updateLabelPosition()
         else:
             self.array = None
+            self.scan_plane_label.clear()
+            self.series_name_label.setText("")
 
         self._displayArray()
+
+    def update_buttons_visibility(self):
+        if self.acquired_series is None:
+            self.up_button.hide()
+            self.down_button.hide()
+        else:
+            self.up_button.show()
+            self.down_button.show()
+
+            # Reduce opacity of up button when on the first image
+            if self.displayed_image_index == 0:
+                self.up_button.setEnabled(False)
+                self.set_button_opacity(self.up_button, 0.8)
+            else:
+                self.up_button.setEnabled(True)
+                self.set_button_opacity(self.up_button, 1.0)
+
+            # Reduce opacity of down button when on the last image
+            if (
+                self.displayed_image_index
+                == len(self.acquired_series.list_acquired_images) - 1
+            ):
+                self.down_button.setEnabled(False)
+                self.set_button_opacity(self.down_button, 0.8)
+            else:
+                self.down_button.setEnabled(True)
+                self.set_button_opacity(self.down_button, 1.0)
+
+    def set_button_opacity(self, button, opacity_value):
+        opacity_effect = QGraphicsOpacityEffect(button)
+        opacity_effect.setOpacity(opacity_value)
+        button.setGraphicsEffect(opacity_effect)
+
+    # up button functionality
+    def go_up(self):
+        if self.acquired_series is None:
+            return
+        if self.displayed_image_index > 0:
+            self.displayed_image_index -= 1
+            self.setDisplayedImage(
+                self.acquired_series.list_acquired_images[self.displayed_image_index],
+                self.acquired_series.scan_plane,
+                self.acquired_series.series_name,
+            )
+        self.update_buttons_visibility()
+        self.scrollChanged.emit(self.displayed_image_index)
+
+    # down button functionality
+    def go_down(self):
+        if self.acquired_series is None:
+            return
+        if (
+            self.displayed_image_index
+            < len(self.acquired_series.list_acquired_images) - 1
+        ):
+            self.displayed_image_index += 1
+            self.setDisplayedImage(
+                self.acquired_series.list_acquired_images[self.displayed_image_index],
+                self.acquired_series.scan_plane,
+                self.acquired_series.series_name,
+            )
+        self.update_buttons_visibility()
+        self.scrollChanged.emit(self.displayed_image_index)
 
     def dropEvent(self, event: QDropEvent) -> None:
         source_widget = event.source()
