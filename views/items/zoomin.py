@@ -148,5 +148,6 @@ class ZoomableView(QGraphicsView):
                 self.window_width = max(1, self.window_width)
 
                 self._displayArray(self.window_center, self.window_width)
+                self.updateColorScale(self.window_center, self.window_width)
         else:
             super().mouseMoveEvent(event)
