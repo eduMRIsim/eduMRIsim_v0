@@ -17,6 +17,8 @@ import datetime
 
 class Scanner(QObject):
     scan_progress = pyqtSignal(float)
+    scan_started_signal = pyqtSignal()
+    scan_finished_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -41,6 +43,7 @@ class Scanner(QObject):
                 * round(scan_item.scan_parameters["FOVPE_mm"])
             )
             self.scan_elapsed_time = 0
+            self.scan_started_signal.emit()
 
             # Set up a QTimer to simulate scanning over time
             self.active_scan_item.status = ScanItemStatusEnum.BEING_SCANNED
@@ -50,21 +53,22 @@ class Scanner(QObject):
             self.scan_timer.start()
         else:
             self.scan_elapsed_time = self.scan_time
+            self.scan_finished_signal.emit()
 
     def _perform_scan_step(self):
         """Perform a step in the scanning process."""
         # Increment elapsed time
         self.scan_elapsed_time += self.scan_timer.interval()  # 100 ms
 
-        # Calculate progress, set progress to 1 if greater; for progress bar
-        progress = self.scan_elapsed_time / self.scan_time
-        if progress > 1.0:
-            progress = 1.0
+        # Calculate remaining time, set progress to 0 if lesser; for progress bar
+        remaining_time = self.scan_time - self.scan_elapsed_time
+        if remaining_time < 0:
+            remaining_time = 0
 
         # Emit progress signal
-        self.scan_progress.emit(progress)
+        self.scan_progress.emit(remaining_time)
 
-        if progress >= 1.0:
+        if remaining_time <= 0:
             # Stop the timer
             self.scan_timer.stop()
             self.scan_timer = None
@@ -72,6 +76,7 @@ class Scanner(QObject):
 
             # Perform the actual scanning
             acquired_series = self._perform_scan()
+            self.scan_finished_signal.emit()
             # Set scan item status to COMPLETE
             self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
 
