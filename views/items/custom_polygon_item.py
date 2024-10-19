@@ -344,7 +344,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         return (x0, y0, z0), direction
     
     def convert_vector_to_proportions_LPS(self, vector):
-        sum = abs(vector[0]) + abs(vector[1]) + abs(vector[2])
+        sum = np.linalg.norm(vector)
         return (abs(vector[0])/sum, abs(vector[1])/sum, abs(vector[2])/sum)
     
     def make_parallel(self, v, d):
@@ -386,14 +386,17 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         else:
             handle_position = ((corners[self.scaling_side][0] + corners[self.scaling_side + 1][0]) / 2, (corners[self.scaling_side][1] + corners[self.scaling_side + 1][1]) / 2)
 
+        # Convert positions to LPS coordinates
         log.debug(f"Handle position: {handle_position}")
         log.debug(f"Cursor position: {new_position.x()}, {new_position.y()}")    
         new_position_LPS = self.viewer.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((new_position.x(), new_position.y()))
         handle_position_LPS = self.viewer.displayed_image.image_geometry.pixmap_coords_to_LPS_coords((handle_position[0], handle_position[1]))
-        vector_from_handle_to_mouse = (new_position_LPS[0] - handle_position_LPS[0], new_position_LPS[1] - handle_position_LPS[1], new_position_LPS[2] - handle_position_LPS[2])
         log.debug(f"Cursor position LPS: {new_position_LPS}")
         log.debug(f"Handle position LPS: {handle_position_LPS}")
-        log.debug(f"Vector from handle to mouse: {vector_from_handle_to_mouse}")
+
+        # Check if the handle moved if not make is_being_scaled false
+        if handle_position_LPS == self.previous_handle_position:
+            self.is_being_scaled = False
 
         # Align new position vector with direction vector
         difference_vector = tuple(map(lambda i, k: i-k, new_position_LPS, handle_position_LPS))
@@ -401,7 +404,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         difference_vector_aligned = self.make_parallel(difference_vector, self.scaling_vector_components)
         log.debug(f"Difference vector aligned: {difference_vector_aligned}")
         
-        
+        # Assign the vector axis to seperate variables
         x_move = difference_vector_aligned[0]
         y_move = difference_vector_aligned[1]
         z_move = difference_vector_aligned[2]
@@ -417,7 +420,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         #print(f"X: {x_move}, Y: {y_move}, Z: {z_move}")
         # Limit maximum movement
-        limit = float('inf')
+        limit = 15#float('inf')
         if abs(x_move) > limit:
             x_move = limit if x_move > 0 else -limit
         if abs(y_move) > limit:
@@ -430,15 +433,16 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.previous_scale_handle_position = handle_position_LPS
 
         # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
-        self.notify_observers(
-            EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
-            x_vector=x_move,
-            y_vector=y_move,
-            z_vector=z_move
-        )
+        if self.is_being_scaled == True:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
+                x_vector=x_move,
+                y_vector=y_move,
+                z_vector=z_move
+            )
 
-        # Update the scale handle positions.
-        self.update_scale_handle_positions()
+            # Update the scale handle positions.
+            self.update_scale_handle_positions()
 
     def scale_handle_release_event_handler(self):
         """

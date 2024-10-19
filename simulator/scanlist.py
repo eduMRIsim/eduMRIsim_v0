@@ -779,17 +779,34 @@ class ScanVolume:
         y_vector: float,
         z_vector: float,
     ):
-
         # Turn LPS to scan_volum
         log.debug(x_vector, y_vector, z_vector)
         x_scale, y_scale, z_scale = self.LPS_coords_to_scan_volume_mm_coords((x_vector, y_vector, z_vector))
         #x_scale, y_scale, z_scale = (x_vector, y_vector, z_vector)
-        
         log.debug(x_scale, y_scale, z_scale)
+
+        # Validation so that negative movement cannot reduce the scan volume to lower than limit
+        limit_low = 50
+        if self.extentX_mm + x_scale <= limit_low:
+            x_scale = 0
+        if self.extentY_mm + y_scale <= limit_low:
+            y_scale = 0
+        if self.slice_gap_mm + z_scale <= limit_low:
+            z_scale = 0
+
+        # Validation so that enlargement cannot exceed scanner dimensions
+        limit_high = 240#max(self.scanner_AP_mm, self.scanner_RL_mm, self.scanner_FH_mm)
+        if self.extentX_mm + x_scale >= limit_high:
+            x_scale = 0
+        if self.extentY_mm + y_scale >= limit_high:
+            y_scale = 0
+        if self.slice_gap_mm * (self.N_slices - 1) + z_scale >= limit_high:
+            z_scale = 0
+
         # Scale the scan volume by the scale vector
         self.extentX_mm += x_scale
         self.extentY_mm += y_scale
-        self.slice_gap_mm += z_scale
+        self.slice_gap_mm += (z_scale / self.N_slices)
 
         self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
