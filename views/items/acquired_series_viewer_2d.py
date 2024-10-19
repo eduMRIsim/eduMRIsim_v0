@@ -457,33 +457,9 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.leveling_enabled = not self.leveling_enabled
         if self.leveling_enabled:
             log.info("Window-level mode enabled")
-            self.show_color_scale() 
             self.updateColorScale(self.window_center, self.window_width) 
         else:
             log.info("Window-level mode disabled")
-            self.hide_color_scale()
-            
-    def show_color_scale(self):
-        """Show the color scale and labels, and ensure they are redrawn."""
-        self.color_scale_label.show()
-        self.color_scale_label.update() 
-        self.min_value_label.show()
-        self.min_value_label.update()
-        self.mid_value_label.show()
-        self.mid_value_label.update()
-        self.max_value_label.show()
-        self.max_value_label.update()
-
-    def hide_color_scale(self):
-        """Hide the color scale and labels, and ensure they are redrawn."""
-        self.color_scale_label.hide()
-        self.color_scale_label.update() 
-        self.min_value_label.hide()
-        self.min_value_label.update()
-        self.mid_value_label.hide()
-        self.mid_value_label.update()
-        self.max_value_label.hide()
-        self.max_value_label.update()
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
