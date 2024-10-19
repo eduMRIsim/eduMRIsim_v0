@@ -1,5 +1,3 @@
-# from PyQt5.QtGui import QColor
-
 from utils.logger import log
 import math
 

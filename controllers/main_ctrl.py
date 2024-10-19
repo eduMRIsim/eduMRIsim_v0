@@ -380,6 +380,19 @@ class MainController:
             self.ui.update_UI()
             # handle drops
             self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
+ 
+    def handle_importScanItemButton_clicked(self):
+        path = self.export_scanitem_dialog.open_file_dialog(save=False)
+
+        # get filename from path
+        filename = path.split("/")[-1].split(".")[0]
+
+        with open(path, 'r') as f:
+            scan_parameters = json.load(f)
+
+        self.scanner.scanlist.add_scanlist_element(filename, scan_parameters[0])
+
+        log.info(f"ScanItem {filename} imported")
 
     def handle_importScanItemButton_clicked(self):
         path = self.export_scanitem_dialog.open_file_dialog(save=False)
