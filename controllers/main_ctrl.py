@@ -11,6 +11,7 @@ from events import EventEnum
 from simulator.load import load_json, load_model_data
 from simulator.model import Model
 from simulator.scanlist import (
+    ScanItem,
     ScanItemStatusEnum,
     AcquiredImage,
     AcquiredSeries,
@@ -69,9 +70,7 @@ class MainController:
         self.ui.parameterFormLayout.formActivatedSignal.connect(
             self.handle_parameterFormLayout_activated
         )
-        self.ui.parameterFormLayout.stackSignal.connect(
-            self.handle_stack_action
-        )
+        self.ui.stackParameterFormLayout.stackSignal.connect(self.handleStackAction)
         self.ui.scanParametersCancelChangesButton.clicked.connect(
             self.handle_scanParametersCancelChangesButton_clicked
         )
@@ -92,8 +91,11 @@ class MainController:
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
         )
-        self.ui.scanPlanningWindow1.testSignal.connect(self.testWindow1Signal)
-        self.ui.scanPlanningWindow2.testSignal.connect(self.testWindow2Signal)
+
+        # change stack event from scan planning window
+        self.ui.scanPlanningWindow1.stackSignal.connect(self.handleStackActionFromWindow)
+        self.ui.scanPlanningWindow2.stackSignal.connect(self.handleStackActionFromWindow)
+        self.ui.scanPlanningWindow3.stackSignal.connect(self.handleStackActionFromWindow)
 
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
@@ -215,13 +217,49 @@ class MainController:
             scan_parameters = self.ui.examCardListView.model().get_data(index)
             self.scanner.scanlist.add_scanlist_element(name, scan_parameters)
 
-    def testWindow1Signal(self, n):
-        # print("window 1 signal")
-        pass
+    def handleStackActionFromWindow(self, stack_index):
+        self.scanner.active_scan_item.selected_stack_index = stack_index
+        # TODO: call change stack function under acquired series viewer that would set active states of polygons and update them
 
-    def testWindow2Signal(self, n):
-        # print("window 2 signal")
-        pass
+    # implement event handler to catch stack change event from stack parameters tab, then change stack under acquiredseries viewer and update scan parameters
+    def handleStackAction(self, act):
+        if act["event"] == EventEnum.STACK_CHANGED:
+            new_stack_index = act["stack_index"]
+            self.scanner.active_scan_item.change_active_stack(new_stack_index)
+            changed_stack_index = self.scanner.active_scan_item.selected_stack_index
+            self.ui.scanPlanningWindow1.change_stack(changed_stack_index)
+            self.ui.scanPlanningWindow2.change_stack(changed_stack_index)
+            self.ui.scanPlanningWindow3.change_stack(changed_stack_index)
+            self.populate_parameterFormLayout(self.scanner.active_scan_item)
+        elif act["event"] == EventEnum.ADD_STACK:
+            self.scanner.active_scan_item.add_stack()
+            self.ui.scanPlanningWindow1.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow2.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+            self.ui.scanPlanningWindow3.setScanVolumes(
+                self.scanner.active_scan_item.scan_volumes
+            )
+        elif act["event"] == EventEnum.DELETE_STACK:
+            # extra guard to only allow deleting stack if there are more than 1 stacks in the current scan item
+            if self.scanner.active_scan_item.get_number_of_stacks() == 1:
+                return
+            delete_stack_index = self.scanner.active_scan_item.selected_stack_index
+            # delete stack in scan item
+            self.scanner.active_scan_item.delete_stack(delete_stack_index)
+            # delete stacks under scan planning windows
+            self.ui.scanPlanningWindow1.delete_stack(delete_stack_index)
+            self.ui.scanPlanningWindow2.delete_stack(delete_stack_index)
+            self.ui.scanPlanningWindow3.delete_stack(delete_stack_index)
+            # update stack parameters ui
+            index_position = self.scanner.active_scan_item.get_order_position_of_active_stack()
+            self.ui.stackParameterFormLayout.delete_stack_event(index_position, len(self.scanner.active_scan_item.scan_parameters))
+            # change active stacks in scan planning windows to other stack
+            self.ui.scanPlanningWindow1.change_stack(self.scanner.active_scan_item.selected_stack_index)
+            self.ui.scanPlanningWindow2.change_stack(self.scanner.active_scan_item.selected_stack_index)
+            self.ui.scanPlanningWindow3.change_stack(self.scanner.active_scan_item.selected_stack_index)
 
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()
@@ -288,10 +326,17 @@ class MainController:
         index = self.ui.scanlistListWidget.row(item)
         self.scanner.scanlist.active_idx = index
 
-    def populate_parameterFormLayout(self, scan_item):
+    def populate_parameterFormLayout(self, scan_item: ScanItem):
         # self.ui.parameterFormLayout.set_parameters(scan_item.scan_parameters)
         active_params = scan_item.get_current_active_parameters()
         self.ui.parameterFormLayout.set_parameters(active_params)
+
+    def populate_stackFormLayout(self):
+        stacks_params = {
+            "nr_of_stacks": len(self.scanner.active_scan_item.scan_parameters), 
+            "selected_stack_index": 0
+        }
+        self.ui.stackParameterFormLayout.set_stacks_params(stacks_params)
 
     def handle_viewModelButton_clicked(self):
         rightlayout = self.ui.layout
@@ -337,20 +382,6 @@ class MainController:
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
-
-    def handle_stack_action(self, act):
-        if act["event"] == "ADD":
-            # print("HERE111111111")
-            self.scanner.active_scan_item.add_stack()
-            self.ui.scanPlanningWindow1.setScanVolumes(
-                self.scanner.active_scan_item.scan_volumes
-            )
-            self.ui.scanPlanningWindow2.setScanVolumes(
-                self.scanner.active_scan_item.scan_volumes
-            )
-            self.ui.scanPlanningWindow3.setScanVolumes(
-                self.scanner.active_scan_item.scan_volumes
-            )
 
     def handle_scanParametersCancelChangesButton_clicked(self):
         self.scanner.active_scan_item.cancel_changes()
@@ -582,7 +613,11 @@ class MainController:
             )
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
             self.populate_parameterFormLayout(self.scanner.active_scan_item)
+            self.populate_stackFormLayout()
             self.scanner.active_scan_item.add_observer(self)
+            self.ui.scanPlanningWindow1.selected_stack_indx = 0
+            self.ui.scanPlanningWindow2.selected_stack_indx = 0
+            self.ui.scanPlanningWindow3.selected_stack_indx = 0
 
             # Set scan volume on planning windows only if the active scan item is not completed
             # TODO: change over to active_scan_item.scan_volumes

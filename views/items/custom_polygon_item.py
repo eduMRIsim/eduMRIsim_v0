@@ -553,7 +553,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.update_scale_handle_positions()
 
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
-        print(" SET POSITION FROM COORDINATES " + str(polygon_in_pixmap_coords))
         polygon_in_polygon_coords = QPolygonF()
         for pt in polygon_in_pixmap_coords:
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))

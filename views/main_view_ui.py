@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from controllers.settings_mgr import SettingsManager
+from simulator.scanner import Scanner
 from utils.logger import log
 
 from views.items.acquired_series_viewer_2d import (
@@ -62,7 +63,7 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralWidget)
         self.setWindowTitle("eduMRIsim")
 
-        self.scanner = scanner
+        self.scanner: Scanner = scanner
 
         # stacked layout for the right side
         self._stackedLayout = QStackedLayout()
@@ -152,6 +153,10 @@ class Ui_MainWindow(QMainWindow):
     @property
     def parameterFormLayout(self):
         return self._scanParametersWidget.parameterFormLayout
+    
+    @property
+    def stackParameterFormLayout(self):
+        return self._scanParametersWidget.stackParametersFormLayout
 
     @property
     def scanParametersSaveChangesButton(self):
@@ -297,6 +302,9 @@ class Ui_MainWindow(QMainWindow):
         settings.setValue(
             "_parameterFormLayout_params", self.parameterFormLayout.save_state()
         )
+        settings.setValue(
+            "_stackParameterFormLayout_params", self.stackParameterFormLayout.get_stacks_params()
+        )
 
         # UI labels
         settings.setValue("examinationNameLabel", self.examinationNameLabel.text())
@@ -332,6 +340,11 @@ class Ui_MainWindow(QMainWindow):
         self.parameterFormLayout.set_parameters(
             settings.value("_parameterFormLayout_params", type=dict)
         )
+        self.stackParameterFormLayout.set_stacks_params(
+            {"nr_of_stacks": self.scanner.active_scan_item.get_number_of_stacks(), "selected_stack_index": 0}
+            # can't restore stack parameters option values from settings as settings don't restore the previously selected scan item
+            # settings.value("_stackParameterFormLayout_params", type=dict)
+        )
 
         # UI labels
         self.examinationNameLabel.setText(
@@ -344,13 +357,13 @@ class Ui_MainWindow(QMainWindow):
 
         # AcquiredSeries widgets
         self.scanPlanningWindow1.setAcquiredSeries(
-            acquired_series=settings.value("acquiredSeries1")
+            acquired_series=settings.value("acquiredSeries1"), completed_scan=True
         )
         self.scanPlanningWindow2.setAcquiredSeries(
-            acquired_series=settings.value("acquiredSeries2")
+            acquired_series=settings.value("acquiredSeries2"), completed_scan=True
         )
         self.scanPlanningWindow3.setAcquiredSeries(
-            acquired_series=settings.value("acquiredSeries3")
+            acquired_series=settings.value("acquiredSeries3"), completed_scan=True
         )
         self.scanPlanningWindow1.displayed_image_index = settings.value(
             "acquiredSeriesIDX1", type=int

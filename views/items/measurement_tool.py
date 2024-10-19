@@ -1,10 +1,10 @@
-from PyQt5.QtGui import QColor
+# from PyQt5.QtGui import QColor
 
 from utils.logger import log
 import math
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QBrush, QPen
+from PyQt6.QtGui import QBrush, QPen, QColor
 from PyQt6.QtWidgets import QGraphicsEllipseItem
 
 

@@ -9,6 +9,7 @@ from simulator.scanlist import (
     AcquiredSeries,
     AcquiredImage,
     ImageGeometry,
+    ScanItem,
     ScanItemStatusEnum,
 )
 
@@ -85,35 +86,38 @@ class Scanner(QObject):
         # scan_plane = scan_item.scan_parameters["ScanPlane"]
         scan_plane = active_params["ScanPlane"]
 
-        signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(
-            # scan_item.scan_parameters, self.model
-            active_params, self.model
-        )
         list_acquired_images = []
-        # n_slices = int(scan_item.scan_parameters["NSlices"])
-        n_slices = int(active_params["NSlices"])
-        for i in range(n_slices):
-            # For each slice, create an acquired image
-            # Step 1: create image geometry of slice
-            # image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
-            scan_vol = scan_item.get_current_active_scan_volume()
-            image_geometry = scan_vol.get_image_geometry_of_slice(i)
-            # Step 2: get image data of slice
-            image_data = self._get_image_data_from_signal_array(
-                image_geometry, self.model, signal_array
+        for parms in scan_item.scan_parameters:
+            signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(
+                # scan_item.scan_parameters, self.model
+                parms, self.model
             )
+            # n_slices = int(scan_item.scan_parameters["NSlices"])
+            n_slices = int(parms["NSlices"])
+            stack_index = parms["StackIndex"]
+            for i in range(n_slices):
+                # For each slice, create an acquired image
+                # Step 1: create image geometry of slice
+                # image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
+                scan_vol = scan_item.find_scan_volume_with_stack_index(stack_index)
+                image_geometry = scan_vol.get_image_geometry_of_slice(i)
+                # Step 2: get image data of slice
+                image_data = self._get_image_data_from_signal_array(
+                    image_geometry, self.model, signal_array
+                )
 
-            acquisition_and_content_date = datetime.datetime.now().strftime("%Y%m%d")
-            acquisition_and_content_time = datetime.datetime.now().strftime("%H%M%S.%f")
+                acquisition_and_content_date = datetime.datetime.now().strftime("%Y%m%d")
+                acquisition_and_content_time = datetime.datetime.now().strftime("%H%M%S.%f")
 
-            # Step 3: create acquired image
-            acquired_image = AcquiredImage(
-                image_data,
-                image_geometry,
-                acquisition_and_content_date,
-                acquisition_and_content_time,
-            )
-            list_acquired_images.append(acquired_image)
+                # Step 3: create acquired image
+                acquired_image = AcquiredImage(
+                    image_data,
+                    image_geometry,
+                    acquisition_and_content_date,
+                    acquisition_and_content_time,
+                    stack_index
+                )
+                list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
         acquired_series = AcquiredSeries(
             series_name, scan_plane, list_acquired_images, series_date, series_time
@@ -225,7 +229,7 @@ class Scanner(QObject):
             return None
 
     @property
-    def active_scan_item(self):
+    def active_scan_item(self) -> ScanItem:
         try:
             return self.examination.scanlist.active_scan_item
         except AttributeError:
@@ -249,7 +253,6 @@ class Scanner(QObject):
                 ele.scan_item._scan_parameters
                 for ele in self.examination.scanlist.scanlist_elements
             ]
-            print("SAVE SCAN PARAMS 1 " + str(scnalist_params))
             scanlist_data = [
                 ele.acquired_data for ele in self.examination.scanlist.scanlist_elements
             ]
