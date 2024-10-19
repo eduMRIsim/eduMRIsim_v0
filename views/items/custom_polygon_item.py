@@ -82,9 +82,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.scene_center = QPointF(0.0, 0.0)
         self.previous_scale_handle_position = (0.0, 0.0)
 
-        self.on_x_axis = False
-        self.on_y_axis = False
-
         self.scaling_vector_components = (1.0, 1.0, 1.0)
         self.scaling_side = None
 
@@ -455,8 +452,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         """
 
         self.is_being_scaled = False
-        self.on_x_axis = False
-        self.on_y_axis = False
 
         self.scaling_vector_components = (1.0, 1.0, 1.0)
         self.scaling_side = None
