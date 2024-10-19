@@ -394,10 +394,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         log.debug(f"Cursor position LPS: {new_position_LPS}")
         log.debug(f"Handle position LPS: {handle_position_LPS}")
 
-        # Check if the handle moved if not make is_being_scaled false
-        if handle_position_LPS == self.previous_handle_position:
-            self.is_being_scaled = False
-
         # Align new position vector with direction vector
         difference_vector = tuple(map(lambda i, k: i-k, new_position_LPS, handle_position_LPS))
         log.debug(f"Difference vector: {difference_vector}")
@@ -432,17 +428,25 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the previous handle position equal to the new handle position.
         self.previous_scale_handle_position = handle_position_LPS
 
-        # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
-        if self.is_being_scaled == True:
-            self.notify_observers(
-                EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
-                x_vector=x_move,
-                y_vector=y_move,
-                z_vector=z_move
-            )
+        # Save sizes for check
+        previous_sizes = (self.scan_volume.extentX_mm, self.scan_volume.extentY_mm, self.scan_volume.slice_gap_mm)
 
-            # Update the scale handle positions.
-            self.update_scale_handle_positions()
+        # Let the other windows know that the scan volume display was scaled, passing in the calculated scale factors.
+        self.notify_observers(
+            EventEnum.SCAN_VOLUME_DISPLAY_SCALED,
+            x_vector=x_move,
+            y_vector=y_move,
+            z_vector=z_move
+        )
+
+        # Update the scale handle positions.
+        self.update_scale_handle_positions()
+
+        # Check if size has been updated
+        if previous_sizes == (self.scan_volume.extentX_mm, self.scan_volume.extentY_mm, self.scan_volume.slice_gap_mm):
+            self.is_being_scaled = False
+        
+        print(self.is_being_scaled)
 
     def scale_handle_release_event_handler(self):
         """

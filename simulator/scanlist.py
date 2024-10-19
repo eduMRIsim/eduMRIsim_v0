@@ -782,7 +782,6 @@ class ScanVolume:
         # Turn LPS to scan_volum
         log.debug(x_vector, y_vector, z_vector)
         x_scale, y_scale, z_scale = self.LPS_coords_to_scan_volume_mm_coords((x_vector, y_vector, z_vector))
-        #x_scale, y_scale, z_scale = (x_vector, y_vector, z_vector)
         log.debug(x_scale, y_scale, z_scale)
 
         # Validation so that negative movement cannot reduce the scan volume to lower than limit
@@ -791,7 +790,7 @@ class ScanVolume:
             x_scale = 0
         if self.extentY_mm + y_scale <= limit_low:
             y_scale = 0
-        if self.slice_gap_mm + z_scale <= limit_low:
+        if self.slice_gap_mm * (self.N_slices - 1) + z_scale <= limit_low:
             z_scale = 0
 
         # Validation so that enlargement cannot exceed scanner dimensions
