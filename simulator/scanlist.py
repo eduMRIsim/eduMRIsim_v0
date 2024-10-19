@@ -21,6 +21,9 @@ class ImageGeometry:
         self.resY_mm = geometry_parameters["resY_mm"]
         self.origin_LPS = geometry_parameters["origin_LPS"]
         self.plane = geometry_parameters["plane"]
+        self.RLAngle_deg = geometry_parameters["RLAngle_deg"]
+        self.APAngle_deg = geometry_parameters["APAngle_deg"]
+        self.FHAngle_deg = geometry_parameters["FHAngle_deg"]
 
     @property
     def axisZ_LPS(self):
@@ -45,6 +48,9 @@ class ImageGeometry:
             "resY_mm": self.resY_mm,
             "origin_LPS": self.origin_LPS,
             "plane": self.plane,
+            "RLAngle_deg": self.RLAngle_deg,
+            "APAngle_deg": self.APAngle_deg,
+            "FHAngle_deg": self.FHAngle_deg,
         }
 
     def image_mm_coords_to_pixmap_coords(self, image_mm_coords: tuple) -> tuple:
@@ -798,6 +804,9 @@ class ScanVolume:
         geometry_parameters = self._get_geometry_parameters()
         geometry_parameters["origin_LPS"] = origin_slice_in_LPS_coords
         geometry_parameters["plane"] = self.scanPlane
+        geometry_parameters["RLAngle_deg"] = np.rad2deg(self.RLAngle_rad)
+        geometry_parameters["APAngle_deg"] = np.rad2deg(self.APAngle_rad)
+        geometry_parameters["FHAngle_deg"] = np.rad2deg(self.FHAngle_rad)
         return ImageGeometry(geometry_parameters)
 
     def get_rotations(self) -> dict:
