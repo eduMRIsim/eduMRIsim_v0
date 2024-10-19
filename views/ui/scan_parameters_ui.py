@@ -39,6 +39,10 @@ class ScanParametersWidget(QWidget):
         return self._scanParametersSaveChangesButton
 
     @property
+    def scanParametersExportButton(self):
+        return self._scanParametersExportButton
+
+    @property
     def scanParametersCancelChangesButton(self):
         return self._scanParametersCancelChangesButton
 
@@ -53,9 +57,11 @@ class ScanParametersWidget(QWidget):
     def _createButtons(self):
         buttonsLayout = QHBoxLayout()
         self._scanParametersSaveChangesButton = PrimaryActionButton("Save")
+        self._scanParametersExportButton = SecondaryActionButton("Export")
         self._scanParametersCancelChangesButton = SecondaryActionButton("Cancel")
         self._scanParametersResetButton = DestructiveActionButton("Reset")
         buttonsLayout.addWidget(self._scanParametersSaveChangesButton, 1)
+        buttonsLayout.addWidget(self._scanParametersExportButton, 1)
         buttonsLayout.addWidget(self._scanParametersCancelChangesButton, 1)
         buttonsLayout.addSpacerItem(
             QSpacerItem(
@@ -178,12 +184,13 @@ class ParameterFormLayout(QVBoxLayout):
 
             # Store the editor widget in the dictionary for later access.
             self.editors[parameter_key] = editor
-        
+
         add_stack_button = PrimaryActionButton("Add stack")
-        add_stack_button.clicked.connect(lambda: self.handle_add_new_stack_btn_clicked())
+        add_stack_button.clicked.connect(
+            lambda: self.handle_add_new_stack_btn_clicked()
+        )
         self.addWidget(add_stack_button)
 
-    
     def handle_add_new_stack_btn_clicked(self):
         # print("ADD PRESS")
         self.stackSignal.emit({"event": "ADD"})

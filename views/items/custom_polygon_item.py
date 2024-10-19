@@ -91,6 +91,12 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the initial position of the scale handles.
         self.update_scale_handle_positions()
 
+        # Create and set the (initial) position of the middle point of the scan volume
+        self.middle_point = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
+        self.middle_point.setBrush(Qt.GlobalColor.yellow)
+        self.middle_point.setVisible(False)
+        self.update_middle_point_position()
+
     def set_movability(self, isMovable: bool):
         if isMovable:
             # print("make movable")
@@ -99,7 +105,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         else:
             self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
             self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
-    
+
     def set_color(self, color):
         self.setPen(color)
 
@@ -148,7 +154,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.rotation_handles[i]
             handle_pos_local = centroid_local + offset
             handle.setPos(handle_pos_local)
-            if (self.is_active_stack):
+            if self.is_active_stack:
                 handle.setVisible(True)
 
         # Hide any extra handles
@@ -207,12 +213,31 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.scale_handles[i]
             handle_pos_local = local_center + offset
             handle.setPos(handle_pos_local)
-            if (self.is_active_stack):
+            if self.is_active_stack:
                 handle.setVisible(True)
 
         # Hide the remaining handles.
         for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
             self.scale_handles[i].setVisible(False)
+
+    def update_middle_point_position(self) -> None:
+        """
+        Update the position of the middle point of the polygon.
+
+        This method calculates the centroid of the polygon and sets the middle point
+        to this position. If the polygon is not visible or is empty, the middle point
+        is hidden.
+        """
+        polygon = self.polygon()
+        if not self.isVisible() or polygon.isEmpty():
+            self.middle_point.setVisible(False)
+            return
+        new_middle_point = QPointF(
+            sum(point.x() for point in polygon) / len(polygon),
+            sum(point.y() for point in polygon) / len(polygon),
+        )
+        self.middle_point.setPos(new_middle_point)
+        self.middle_point.setVisible(True)
 
     def scale_handle_press_event_handler(self, event: QGraphicsSceneMouseEvent, handle):
         """
@@ -469,7 +494,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.viewer.viewport().update()
         # QApplication.processEvents()
 
-
         # Update the scale handle positions.
         self.update_scale_handle_positions()
 
@@ -508,7 +532,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         n_points = len(polygon_in_polygon_coords)
-        # If the polygon is empty, clear the rotation and scaling handles, and exit early. This check prevents a crash
+        # If the polygon is empty, clear the rotation and scaling handles, as well as the middle point, and exit early.
+        # This check prevents a crash.
         if n_points == 0:
             super().setPolygon(polygon_in_polygon_coords)
             for handle in self.rotation_handles:
@@ -517,6 +542,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             for handle in self.scale_handles:
                 handle.setVisible(False)
             self.scale_handle_offsets = []
+            self.middle_point.setVisible(False)
             return
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
@@ -552,8 +578,10 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         self.update_scale_handle_positions()
 
+        # Update the middle point position
+        self.update_middle_point_position()
+
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
-        print(" SET POSITION FROM COORDINATES " + str(polygon_in_pixmap_coords))
         polygon_in_polygon_coords = QPolygonF()
         for pt in polygon_in_pixmap_coords:
             pt_in_polygon_coords = self.mapFromParent(QPointF(pt[0], pt[1]))
