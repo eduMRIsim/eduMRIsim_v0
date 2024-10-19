@@ -11,7 +11,7 @@ from PyQt6.QtGui import (
     QPolygonF,
     QDragEnterEvent,
     QDragMoveEvent,
-    QDropEvent
+    QDropEvent,
 )
 from PyQt6.QtWidgets import (
     QGraphicsScene,
@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QGraphicsOpacityEffect,
-    QApplication
+    QApplication,
 )
 
 from typing import List, Optional
@@ -162,13 +162,13 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.scene.addItem(self.line_item)
 
         self.text_item = QGraphicsTextItem()
-        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.text_item.setDefaultTextColor(QColor(255, 165, 0))
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
-
         self.only_display_image = False
+        self.view_only_instance = False
 
     # start zoom when pressed
     # def mousePressEvent(self, event):
@@ -305,6 +305,11 @@ class AcquiredSeriesViewer2D(ZoomableView):
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
     # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
+        # If this instance is only for displaying images, do not allow any interaction with the CustomPolygonItem
+        # instead, the events are passed to the ZoomableView to enable measurements and zooming mouse events etc.
+        if self.view_only_instance:
+            return super().eventFilter(source, event)
+
         # if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
         #     # print("HEREEE")
         #     super().eventFilter(source, event)
@@ -319,16 +324,17 @@ class AcquiredSeriesViewer2D(ZoomableView):
                 # self.scan_volume_display.handle_scene_mouse_move(event)
                 self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.handle_scene_mouse_move(event)
                 return True
-            # if (
-            #     self.scan_volume_display is not None
-            #     and self.scan_volume_display.is_being_scaled
-            # ):
+
             if (
-                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display is not None
-                and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_being_scaled
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                is not None
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_being_scaled
             ):
-                # self.scan_volume_display.scale_handle_move_event_handler(event)
-                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.scale_handle_move_event_handler(event)
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.scale_handle_move_event_handler(event)
                 return True
         elif event.type() == QEvent.Type.GraphicsSceneMouseRelease and self.get_stack_for_stack_id(self.selected_stack_indx) is not None:
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
@@ -340,11 +346,15 @@ class AcquiredSeriesViewer2D(ZoomableView):
             #     and self.scan_volume_display.is_being_scaled
             # ):
             if (
-                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display is not None
-                and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_being_scaled
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                is not None
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_being_scaled
             ):
-                # self.scan_volume_display.scale_handle_release_event_handler()
-                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.scale_handle_release_event_handler()
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.scale_handle_release_event_handler()
                 return True
         return super().eventFilter(source, event)
 
@@ -387,53 +397,51 @@ class AcquiredSeriesViewer2D(ZoomableView):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
-
     def _displayArray(self, window_center=None, window_width=None):
-      if self.array is None:
+        if self.array is None:
             return
-      
-      if self.array is not None:
-        array_norm = (self.array[:, :] - np.min(self.array)) / (
-            np.max(self.array) - np.min(self.array)
-        )
-        array_8bit = (array_norm * 255).astype(np.uint8)
 
-        if window_center is None or window_width is None:
-            window_center = np.mean(self.array)
-            window_width = np.max(self.array) - np.min(self.array)
+        if self.array is not None:
+            array_norm = (self.array[:, :] - np.min(self.array)) / (
+                np.max(self.array) - np.min(self.array)
+            )
+            array_8bit = (array_norm * 255).astype(np.uint8)
 
-        min_window = window_center - (window_width / 2)
-        max_window = window_center + (window_width / 2)
+            if window_center is None or window_width is None:
+                window_center = np.mean(self.array)
+                window_width = np.max(self.array) - np.min(self.array)
 
-        array_clamped = np.clip(self.array, min_window, max_window)
-        array_norm = (array_clamped - min_window) / (max_window - min_window)
-        array_8bit = (array_norm * 255).astype(np.uint8)
+            min_window = window_center - (window_width / 2)
+            max_window = window_center + (window_width / 2)
 
-        # Create QImage and display
-        image = np.ascontiguousarray(array_8bit)
-        height, width = image.shape
-        qimage = QImage(
-            image.data, width, height, width, QImage.Format.Format_Grayscale8
-        )
+            array_clamped = np.clip(self.array, min_window, max_window)
+            array_norm = (array_clamped - min_window) / (max_window - min_window)
+            array_8bit = (array_norm * 255).astype(np.uint8)
 
-        # Create a QPixmap - a pixmap which can be displayed in a GUI
-        pixmap = QPixmap.fromImage(qimage)
-        self.pixmap_item.setPixmap(pixmap)
+            # Create QImage and display
+            image = np.ascontiguousarray(array_8bit)
+            height, width = image.shape
+            qimage = QImage(
+                image.data, width, height, width, QImage.Format.Format_Grayscale8
+            )
 
-        self.pixmap_item.setPos(0, 0)
-        self.scene.setSceneRect(0, 0, width, height)
-        self.resetTransform()
-        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
-        self.centerOn(self.pixmap_item)
+            # Create a QPixmap - a pixmap which can be displayed in a GUI
+            pixmap = QPixmap.fromImage(qimage)
+            self.pixmap_item.setPixmap(pixmap)
 
+            self.pixmap_item.setPos(0, 0)
+            self.scene.setSceneRect(0, 0, width, height)
+            self.resetTransform()
+            self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+            self.centerOn(self.pixmap_item)
 
     def toggle_window_level_mode(self):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
         if self.leveling_enabled:
-            print("Window-level mode enabled")
+            log.info("Window-level mode enabled")
         else:
-            print("Window-level mode disabled")
+            log.info("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
@@ -468,11 +476,17 @@ class AcquiredSeriesViewer2D(ZoomableView):
             #     kwargs[Keys.SCAN_VOLUME_DIRECTION_VECTOR_IN_COORDS.value]
             # )
             # self.scan_volume.add_observer(self)
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).remove_observer(self)
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).translate_scan_volume(
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).remove_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).translate_scan_volume(
                 kwargs[Keys.SCAN_VOLUME_DIRECTION_VECTOR_IN_COORDS.value]
             )
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).add_observer(self)
+            self.get_scan_volume_for_stack_index(self.selected_stack_indx).add_observer(
+                self
+            )
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_ROTATED:
             rotation_angle_deg = kwargs["rotation_angle_deg"]
             rotation_axis = kwargs["rotation_axis"]
@@ -480,9 +494,15 @@ class AcquiredSeriesViewer2D(ZoomableView):
             # self.scan_volume.remove_observer(self)
             # self.scan_volume.rotate_scan_volume(rotation_angle_rad, rotation_axis)
             # self.scan_volume.add_observer(self)
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).remove_observer(self)
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).rotate_scan_volume(rotation_angle_rad, rotation_axis)
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).add_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).remove_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).rotate_scan_volume(rotation_angle_rad, rotation_axis)
+            self.get_scan_volume_for_stack_index(self.selected_stack_indx).add_observer(
+                self
+            )
 
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
             scale_factor_x = kwargs["scale_factor_x"]
@@ -497,10 +517,14 @@ class AcquiredSeriesViewer2D(ZoomableView):
             # )
             # self._update_scan_volume_display()
             # self.scan_volume.add_observer(self)
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).scale_scan_volume(
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).scale_scan_volume(
                 scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos
             )
-            self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+            self._update_scan_volume_display(
+                self.get_stack_for_stack_id(self.selected_stack_indx)
+            )
 
     def wheelEvent(self, event):
         # Check if the array is None
@@ -542,7 +566,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.update_buttons_visibility()
 
             # TODO: is this all code in if condition needed
-            if (len(self.stacks) == 0):
+            if len(self.stacks) == 0:
                 self.scan_volumes = []
                 new_stack = StackItem(self.pixmap_item, self, 0)
                 new_scan_vol = ScanVolume(0)
@@ -561,7 +585,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.setDisplayedImage(None)
 
     def setScanCompleteAcquiredData(self, acquired_series: AcquiredSeries):
-        if (len(self.stacks) == 0):
+        if len(self.stacks) == 0:
             self.scan_volumes = []
             new_stack = StackItem(self.pixmap_item, self, 0)
             new_scan_vol = ScanVolume(0)
@@ -571,8 +595,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
         self.setAcquiredSeries(acquired_series)
         self.only_display_image = True
-
-
 
     def setDisplayedImage(self, image: AcquiredImage, scan_plane="Unknown", series_name="Scan", completed=False):
         previous_scan_plane = None
@@ -589,7 +611,9 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
             # self.scan_volume_display.set_displayed_image(image)
             # TODO: set scan volume display image of current active stack instead
-            self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.set_displayed_image(image)
+            self.get_stack_for_stack_id(
+                self.selected_stack_indx
+            ).volume_display.set_displayed_image(image)
 
             # Set default window and level values
             self.window_center = np.mean(self.array)
@@ -657,7 +681,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
                 vol_itm_indices_to_delete.append(inx)
         for inx in vol_itm_indices_to_delete:
             del self.scan_volumes[inx]
-        
 
     def setScanVolumes(self, scan_volumes: List[ScanVolume]):
         if len(self.scan_volumes) > 0:
@@ -705,9 +728,11 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self._update_scan_volume_display()
 
     def _update_scan_volume_display_for_active_stack_item(self):
-        self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+        self._update_scan_volume_display(
+            self.get_stack_for_stack_id(self.selected_stack_indx)
+        )
 
-    def _update_scan_volume_display(self, stack_item: 'StackItem'):
+    def _update_scan_volume_display(self, stack_item: "StackItem"):
         # TODO: call these methods on StackItem instead
         """Updates the intersection polygon between the scan volume and the displayed image."""
         # if self.displayed_image is not None and self.scan_volume is not None:
@@ -752,17 +777,18 @@ class AcquiredSeriesViewer2D(ZoomableView):
             if stack_item is not None:
                 stack_item.clear_objects()
 
-
     def contextMenuEvent(self, event):
         """Event handler for if the user requests to open the right-click context menu."""
 
         super().contextMenuEvent(event)
 
-        # Enable the export button only if we have a displayed image that can be exported.
+        # Enable the export actions only if we have a displayed image that can be exported.
         if self.displayed_image is not None:
             self.export_action.setEnabled(True)
+            self.export_dicomdir_action.setEnabled(True)
         else:
             self.export_action.setEnabled(False)
+            self.export_dicomdir_action.setEnabled(False)
 
         # Execute and open the menu.
         action_performed = self.right_click_menu.exec(self.mapToGlobal(event.pos()))
@@ -830,7 +856,8 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
 
         event.accept()
 
-class StackItem():
+
+class StackItem:
     volume_display: Optional[CustomPolygonItem] = None
     middle_line_display: Optional[MiddleLineItem] = None
     slices_display: List[SlicecItem] = []
@@ -876,7 +903,9 @@ class StackItem():
         self.volume_display.is_active_stack = False
 
     # update stack item display component with coordinates
-    def update_objects_with_pixmap_coords(self, volume_edges, middle_edges, slice_edges):
+    def update_objects_with_pixmap_coords(
+        self, volume_edges, middle_edges, slice_edges
+    ):
         self.volume_display.setPolygon(QPolygonF())
 
         self.volume_display.setPolygonFromPixmapCoords(volume_edges)

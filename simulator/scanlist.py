@@ -360,7 +360,9 @@ class ScanItem:
         for scan_params in scan_parameters:
             scan_params_processed = {}
             stack_inx = int(scan_params["StackIndex"])
-            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, stack_inx)
+            scan_params_index = self.find_parameters_with_stack_index(
+                self._scan_parameters, stack_inx
+            )
             # TODO: should also copy other keys and values of _scan_parameters into scan_params_processed
             if scan_params_index is not None:
                 scan_params_processed = self._scan_parameters[scan_params_index]
@@ -387,9 +389,9 @@ class ScanItem:
                 scan_volume = ScanVolume(stack_inx)
                 self.scan_volumes.append(scan_volume)
             else:
-                 # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed.
-                 # This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not
-                 # respond to events that they themselves initiated.
+                # Scan item removes itself as an observer of the scan volume so that it does not receive the notification that the scan voulume has changed.
+                # This is to avoid an infinite loop. In the future a more sophisticated event system could be implemented to ensure that observers do not
+                # respond to events that they themselves initiated.
                 scan_volume.remove_observer(self)
 
             assert scan_volume is not None
@@ -400,7 +402,9 @@ class ScanItem:
                 scan_params_processed[key] = value
 
             # update wiht clamped values
-            scan_params_index = self.find_parameters_with_stack_index(self._scan_parameters, stack_inx)
+            scan_params_index = self.find_parameters_with_stack_index(
+                self._scan_parameters, stack_inx
+            )
             if scan_params_index is not None:
                 self._scan_parameters[scan_params_index] = scan_params_processed
             else:
@@ -462,7 +466,11 @@ class ScanItem:
                 except:
                     scan_params_processed[key] = value
             stack_index = int(scan_params_processed["StackIndex"])
-            corresponding_stack_index_params: List[dict] = [parms for parms in self._scan_parameters if parms["StackIndex"] == stack_index]
+            corresponding_stack_index_params: List[dict] = [
+                parms
+                for parms in self._scan_parameters
+                if parms["StackIndex"] == stack_index
+            ]
             # there should be only one params object created for each stack index
             assert len(corresponding_stack_index_params) == 1
 
@@ -765,7 +773,10 @@ class ScanItem:
                     scan_parameters["FHAngle_deg"] = str(FHAngle_deg)
                     changed = True
 
-                    scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = scan_parameters["FOVPE_mm"], scan_parameters["FOVFE_mm"]
+                    scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = (
+                        scan_parameters["FOVPE_mm"],
+                        scan_parameters["FOVFE_mm"],
+                    )
 
                 elif (
                     abs(RLAngle_deg) > THRESHOLD_ANGLE
@@ -813,10 +824,8 @@ class ScanItem:
                     scan_parameters["FOVFE_mm"], scan_parameters["FOVPE_mm"] = (
                         scan_parameters["FOVPE_mm"],
                         scan_parameters["FOVFE_mm"],
-)
-            elif (
-                    abs(FHAngle_deg) > THRESHOLD_ANGLE >= abs(APAngle_deg)
-            ):
+                    )
+            elif abs(FHAngle_deg) > THRESHOLD_ANGLE >= abs(APAngle_deg):
                 # Change to Coronal plane
                 scan_parameters["ScanPlane"] = "Coronal"
 
@@ -835,9 +844,7 @@ class ScanItem:
                 changed = True
 
             elif scanPlane == "Coronal":
-                if (
-                        abs(RLAngle_deg) > THRESHOLD_ANGLE >= abs(FHAngle_deg)
-                ):
+                if abs(RLAngle_deg) > THRESHOLD_ANGLE >= abs(FHAngle_deg):
                     # Change to Axial plane
                     scan_parameters["ScanPlane"] = "Axial"
 

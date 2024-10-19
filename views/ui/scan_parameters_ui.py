@@ -46,6 +46,10 @@ class ScanParametersWidget(QWidget):
         return self._scanParametersSaveChangesButton
 
     @property
+    def scanParametersExportButton(self):
+        return self._scanParametersExportButton
+
+    @property
     def scanParametersCancelChangesButton(self):
         return self._scanParametersCancelChangesButton
 
@@ -60,9 +64,11 @@ class ScanParametersWidget(QWidget):
     def _createButtons(self):
         buttonsLayout = QHBoxLayout()
         self._scanParametersSaveChangesButton = PrimaryActionButton("Save")
+        self._scanParametersExportButton = SecondaryActionButton("Export")
         self._scanParametersCancelChangesButton = SecondaryActionButton("Cancel")
         self._scanParametersResetButton = DestructiveActionButton("Reset")
         buttonsLayout.addWidget(self._scanParametersSaveChangesButton, 1)
+        buttonsLayout.addWidget(self._scanParametersExportButton, 1)
         buttonsLayout.addWidget(self._scanParametersCancelChangesButton, 1)
         buttonsLayout.addSpacerItem(
             QSpacerItem(

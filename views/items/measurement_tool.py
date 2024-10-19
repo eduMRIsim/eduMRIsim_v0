@@ -7,6 +7,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QBrush, QPen, QColor
 from PyQt6.QtWidgets import QGraphicsEllipseItem
 
+from utils.logger import log
+
 
 class MeasurementTool:
     def __init__(self, line_item, text_item, ac_series):
@@ -22,10 +24,10 @@ class MeasurementTool:
         self.scene = self.line_item.scene()
         self.scene.addItem(self.start_dot)
         self.scene.addItem(self.end_dot)
-        self.start_dot.setBrush(QBrush(Qt.GlobalColor.red))
-        self.end_dot.setBrush(QBrush(Qt.GlobalColor.red))
-        # self.start_dot.setPen(QPen(QColor(255, 165, 0), 1))
-        # self.end_dot.setPen(QPen(QColor(255, 165, 0), 1))
+        self.start_dot.setBrush(QBrush(QColor(255, 165, 0)))
+        self.end_dot.setBrush(QBrush(QColor(255, 165, 0)))
+        self.start_dot.setPen(QPen(QColor(255, 165, 0), 1))
+        self.end_dot.setPen(QPen(QColor(255, 165, 0), 1))
 
         self.hide_items()
 
@@ -60,7 +62,7 @@ class MeasurementTool:
                 self.end_point.x(),
                 self.end_point.y(),
             )
-            self.line_item.setPen(QColor(255, 165, 0), 1)
+            self.line_item.setPen(QPen(QColor(255, 165, 0), 1))
 
             distance = self.calculate_distance(self.start_point, self.end_point)
             self.text_item.setPlainText(f"{distance:.2f} mm")
