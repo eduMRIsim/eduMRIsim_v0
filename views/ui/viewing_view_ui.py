@@ -30,6 +30,8 @@ from views.items.zoomin import ZoomableView
 from views.ui.scanlist_ui import ScanlistListWidget
 from utils.logger import log
 
+import matplotlib.pyplot as plt
+
 
 class gridViewingWindowLayout(QFrame):
     gridUpdated = pyqtSignal()  # signal to notify row/column removal
@@ -232,6 +234,7 @@ class GridCell(ZoomableView):
         self.previous_mouse_position = None
         
         # color scale bar
+        self.color_scale = 'bw'
         self.color_scale_label = QLabel(self)
         self.color_scale_label.setFixedSize(20, 200)
         self.color_scale_label.setStyleSheet("background: black; border: 1px solid white")
@@ -392,45 +395,48 @@ class GridCell(ZoomableView):
 
         self.position_color_scale_elements()
 
+    def setColorScale(self, color: str):
+        if color in ['bw', 'rgb']:
+            self.color_scale = color
+            self._displayArray(self.window_center, self.window_width)
+        else:
+            raise ValueError("Invalid color scale. Use 'bw' or 'rgb'.")
+
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
+
+        array_norm = (self.array[:, :] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
         
         self.updateColorScale(window_center, window_width)
 
-        if self.array is not None:
-            array_norm = (self.array[:, :] - np.min(self.array)) / (
-                np.max(self.array) - np.min(self.array)
-            )
+        if window_center is None or window_width is None:
+            window_center = np.mean(self.array)
+            window_width = np.max(self.array) - np.min(self.array)
+
+        min_window = window_center - (window_width / 2)
+        max_window = window_center + (window_width / 2)
+
+        array_clamped = np.clip(self.array, min_window, max_window)
+        array_norm = (array_clamped - min_window) / (max_window - min_window)
+
+        if self.color_scale == 'bw':
             array_8bit = (array_norm * 255).astype(np.uint8)
+            qimage = QImage(array_8bit.data, array_8bit.shape[1], array_8bit.shape[0], array_8bit.shape[1], QImage.Format.Format_Grayscale8)
 
-            if window_center is None or window_width is None:
-                window_center = np.mean(self.array)
-                window_width = np.max(self.array) - np.min(self.array)
+        elif self.color_scale == 'rgb':
+            color_mapped_array = plt.get_cmap('viridis')(array_norm)[:, :, :3] 
+            array_rgb = (color_mapped_array * 255).astype(np.uint8)
+            qimage = QImage(array_rgb.data, array_rgb.shape[1], array_rgb.shape[0], array_rgb.shape[1] * 3, QImage.Format.Format_RGB888)
 
-            min_window = window_center - (window_width / 2)
-            max_window = window_center + (window_width / 2)
+        pixmap = QPixmap.fromImage(qimage)
+        self.pixmap_item.setPixmap(pixmap)
 
-            array_clamped = np.clip(self.array, min_window, max_window)
-            array_norm = (array_clamped - min_window) / (max_window - min_window)
-            array_8bit = (array_norm * 255).astype(np.uint8)
-
-            # Create QImage and display
-            image = np.ascontiguousarray(array_8bit)
-            height, width = image.shape
-            qimage = QImage(
-                image.data, width, height, width, QImage.Format.Format_Grayscale8
-            )
-
-            # Create a QPixmap - a pixmap which can be displayed in a GUI
-            pixmap = QPixmap.fromImage(qimage)
-            self.pixmap_item.setPixmap(pixmap)
-
-            self.pixmap_item.setPos(0, 0)
-            self.scene.setSceneRect(0, 0, width, height)
-            self.resetTransform()
-            self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
-            self.centerOn(self.pixmap_item)
+        self.pixmap_item.setPos(0, 0)
+        self.scene.setSceneRect(0, 0, qimage.width(), qimage.height())
+        self.resetTransform()
+        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+        self.centerOn(self.pixmap_item)
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:

@@ -478,6 +478,19 @@ class MainController:
                 log.info("Window-level mode disabled")
         else:
             log.error("Error with window-level mode")
+            
+    def handle_changeColorMapping(self, mapping):
+        """
+        Changes color mapping to("bw" or "rgb").
+        """
+        # Loop through all grid cells and apply the color scale change
+        for row in range(len(self.ui.gridViewingWindow.grid_cells)):
+            for col in range(len(self.ui.gridViewingWindow.grid_cells[row])):
+                grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
+                if grid_cell is not None:
+                    grid_cell.setColorScale(mapping)  # Apply the color scale to the grid cell
+                    log.info(f"Color mapping changed to {mapping} for GridCell ({row}, {col})")
+        log.info(f"Color mapping changed to {mapping} for all GridCells.")
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):

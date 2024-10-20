@@ -55,15 +55,23 @@ class MenuBar:
         # Tools section
         tools_section = self.add_section("Tools")
         tools_section.add_mode_action_group()
-        
         tools_section.add_mode_action(
             "Measure Distance",
             lambda: self.main_controller.handle_measureDistanceButtonClicked(),
         )
-
         tools_section.add_mode_action(
             "Window Level",
             lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
+        )
+
+        # Color Scale section
+        color_scale_section = self.add_section("Color Scale")
+        color_scale_section.add_mode_action_group()
+        color_scale_section.add_mode_action(
+            "Black and White", lambda: self.main_controller.handle_changeColorMapping("bw"), checked=True
+        )
+        color_scale_section.add_mode_action(
+            "RGB", lambda: self.main_controller.handle_changeColorMapping("rgb")
         )
 
 
