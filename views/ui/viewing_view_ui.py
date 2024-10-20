@@ -320,6 +320,8 @@ class GridCell(ZoomableView):
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
         
+        self.position_color_scale_elements()
+        
     def toggle_window_level_mode(self):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
@@ -329,6 +331,9 @@ class GridCell(ZoomableView):
             if self.window_center is None or self.window_width is None:
                 self.window_center = np.mean(self.array)
                 self.window_width = np.max(self.array) - np.min(self.array)
+            
+            self.position_color_scale_elements()
+            
         else:
             log.info("Window-level mode disabled")
 
@@ -353,6 +358,11 @@ class GridCell(ZoomableView):
     def updateColorScale(self, window_center, window_width):
         """Update the color scale for window and level adjustments and set the text labels."""
         
+        if window_center is None:
+            window_center = np.mean(self.array) if self.array is not None else 128
+        if window_width is None:
+            window_width = np.max(self.array) - np.min(self.array) if self.array is not None else 256
+
         window_center = max(0, window_center)
         window_width = max(1, window_width)
 
@@ -363,21 +373,13 @@ class GridCell(ZoomableView):
         pixmap.fill(Qt.GlobalColor.transparent)
 
         painter = QPainter(pixmap)
-
         gradient = QLinearGradient(0, 0, 0, self.color_scale_label.height())
 
-        if window_width <= 1:
-            grey_value = int(255 * (window_center / max(1, max_value)))
-            grey_value = max(0, grey_value)
-            color = QColor(grey_value, grey_value, grey_value)
-            gradient.setColorAt(0, color)
-            gradient.setColorAt(1, color)
-        else:
-            min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
-            max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
+        min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
+        max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
 
-            gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
-            gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
+        gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
+        gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
 
         painter.fillRect(0, 0, self.color_scale_label.width(), self.color_scale_label.height(), gradient)
         painter.end()
@@ -388,45 +390,47 @@ class GridCell(ZoomableView):
         self.mid_value_label.setText(f"{int(window_center)}")
         self.max_value_label.setText(f"{int(max_value)}")
 
-        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() - 5)
-        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
-        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() + self.color_scale_label.height() - 20)
-
-        self.min_value_label.adjustSize()
-        self.mid_value_label.adjustSize()
-        self.max_value_label.adjustSize()
+        self.position_color_scale_elements()
 
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
-
-        if window_center is None or window_width is None:
-            window_center = np.mean(self.array)
-            window_width = np.max(self.array) - np.min(self.array)
-            
+        
         self.updateColorScale(window_center, window_width)
 
-        min_window = window_center - (window_width / 2)
-        max_window = window_center + (window_width / 2)
+        if self.array is not None:
+            array_norm = (self.array[:, :] - np.min(self.array)) / (
+                np.max(self.array) - np.min(self.array)
+            )
+            array_8bit = (array_norm * 255).astype(np.uint8)
 
-        array_clamped = np.clip(self.array, min_window, max_window)
-        array_norm = (array_clamped - min_window) / (max_window - min_window)
-        array_8bit = (array_norm * 255).astype(np.uint8)
+            if window_center is None or window_width is None:
+                window_center = np.mean(self.array)
+                window_width = np.max(self.array) - np.min(self.array)
 
-        # Create QImage and display
-        image = np.ascontiguousarray(array_8bit)
-        height, width = image.shape
-        qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
+            min_window = window_center - (window_width / 2)
+            max_window = window_center + (window_width / 2)
 
-        # Create a QPixmap - a pixmap which can be displayed in a GUI
-        pixmap = QPixmap.fromImage(qimage)
-        self.pixmap_item.setPixmap(pixmap)
+            array_clamped = np.clip(self.array, min_window, max_window)
+            array_norm = (array_clamped - min_window) / (max_window - min_window)
+            array_8bit = (array_norm * 255).astype(np.uint8)
 
-        self.pixmap_item.setPos(0, 0)
-        self.scene.setSceneRect(0, 0, width, height)
-        self.resetTransform()
-        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
-        self.centerOn(self.pixmap_item)
+            # Create QImage and display
+            image = np.ascontiguousarray(array_8bit)
+            height, width = image.shape
+            qimage = QImage(
+                image.data, width, height, width, QImage.Format.Format_Grayscale8
+            )
+
+            # Create a QPixmap - a pixmap which can be displayed in a GUI
+            pixmap = QPixmap.fromImage(qimage)
+            self.pixmap_item.setPixmap(pixmap)
+
+            self.pixmap_item.setPos(0, 0)
+            self.scene.setSceneRect(0, 0, width, height)
+            self.resetTransform()
+            self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+            self.centerOn(self.pixmap_item)
 
     def setAcquiredSeries(self, acquired_series: AcquiredSeries):
         if acquired_series is not None:
