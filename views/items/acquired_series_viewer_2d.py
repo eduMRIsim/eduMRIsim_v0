@@ -72,11 +72,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
         # Initialize displayed image to None
         self.displayed_image = None
 
-        # window level mode
-        self.window_center = None
-        self.window_width = None
-        self.leveling_enabled = False
-
         # Initalize displayed series to None
         self.acquired_series = None
 
@@ -116,18 +111,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             Qt.WidgetAttribute.WA_TransparentForMouseEvents, True
         )
         self.updateLabelPosition()
-        
-        # Display window level label
-        self.color_scale_label = QLabel(self)
-        self.color_scale_label.setFixedSize(20, 200)
-        self.color_scale_label.setStyleSheet("background: black; border: 1px solid white")
-        self.min_value_label = QLabel(self)
-        self.min_value_label.setStyleSheet("color: white; font-size: 10px;")
-        self.mid_value_label = QLabel(self)
-        self.mid_value_label.setStyleSheet("color: white; font-size: 10px;")
-        self.max_value_label = QLabel(self)
-        self.max_value_label.setStyleSheet("color: white; font-size: 10px;")
-        self.position_color_scale_elements()
 
         # Display scan name
         self.series_name_label = QLabel(self)
@@ -363,61 +346,11 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.mid_value_label.adjustSize()
         self.max_value_label.adjustSize()
 
-        
-    def updateColorScale(self, window_center, window_width):
-        """Update the color scale for window and level adjustments and set the text labels."""
-        
-        window_center = max(0, window_center)
-        window_width = max(1, window_width)
-
-        min_value = max(0, window_center - (window_width / 2))
-        max_value = max(0, window_center + (window_width / 2))
-
-        pixmap = QPixmap(self.color_scale_label.size())
-        pixmap.fill(Qt.GlobalColor.transparent)
-
-        painter = QPainter(pixmap)
-
-        gradient = QLinearGradient(0, 0, 0, self.color_scale_label.height())
-
-        if window_width <= 1:
-            grey_value = int(255 * (window_center / max(1, max_value)))
-            grey_value = max(0, grey_value)
-            color = QColor(grey_value, grey_value, grey_value)
-            gradient.setColorAt(0, color)
-            gradient.setColorAt(1, color)
-        else:
-            min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
-            max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
-
-            gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
-            gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
-
-        painter.fillRect(0, 0, self.color_scale_label.width(), self.color_scale_label.height(), gradient)
-        painter.end()
-
-        self.color_scale_label.setPixmap(pixmap)
-
-        self.min_value_label.setText(f"{int(min_value)}")
-        self.mid_value_label.setText(f"{int(window_center)}")
-        self.max_value_label.setText(f"{int(max_value)}")
-
-        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() - 5)
-        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
-        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() + self.color_scale_label.height() - 20)
-
-        self.min_value_label.adjustSize()
-        self.mid_value_label.adjustSize()
-        self.max_value_label.adjustSize()
-
-
 
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
         
-        self.updateColorScale(window_center, window_width)
-
         if self.array is not None:
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
@@ -451,15 +384,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.resetTransform()
             self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
             self.centerOn(self.pixmap_item)
-
-    def toggle_window_level_mode(self):
-        """Toggles window-leveling mode."""
-        self.leveling_enabled = not self.leveling_enabled
-        if self.leveling_enabled:
-            log.info("Window-level mode enabled")
-            self.updateColorScale(self.window_center, self.window_width) 
-        else:
-            log.info("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF

@@ -9,6 +9,7 @@ from PyQt6.QtGui import (
     QDropEvent,
     QPen,
     QAction,
+    QLinearGradient
 )
 from PyQt6.QtWidgets import (
     QFrame,
@@ -20,6 +21,7 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QMenu,
+    QLabel,
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -222,6 +224,24 @@ class GridCell(ZoomableView):
         self.row = row  # row index
         self.col = col  # col index
         self.parent_layout = parent_layout  # reference to the parent layout
+        
+        # window level variables
+        self.window_center = None
+        self.window_width = None
+        self.leveling_enabled = False
+        self.previous_mouse_position = None
+        
+        # color scale bar
+        self.color_scale_label = QLabel(self)
+        self.color_scale_label.setFixedSize(20, 200)
+        self.color_scale_label.setStyleSheet("background: black; border: 1px solid white")
+        self.min_value_label = QLabel(self)
+        self.min_value_label.setStyleSheet("color: white; font-size: 10px;")
+        self.mid_value_label = QLabel(self)
+        self.mid_value_label.setStyleSheet("color: white; font-size: 10px;")
+        self.max_value_label = QLabel(self)
+        self.max_value_label.setStyleSheet("color: white; font-size: 10px;")
+        self.position_color_scale_elements() 
 
         # pixmap graphics
         self.scene = QGraphicsScene(self)
@@ -299,40 +319,111 @@ class GridCell(ZoomableView):
         self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
-
-    def _displayArray(self):
-        if self.array is not None:
-
-            # Normalize the slice values for display
-            array_norm = (self.array[:, :] - np.min(self.array)) / (
-                np.max(self.array) - np.min(self.array)
-            )
-            array_8bit = (array_norm * 255).astype(np.uint8)
-
-            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
-            image = np.ascontiguousarray(np.array(array_8bit))
-            height, width = image.shape
-            qimage = QImage(
-                image.data, width, height, width, QImage.Format.Format_Grayscale8
-            )
-
-            # Create a QPixmap - a pixmap which can be displayed in a GUI
-            pixmap = QPixmap.fromImage(qimage)
-            self.pixmap_item.setPixmap(pixmap)
-
-            self.pixmap_item.setPos(0, 0)  # Ensure the pixmap item is at (0, 0)
-            self.scene.setSceneRect(
-                0, 0, width, height
-            )  # Adjust the scene rectangle to match the pixmap dimensions
-
+        
+    def toggle_window_level_mode(self):
+        """Toggles window-leveling mode."""
+        self.leveling_enabled = not self.leveling_enabled
+        if self.leveling_enabled:
+            log.info("Window-level mode enabled")
+            # Initialize default values if they are None
+            if self.window_center is None or self.window_width is None:
+                self.window_center = np.mean(self.array)
+                self.window_width = np.max(self.array) - np.min(self.array)
         else:
-            # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
-            black_image.fill(Qt.GlobalColor.black)
-            pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)
-            self.scene.setSceneRect(0, 0, 1, 1)
+            log.info("Window-level mode disabled")
 
+    def position_color_scale_elements(self):
+        """Ensure the color scale and labels are positioned correctly."""
+        padding = 20  
+
+        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+
+        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() - 5)
+        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() - 20)
+
+        self.min_value_label.adjustSize()
+        self.mid_value_label.adjustSize()
+        self.max_value_label.adjustSize()
+
+        
+    def updateColorScale(self, window_center, window_width):
+        """Update the color scale for window and level adjustments and set the text labels."""
+        
+        window_center = max(0, window_center)
+        window_width = max(1, window_width)
+
+        min_value = max(0, window_center - (window_width / 2))
+        max_value = max(0, window_center + (window_width / 2))
+
+        pixmap = QPixmap(self.color_scale_label.size())
+        pixmap.fill(Qt.GlobalColor.transparent)
+
+        painter = QPainter(pixmap)
+
+        gradient = QLinearGradient(0, 0, 0, self.color_scale_label.height())
+
+        if window_width <= 1:
+            grey_value = int(255 * (window_center / max(1, max_value)))
+            grey_value = max(0, grey_value)
+            color = QColor(grey_value, grey_value, grey_value)
+            gradient.setColorAt(0, color)
+            gradient.setColorAt(1, color)
+        else:
+            min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
+            max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
+
+            gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
+            gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
+
+        painter.fillRect(0, 0, self.color_scale_label.width(), self.color_scale_label.height(), gradient)
+        painter.end()
+
+        self.color_scale_label.setPixmap(pixmap)
+
+        self.min_value_label.setText(f"{int(min_value)}")
+        self.mid_value_label.setText(f"{int(window_center)}")
+        self.max_value_label.setText(f"{int(max_value)}")
+
+        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() - 5)
+        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5, self.color_scale_label.y() + self.color_scale_label.height() - 20)
+
+        self.min_value_label.adjustSize()
+        self.mid_value_label.adjustSize()
+        self.max_value_label.adjustSize()
+
+    def _displayArray(self, window_center=None, window_width=None):
+        if self.array is None:
+            return
+
+        if window_center is None or window_width is None:
+            window_center = np.mean(self.array)
+            window_width = np.max(self.array) - np.min(self.array)
+            
+        self.updateColorScale(window_center, window_width)
+
+        min_window = window_center - (window_width / 2)
+        max_window = window_center + (window_width / 2)
+
+        array_clamped = np.clip(self.array, min_window, max_window)
+        array_norm = (array_clamped - min_window) / (max_window - min_window)
+        array_8bit = (array_norm * 255).astype(np.uint8)
+
+        # Create QImage and display
+        image = np.ascontiguousarray(array_8bit)
+        height, width = image.shape
+        qimage = QImage(image.data, width, height, width, QImage.Format.Format_Grayscale8)
+
+        # Create a QPixmap - a pixmap which can be displayed in a GUI
+        pixmap = QPixmap.fromImage(qimage)
+        self.pixmap_item.setPixmap(pixmap)
+
+        self.pixmap_item.setPos(0, 0)
+        self.scene.setSceneRect(0, 0, width, height)
         self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
