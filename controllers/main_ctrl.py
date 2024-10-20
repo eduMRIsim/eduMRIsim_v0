@@ -201,17 +201,43 @@ class MainController:
             lambda: self.handle_viewingPortExport_triggered(3)
         )
 
-        self.ui.scannedImageFrame.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(0)
+        self.ui.scannedImageFrame.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(0)
         )
-        self.ui.scanPlanningWindow1.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(1)
+        self.ui.scanPlanningWindow1.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(1)
         )
-        self.ui.scanPlanningWindow2.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(2)
+        self.ui.scanPlanningWindow2.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(2)
         )
-        self.ui.scanPlanningWindow3.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(3)
+        self.ui.scanPlanningWindow3.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(0)
+        )
+        self.ui.scanPlanningWindow1.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(1)
+        )
+        self.ui.scanPlanningWindow2.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(2)
+        )
+        self.ui.scanPlanningWindow3.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow1.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow2.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow3.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
         )
 
     def prepare_model_data(self):
@@ -222,11 +248,11 @@ class MainController:
 
     def export_examination(self):
         default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
-        options = (
-            QFileDialog.FileMode.Options()
-        )  # Use native dialog for a more modern look
+        # options = (
+        #     QFileDialog.FileMode.Options()
+        # )  # Use native dialog for a more modern look
         file_path, _ = QFileDialog.getSaveFileName(
-            self.ui, "Save Session", default_filename, options=options
+            self.ui, "Save Session", default_filename
         )
 
         # If canceled, return without doing anything
@@ -501,7 +527,7 @@ class MainController:
         study = self.ui.scanner.examination
         self.export_image_dialog_ui.export_file_dialog(image, series, study, parameters)
 
-    def handle_exportToDicomdir_triggered(self, index: int):
+    def handle_exportImageToDicomdir_triggered(self, index: int):
         if index not in range(0, 4):
             raise ValueError(
                 f"Index {index} does not refer to a valid image viewing port"
@@ -521,8 +547,31 @@ class MainController:
             series = self.ui.scanPlanningWindow3.acquired_series
         parameters = self._return_parameters_from_image_in_scanlist(image)
         study = self.ui.scanner.examination
-        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(
+        self.export_image_dialog_ui.export_image_to_dicom_with_dicomdir(
             image, series, study, parameters
+        )
+
+    def handle_exportSeriesToDicomdir_triggered(self, index: int):
+        if index not in range(0, 4):
+            raise ValueError(
+                f"Index {index} does not refer to a valid image viewing port"
+            )
+
+        if index == 0:
+            series = self.ui.scannedImageFrame.acquired_series
+        elif index == 1:
+            series = self.ui.scanPlanningWindow1.acquired_series
+        elif index == 2:
+            series = self.ui.scanPlanningWindow2.acquired_series
+        else:
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters_list = []
+        for image in series.list_acquired_images:
+            parameters = self._return_parameters_from_image_in_scanlist(image)
+            parameters_list.append(parameters)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_series_to_dicom_with_dicomdir(
+            series, study, parameters_list
         )
 
     def handle_measureDistanceButtonClicked(self):
