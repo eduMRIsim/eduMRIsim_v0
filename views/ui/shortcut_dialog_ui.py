@@ -23,24 +23,22 @@ class ShortcutDialog(QDialog):
             ("Ctrl+W", "Toggle window leveling"),
             ("Ctrl+A", "Measure area"),
             ("Ctrl+H", "Show keyboard shortcuts (this dialog)"),
-            ("M", "Toggle distance measuring:\n"
+            ("M", "Measure a distance in an image:\n"
                   "1. Left click into a planning view window.\n"
-                  "2. Move the mouse to one of the two end points of the line to be measured.\n"
-                  "3. Press M to start measuring from the mouse cursor.\n"
-                  "4. Move the mouse to the other end point of the line to be measured.\n"
-                  "5. Press M again to stop measuring"),
-            ("Z", "Toggle zooming:\n"
-                  "1. Left click outside of the planning view window that the image that you want to zoom is in, but still within the app window.\n"
-                  "2. Move the mouse into the planning view window, over the image.\n"
-                  "3. Hold left click and Z to start zooming.\n"
-                  "4. While holding left click and Z, move the mouse up and down to zoom in and out.\n"
-                  "5. Release Z to stop zooming"),
-            ("P", "Toggle panning:\n"
-                  "1. Left click outside of the planning view window that the image that you want to pan is in, but still within the app window.\n"
-                  "2. Move the mouse into the planning view window, over the image.\n"
-                  "3. Hold left click and P to start panning.\n"
-                  "4. While holding left click and P, move the mouse in any direction to pan the image.\n"
-                  "5. Release P to stop panning"),
+                  "2. Move the mouse cursor to one of the two end points of the line to be measured.\n"
+                  "3. Press the M key to start measuring from the mouse cursor.\n"
+                  "4. Move the mouse cursor to the other end point of the line to be measured.\n"
+                  "5. Press the M key again to stop measuring."),
+            ("Z", "Zoom in and out of an image:\n"
+                  "1. Move the mouse cursor into the planning view window, over the image.\n"
+                  "2. Start holding the Z key to start zooming.\n"
+                  "3. While holding the Z key, hold left click and move the mouse cursor up and down to zoom in and out.\n"
+                  "4. Release left click and then the Z key to stop zooming."),
+            ("P", "Pan an image:\n"
+                  "1. Move the mouse cursor into the planning view window, over the image.\n"
+                  "2. Start holding the P key to start panning.\n"
+                  "3. While holding the P key, hold left click and move the mouse cursor to pan the image.\n"
+                  "4. Release left click and then the P key to stop panning."),
         ]
 
         # Create a table to display the shortcuts
