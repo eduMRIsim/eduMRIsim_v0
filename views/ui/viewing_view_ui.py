@@ -95,7 +95,7 @@ class gridViewingWindowLayout(QFrame):
         """Hides checkboxes in all cells."""
         for row in self.grid_cells:
             for cell in row:
-                cell.checkbox.setChecked(False)
+                cell.checkbox.setChecked(False) #uncheck all cells before hiding them
                 cell.set_visibility_checkbox(False) 
 
     def get_checked_cells(self):
@@ -111,7 +111,7 @@ class gridViewingWindowLayout(QFrame):
 
         return checked_cells
     
-    def start_geometry_linking(self):
+    def start_contrast_linking(self):
         """Synchronizes zooming for the checked cells. """
         linked_cells = self.get_checked_cells()
         self.linked_cells = []
@@ -119,47 +119,46 @@ class gridViewingWindowLayout(QFrame):
             self.linked_cells.append(self.grid_cells[i][j])
 
         if not linked_cells:
-            log.warn("No cells selected for geometry linking!.")
+            log.warn("No cells selected for contrast linking!.")
             return
         else:
-            print(f"Geometry linking will be done for cells: {linked_cells}")
+            print(f"Contrast linking will be done for cells: {linked_cells}")
 
-        reference_cell = self.grid_cells[linked_cells[0][0]][linked_cells[0][1]]
-        reference_zoom_level = reference_cell.transform().m11()  # get zoom level
+        # cell that was checked first
+        #reference_cell = self.linked_cells[0]
 
-        for cell in self.linked_cells:
-            # connect to zoom signal
-            cell.zoomChanged.connect(self.synchronize_zoom_to_all_cells) 
-
-            # apply the zoom level
-            #current_zoom = cell.transform().m11()
-            #if current_zoom != reference_zoom_level:
-                #cell.resetTransform()
-                #cell.updateLabelPosition() # do i need this
-                #zoom_factor = reference_zoom_level / 1.0
-                #cell.scale(zoom_factor, zoom_factor)
+        for cell_i in self.linked_cells:
+            for cell_j in self.linked_cells:
+                # connect all cells to the reference_cell signal
+                if cell_j != cell_i:
+                    cell_i.contrastChanged.connect(
+                        lambda window_center, window_width: self.synchronize_window_levelling(window_center, window_width, cell_j)
+                    ) 
         
-        print(f"Cells {len(linked_cells)} are geometry linked.")
+        print(f"Cells {len(linked_cells)} are contrast linked.")
     
-    def synchronize_zoom_to_all_cells(self, zoom_level):
-        """Synchronizes the zoom level in the linked cells ."""
-        for cell in self.linked_cells:
-            current_zoom = cell.transform().m11()
-            if current_zoom != zoom_level:
-                cell.resetTransform()
-                zoom_factor = zoom_level / 1.0
-                cell.scale(zoom_factor, zoom_factor)
+    def synchronize_window_levelling(self, window_center, window_width, cell):
+        """Synchronizes the window levelling for all the linked cells ."""
+        #for cell in self.linked_cells:
+            #pass
+        cell.window_center = window_center
+        cell.window_width = window_width
+        cell._displayArray(window_center, window_width)
+        cell.updateColorScale(window_center, window_width)
     
-    def stop_geometry_linking(self):
+    def stop_contrast_linking(self):
         """Stops geometry linking for the selected cells."""
         linked_cells = self.get_checked_cells()
         
         if not linked_cells:
-            log.warn("No cells selected for geometry linking!.")
+            log.warn("No cells selected for contrast linking!.")
             return
 
         for cell in self.linked_cells:
-            cell.zoomChanged.disconnect(self.synchronize_zoom_to_all_cells) # disconnects cells from zoom signal
+            try:
+                cell.contrastChanged.disconnect(self.synchronize_window_levelling) 
+            except Exception as e:
+                pass
 
         for i in range(len(self.grid_cells)):
             for j in range(len(self.grid_cells[i])):
@@ -167,7 +166,7 @@ class gridViewingWindowLayout(QFrame):
                 self.grid_cell.resetTransform()
                 #self.updateLabelPosition()
         
-        print(f"Stopped geometry linking for {len(self.linked_cells)} cells.")
+        print(f"Stopped contrast linking for {len(self.linked_cells)} cells.")
         self.linked_cells = []
         self.hide_checkboxes()
 
@@ -375,13 +374,16 @@ class GridCell(ZoomableView):
             self.update_checkbox_position()
         
     def update_checkbox_position(self):
+        """Ensures the checkboxes are positioned in the right bottom corner. """
         if self.checkbox.isVisible():
             checkbox_height = self.checkbox.size().height()
+            checkbox_width = self.checkbox.size().width()
         else:
             checkbox_height = 0
+            checkbox_width = 0
 
         padding = 10
-        x_pos = padding 
+        x_pos = self.width() - checkbox_width- padding 
         y_pos = self.height() - checkbox_height - padding 
         self.checkbox.move(x_pos, y_pos)
         self.checkbox.adjustSize()

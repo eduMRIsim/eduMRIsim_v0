@@ -75,6 +75,19 @@ class MenuBar:
         )
 
 
+        # Contrast linking section
+        contrast_linking_section = self.add_section("Contrast Linking")
+        contrast_linking_section.menu.aboutToShow.connect(lambda: self.main_controller.handle_show_checkboxes(True))
+        contrast_linking_section.add_mode_action_group()
+        contrast_linking_section.add_mode_action(
+            "Start linking", lambda: self.main_controller.handle_start_contrastLinking()
+        )
+        contrast_linking_section.add_mode_action(
+            "Stop linking", lambda: self.main_controller.handle_stop_contrastLinking()
+        )
+
+
+
 class Section:
     def __init__(self, menu_bar, section_name):
         """Initialises a section and prepares to manage its actions."""

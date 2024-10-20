@@ -6,8 +6,7 @@ from utils.logger import log
 
 
 class ZoomableView(QGraphicsView):
-    zoomChanged = pyqtSignal(float)  # signals for zoom
-    panChanged = pyqtSignal(int, int) # signals for panning 
+    contrastChanged = pyqtSignal(float, float) # signal for window levelling
 
     def __init__(self):
         super().__init__()
@@ -159,5 +158,7 @@ class ZoomableView(QGraphicsView):
 
                 self._displayArray(self.window_center, self.window_width)
                 self.updateColorScale(self.window_center, self.window_width)
+
+                self.contrastChanged.emit(self.window_center, self.window_width)
         else:
             super().mouseMoveEvent(event)

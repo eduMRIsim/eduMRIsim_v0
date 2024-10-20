@@ -373,19 +373,11 @@ class MainController:
         if checked:
             self.ui.gridViewingWindow.hide_checkboxes()
 
-    def handle_start_geometryLinkingButtonClicked(self):
-        self.ui.gridViewingWindow.start_geometry_linking()
+    def handle_start_contrastLinking(self):
+        self.ui.gridViewingWindow.start_contrast_linking()
 
-    def handle_stop_geometryLinkingButtonClicked(self):
-        self.ui.gridViewingWindow.stop_geometry_linking()
-    
-    def handle_start_contrastLinkingButtonClicked(self):
-        # TODO start contrast linking
-        pass
-
-    def handle_stop_contrastLinkingButtonClicked(self):
-        # TODO stop contrast linking
-        self.ui.gridViewingWindow.hide_checkboxes()
+    def handle_stop_contrastLinking(self):
+        self.ui.gridViewingWindow.stop_contrast_linking()
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
