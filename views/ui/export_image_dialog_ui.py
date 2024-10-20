@@ -229,6 +229,9 @@ class ExportImageDialog(QDialog):
     def _create_file_meta_for_dicom() -> pydicom.dataset.FileMetaDataset:
         """
         Create a FileMetaDataset instance with required DICOM attributes.
+        For reference, the following websites were used for the DICOM attributes that are set within this method:
+            https://dicom.innolitics.com/ciods/mr-image
+            http://dicomlookup.com/
 
         Returns:
             A FileMetaDataset instance with required DICOM attributes.
@@ -261,17 +264,20 @@ class ExportImageDialog(QDialog):
 
     def _set_dicom_attributes(
         self,
-        ds,
-        file_meta,
-        image,
-        image_data_normalized,
-        image_geometry,
-        parameters,
-        series,
-        study,
+        ds: FileDataset,
+        file_meta: pydicom.dataset.FileMetaDataset,
+        image: AcquiredImage,
+        image_data_normalized: np.ndarray,
+        image_geometry: ImageGeometry,
+        parameters: dict,
+        series: AcquiredSeries,
+        study: Examination,
     ) -> None:
         """
         Set DICOM attributes on a FileDataset instance.
+        For reference, the following websites were used for the DICOM attributes that are set within this method:
+            https://dicom.innolitics.com/ciods/mr-image
+            http://dicomlookup.com/
 
         Args:
             ds: The FileDataset instance to set DICOM attributes on.
@@ -301,12 +307,10 @@ class ExportImageDialog(QDialog):
         ds.PhotometricInterpretation = "MONOCHROME2"  # Set this to a different value if a different color scale is used
         ds.RescaleIntercept = 0
         ds.RescaleSlope = 1
-        ds.RescaleType = "US"
+        ds.RescaleType = "US"  # Unspecified, since modality is MR
         ds.PixelData = image_data_normalized.tobytes()
         ds.SliceThickness = parameters["SliceThickness_mm"]
-        ds.SpacingBetweenSlices = parameters[
-            "SliceGap_mm"
-        ]  # This is referred to as "Slice gap" in the scan parameters
+        ds.SpacingBetweenSlices = parameters["SliceGap_mm"] + parameters["SliceThickness_mm"]  # This is referred to as "Slice gap" in the scan parameters
         ds.ScanningSequence = parameters[
             "ScanTechnique"
         ]  # This is referred to as "Scan technique" in the scan parameters
@@ -316,6 +320,10 @@ class ExportImageDialog(QDialog):
         ds.ImagePositionPatient = list(image_geometry.origin_LPS)
         ds.ImageOrientationPatient = image_geometry.axisX_LPS.tolist()
         ds.ImageOrientationPatient.extend(image_geometry.axisY_LPS.tolist())
+        ds.PixelSpacing = [
+            image_geometry.resX_mm,
+            image_geometry.resY_mm
+        ]
         ds.PatientName = "Test^Patient"
         ds.PatientID = "PT000000"
         ds.StudyID = str(study.study_id)
