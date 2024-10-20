@@ -12,6 +12,7 @@ from PyQt6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
+    QLinearGradient
 )
 from PyQt6.QtWidgets import (
     QGraphicsScene,
@@ -70,11 +71,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
         # Initialize displayed image to None
         self.displayed_image = None
-
-        # window level mode
-        self.window_center = None
-        self.window_width = None
-        self.leveling_enabled = False
 
         # Initalize displayed series to None
         self.acquired_series = None
@@ -333,11 +329,28 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.scan_plane_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
+    def position_color_scale_elements(self):
+        """Ensure the color scale and labels are positioned correctly."""
+        padding = 20  
+
+        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+
+        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() - 5)
+        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() - 20)
+
+        self.min_value_label.adjustSize()
+        self.mid_value_label.adjustSize()
+        self.max_value_label.adjustSize()
+
 
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
-
+        
         if self.array is not None:
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
@@ -371,14 +384,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.resetTransform()
             self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
             self.centerOn(self.pixmap_item)
-
-    def toggle_window_level_mode(self):
-        """Toggles window-leveling mode."""
-        self.leveling_enabled = not self.leveling_enabled
-        if self.leveling_enabled:
-            log.info("Window-level mode enabled")
-        else:
-            log.info("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF

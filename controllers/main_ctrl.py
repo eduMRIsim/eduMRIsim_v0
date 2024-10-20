@@ -488,18 +488,19 @@ class MainController:
         self.ui.state = UI_state.ExamState()
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
-
-    def handle_toggleWindowLevelButtonClicked(self):
-        """Toggle the window-level mode"""
-        if hasattr(self.ui.scannedImageFrame, "leveling_enabled"):
-            if not self.ui.scannedImageFrame.leveling_enabled:
-                self.ui.scannedImageFrame.leveling_enabled = True
-                log.info("Window-level mode enabled")
-            else:
-                self.ui.scannedImageFrame.leveling_enabled = False
-                log.info("Window-level mode disabled")
-        else:
-            log.error("Error with window-level mode")
+            
+    def handle_changeColorMapping(self, mapping):
+        """
+        Changes color mapping to("bw" or "rgb").
+        """
+        # Loop through all grid cells and apply the color scale change
+        for row in range(len(self.ui.gridViewingWindow.grid_cells)):
+            for col in range(len(self.ui.gridViewingWindow.grid_cells[row])):
+                grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
+                if grid_cell is not None:
+                    grid_cell.setColorScale(mapping)  # Apply the color scale to the grid cell
+                    log.info(f"Color mapping changed to {mapping} for GridCell ({row}, {col})")
+        log.info(f"Color mapping changed to {mapping} for all GridCells.")
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
@@ -555,6 +556,10 @@ class MainController:
             self.ui._scannedImageFrame.measuring_enabled = False
             self.ui._scannedImageFrame.measure.hide_items()
             log.warn("Measuring disabled")
+            
+    def handle_toggleWindowLevelButtonClicked(self):
+        """Toggle the window-level mode"""
+        return #not used
 
     def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
         """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.
