@@ -101,6 +101,29 @@ class MenuBar:
     def test_action(self):
         pass
 
+        # Color Scale section
+        color_scale_section = self.add_section("Color Scale")
+        color_scale_section.add_mode_action_group()
+        color_scale_section.add_mode_action(
+            "Black and White", lambda: self.main_controller.handle_changeColorMapping("bw"), checked=True
+        )
+        color_scale_section.add_mode_action(
+            "RGB", lambda: self.main_controller.handle_changeColorMapping("rgb")
+        )
+
+
+        # Contrast linking section
+        contrast_linking_section = self.add_section("Contrast Linking")
+        contrast_linking_section.menu.aboutToShow.connect(lambda: self.main_controller.handle_show_checkboxes(True))
+        contrast_linking_section.add_mode_action_group()
+        contrast_linking_section.add_mode_action(
+            "Start linking", lambda: self.main_controller.handle_start_contrastLinking(), checked=False
+        )
+        contrast_linking_section.add_mode_action(
+            "Stop linking", lambda: self.main_controller.handle_stop_contrastLinking(), checked= False
+        )
+
+
 
 class Section:
     def __init__(self, menu_bar, section_name):
