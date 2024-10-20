@@ -14,7 +14,7 @@ class MenuBar:
 
     def __init__(self, main_view, main_controller, load_examination_callback):
         """Initialises the menu bar, stores sections and controller."""
-        if hasattr(self, '_initialized') and self._initialized:
+        if hasattr(self, "_initialized") and self._initialized:
             # Prevent re-initialisation if the instance already exists
             return
         self.main_view = main_view
@@ -28,7 +28,7 @@ class MenuBar:
         # Mark this instance as initialized to prevent reinitialization
         self._initialized = True
 
-    def add_section(self, section_name) -> 'Section':
+    def add_section(self, section_name) -> "Section":
         """Adds a section to the menu."""
         section = Section(self.menu_bar, section_name)
         self.sections[section_name] = section
@@ -62,7 +62,11 @@ class MenuBar:
         )
 
         switch_modes_shortcut = QShortcut("Ctrl+M", self.main_view)
-        switch_modes_shortcut.activated.connect(lambda: self.main_view._stackedLayout.setCurrentIndex(1 if self.main_view._stackedLayout.currentIndex() == 0 else 0))
+        switch_modes_shortcut.activated.connect(
+            lambda: self.main_view._stackedLayout.setCurrentIndex(
+                1 if self.main_view._stackedLayout.currentIndex() == 0 else 0
+            )
+        )
 
         # Tools section
         tools_section = self.add_section("Tools")
@@ -105,24 +109,30 @@ class MenuBar:
         color_scale_section = self.add_section("Color Scale")
         color_scale_section.add_mode_action_group()
         color_scale_section.add_mode_action(
-            "Black and White", lambda: self.main_controller.handle_changeColorMapping("bw"), checked=True
+            "Black and White",
+            lambda: self.main_controller.handle_changeColorMapping("bw"),
+            checked=True,
         )
         color_scale_section.add_mode_action(
             "RGB", lambda: self.main_controller.handle_changeColorMapping("rgb")
         )
 
-
         # Contrast linking section
         contrast_linking_section = self.add_section("Contrast Linking")
-        contrast_linking_section.menu.aboutToShow.connect(lambda: self.main_controller.handle_show_checkboxes(True))
+        contrast_linking_section.menu.aboutToShow.connect(
+            lambda: self.main_controller.handle_show_checkboxes(True)
+        )
         contrast_linking_section.add_mode_action_group()
         contrast_linking_section.add_mode_action(
-            "Start linking", lambda: self.main_controller.handle_start_contrastLinking(), checked=False
+            "Start linking",
+            lambda: self.main_controller.handle_start_contrastLinking(),
+            checked=False,
         )
         contrast_linking_section.add_mode_action(
-            "Stop linking", lambda: self.main_controller.handle_stop_contrastLinking(), checked= False
+            "Stop linking",
+            lambda: self.main_controller.handle_stop_contrastLinking(),
+            checked=False,
         )
-
 
 
 class Section:
@@ -171,4 +181,3 @@ class Section:
 
         if checked:
             action.setChecked(True)
-

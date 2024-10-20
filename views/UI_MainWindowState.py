@@ -164,7 +164,7 @@ class IdleState(UI_MainWindowState):
         context.scanParametersSaveChangesButton.setEnabled(False)
         context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
-        context.scanEtaLabel.setText("Time Remaining: 00:00") 
+        context.scanEtaLabel.setText("Time Remaining: 00:00")
         context.scannedImageFrame.setAcquiredSeries(None)
         context.scanPlanningWindow1.setAcquiredSeries(None)
         context.scanPlanningWindow2.setAcquiredSeries(None)

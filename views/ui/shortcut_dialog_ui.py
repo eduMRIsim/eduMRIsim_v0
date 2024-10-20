@@ -1,5 +1,11 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton
+from PyQt6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
+    QPushButton,
+)
 
 
 class ShortcutDialog(QDialog):
@@ -23,22 +29,31 @@ class ShortcutDialog(QDialog):
             ("Ctrl+W", "Toggle window leveling"),
             # ("Ctrl+A", "Measure area"),
             ("Ctrl+H", "Show keyboard shortcuts (this dialog)"),
-            ("M", "Measure a distance in an image:\n"
-                  "1. Left click into a planning view window.\n"
-                  "2. Move the mouse cursor to one of the two end points of the line to be measured.\n"
-                  "3. Press the M key to start measuring from the mouse cursor.\n"
-                  "4. Move the mouse cursor to the other end point of the line to be measured.\n"
-                  "5. Press the M key again to stop measuring."),
-            ("Z", "Zoom in and out of an image:\n"
-                  "1. Move the mouse cursor into the planning view window, over the image.\n"
-                  "2. Start holding the Z key to start zooming.\n"
-                  "3. While holding the Z key, hold left click and move the mouse cursor up and down to zoom in and out.\n"
-                  "4. Release left click and then the Z key to stop zooming."),
-            ("P", "Pan an image:\n"
-                  "1. Move the mouse cursor into the planning view window, over the image.\n"
-                  "2. Start holding the P key to start panning.\n"
-                  "3. While holding the P key, hold left click and move the mouse cursor to pan the image.\n"
-                  "4. Release left click and then the P key to stop panning."),
+            (
+                "M",
+                "Measure a distance in an image:\n"
+                "1. Left click into a planning view window.\n"
+                "2. Move the mouse cursor to one of the two end points of the line to be measured.\n"
+                "3. Press the M key to start measuring from the mouse cursor.\n"
+                "4. Move the mouse cursor to the other end point of the line to be measured.\n"
+                "5. Press the M key again to stop measuring.",
+            ),
+            (
+                "Z",
+                "Zoom in and out of an image:\n"
+                "1. Move the mouse cursor into the planning view window, over the image.\n"
+                "2. Start holding the Z key to start zooming.\n"
+                "3. While holding the Z key, hold left click and move the mouse cursor up and down to zoom in and out.\n"
+                "4. Release left click and then the Z key to stop zooming.",
+            ),
+            (
+                "P",
+                "Pan an image:\n"
+                "1. Move the mouse cursor into the planning view window, over the image.\n"
+                "2. Start holding the P key to start panning.\n"
+                "3. While holding the P key, hold left click and move the mouse cursor to pan the image.\n"
+                "4. Release left click and then the P key to stop panning.",
+            ),
         ]
 
         # Create a table to display the shortcuts
@@ -60,7 +75,9 @@ class ShortcutDialog(QDialog):
 
         # Align the table headers to the left
         header = table.horizontalHeader()
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         # Resize the table to fit its contents, and add padding
         for row in range(table.rowCount()):
@@ -69,16 +86,21 @@ class ShortcutDialog(QDialog):
                 table.setRowHeight(row, table.rowHeight(row) + 50)
         table.resizeColumnsToContents()
         for column in range(table.columnCount()):
-            table.setColumnWidth(column, table.columnWidth(column) + 20)  # Adding extra 20 pixels
+            table.setColumnWidth(
+                column, table.columnWidth(column) + 20
+            )  # Adding extra 20 pixels
 
         # Create the layout for the dialog
         layout = QVBoxLayout()
         layout.addWidget(table)
 
         # Calculate the minimum size of the dialog to fit the table
-        table_width = sum(table.columnWidth(column) for column in range(table.columnCount()))
-        self.setMinimumSize(table_width + 50, table.verticalHeader().length() + 50)  # Adding padding
+        table_width = sum(
+            table.columnWidth(column) for column in range(table.columnCount())
+        )
+        self.setMinimumSize(
+            table_width + 50, table.verticalHeader().length() + 50
+        )  # Adding padding
 
         # Set the layout for the dialog
         self.setLayout(layout)
-

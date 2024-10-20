@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QLabel,
     QComboBox,
-    QPushButton
+    QPushButton,
 )
 
 from typing import Optional
@@ -36,7 +36,7 @@ class ScanParametersWidget(QWidget):
     @property
     def parameterFormLayout(self):
         return self.scanParametersTabWidget.parameterFormLayout
-    
+
     @property
     def stackParametersFormLayout(self):
         return self.scanParametersTabWidget.stackParametersFormLayout
@@ -93,10 +93,11 @@ class ScanParametersTabWidget(QTabWidget):
     @property
     def parameterFormLayout(self):
         return self.parameterTab.parameterFormLayout
-    
+
     @property
     def stackParametersFormLayout(self):
         return self.stackParametersTab.stackParametersFormLayout
+
 
 class StackParametersTab(QScrollArea):
     def __init__(self):
@@ -284,6 +285,7 @@ class ParameterFormLayout(QVBoxLayout):
                 elif isinstance(editor, QComboBox):
                     editor.setCurrentIndex(0)
 
+
 class StackParametersFormLayout(QVBoxLayout):
     stackSignal = pyqtSignal(object)
 
@@ -299,9 +301,9 @@ class StackParametersFormLayout(QVBoxLayout):
     def get_stacks_params(self) -> dict:
         return {
             "nr_of_stacks": self.nr_of_stacks,
-            "selected_stack_index": self.selected_stack_index
+            "selected_stack_index": self.selected_stack_index,
         }
-    
+
     def delete_stack_event(self, new_stack_index, nr_of_stacks):
         # TODO: disable delete stack button when only one stack is left
         self.editor.clear()
@@ -312,9 +314,12 @@ class StackParametersFormLayout(QVBoxLayout):
         self.editor.setCurrentIndex(new_stack_index)
         if nr_of_stacks == 1:
             self.delete_stack_btn.setDisabled(True)
-    
+
     def set_stacks_params(self, params: dict) -> dict:
-        if params.get("nr_of_stacks") is not None and params.get("selected_stack_index") is not None:
+        if (
+            params.get("nr_of_stacks") is not None
+            and params.get("selected_stack_index") is not None
+        ):
             nr_of_stacks = params["nr_of_stacks"]
             stack_indices = [str(stack_inx) for stack_inx in range(nr_of_stacks)]
             self.selected_stack_index = params["selected_stack_index"]
@@ -327,16 +332,16 @@ class StackParametersFormLayout(QVBoxLayout):
             self.editor.addItems(stack_indices)
             self.editor.setCurrentIndex(params["selected_stack_index"])
             # self.stack_change_handle(self.editor)
-    
+
     def createForm(self) -> None:
         parameter_layout = QGridLayout()
-        stack_indices_options = [str(stack_inx) for stack_inx in range(self.nr_of_stacks)]
+        stack_indices_options = [
+            str(stack_inx) for stack_inx in range(self.nr_of_stacks)
+        ]
         editor = QComboBox()
         editor.addItems(stack_indices_options)
         editor.setCurrentIndex(self.selected_stack_index)
-        editor.currentIndexChanged.connect(
-            lambda: self.stack_change_handle(editor)
-        )
+        editor.currentIndexChanged.connect(lambda: self.stack_change_handle(editor))
 
         parameter_layout.addWidget(
             QLabel("Stack index"), 0, 0, Qt.AlignmentFlag.AlignLeft
@@ -357,13 +362,13 @@ class StackParametersFormLayout(QVBoxLayout):
         )
         self.addSpacerItem(spacer)
         self.editor = editor
-        
+
         add_stack_button = PrimaryActionButton("Add stack")
         add_stack_button.clicked.connect(self.add_stack_handle)
         delete_stack_button = PrimaryActionButton("Delete stack")
-        delete_stack_button.clicked.connect(lambda: self.stackSignal.emit(
-            {"event": EventEnum.DELETE_STACK}
-        ))
+        delete_stack_button.clicked.connect(
+            lambda: self.stackSignal.emit({"event": EventEnum.DELETE_STACK})
+        )
         self.delete_stack_btn = delete_stack_button
         if self.nr_of_stacks == 1:
             delete_stack_button.setDisabled(True)
@@ -383,4 +388,9 @@ class StackParametersFormLayout(QVBoxLayout):
     def stack_change_handle(self, editor):
         stack_indices = [str(stack_inx) for stack_inx in range(self.nr_of_stacks)]
         self.selected_stack_index = editor.currentIndex()
-        self.stackSignal.emit({"event": EventEnum.STACK_CHANGED, "stack_index": int(stack_indices[editor.currentIndex()])})
+        self.stackSignal.emit(
+            {
+                "event": EventEnum.STACK_CHANGED,
+                "stack_index": int(stack_indices[editor.currentIndex()]),
+            }
+        )

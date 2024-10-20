@@ -157,7 +157,7 @@ class Ui_MainWindow(QMainWindow):
     @property
     def parameterFormLayout(self):
         return self._scanParametersWidget.parameterFormLayout
-    
+
     @property
     def stackParameterFormLayout(self):
         return self._scanParametersWidget.stackParametersFormLayout
@@ -311,7 +311,8 @@ class Ui_MainWindow(QMainWindow):
             "_parameterFormLayout_params", self.parameterFormLayout.save_state()
         )
         settings.setValue(
-            "_stackParameterFormLayout_params", self.stackParameterFormLayout.get_stacks_params()
+            "_stackParameterFormLayout_params",
+            self.stackParameterFormLayout.get_stacks_params(),
         )
 
         # UI labels
@@ -349,7 +350,10 @@ class Ui_MainWindow(QMainWindow):
             settings.value("_parameterFormLayout_params", type=dict)
         )
         self.stackParameterFormLayout.set_stacks_params(
-            {"nr_of_stacks": self.scanner.active_scan_item.get_number_of_stacks(), "selected_stack_index": 0}
+            {
+                "nr_of_stacks": self.scanner.active_scan_item.get_number_of_stacks(),
+                "selected_stack_index": 0,
+            }
             # can't restore stack parameters option values from settings as settings don't restore the previously selected scan item
             # settings.value("_stackParameterFormLayout_params", type=dict)
         )
@@ -359,9 +363,7 @@ class Ui_MainWindow(QMainWindow):
             settings.value("examinationNameLabel", "", type=str)
         )
         self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
-        self.scanEtaLabel.setText(
-            "Time Remaining: 00:00"
-        )
+        self.scanEtaLabel.setText("Time Remaining: 00:00")
 
         # AcquiredSeries widgets
         self.scanPlanningWindow1.setAcquiredSeries(

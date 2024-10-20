@@ -8,7 +8,7 @@ class ExportScanItemDialog(QDialog):
         super().__init__()
         self.setWindowTitle("Export scan item")
 
-    def open_file_dialog(self, save = True) -> str | None:
+    def open_file_dialog(self, save=True) -> str | None:
         if save:
             file_name, _ = QFileDialog.getSaveFileName(
                 self,

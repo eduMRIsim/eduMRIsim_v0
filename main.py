@@ -58,7 +58,9 @@ class App(QApplication):
         self.main_view.update_UI()
         self.main_view.show()
 
-        self.menu_bar = MenuBar(self.main_view, self.main_controller, self.load_examination)
+        self.menu_bar = MenuBar(
+            self.main_view, self.main_controller, self.load_examination
+        )
         # self.setup_menu_bar()
 
     def start_new_examination(self):
@@ -91,9 +93,7 @@ class App(QApplication):
             "Save session", self.main_controller.export_examination
         )
 
-        session_section.add_action(
-            "Load session", self.load_examination
-        )
+        session_section.add_action("Load session", self.load_examination)
 
         save_session_shortcut = QShortcut("Ctrl+S", self.main_view)
         save_session_shortcut.activated.connect(self.main_controller.export_examination)
@@ -115,7 +115,11 @@ class App(QApplication):
         )
 
         switch_modes_shortcut = QShortcut("Ctrl+M", self.main_view)
-        switch_modes_shortcut.activated.connect(lambda: self.main_view._stackedLayout.setCurrentIndex(1 if self.main_view._stackedLayout.currentIndex() == 0 else 0))
+        switch_modes_shortcut.activated.connect(
+            lambda: self.main_view._stackedLayout.setCurrentIndex(
+                1 if self.main_view._stackedLayout.currentIndex() == 0 else 0
+            )
+        )
 
         # Tools section
         tools_section = menu_bar.add_section("Tools")

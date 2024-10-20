@@ -38,11 +38,13 @@ class ScanProgressInfoFrame(QFrame):
 
     def _createEtaLabel(self):
         # Create a horizontal layout to hold the ETA label
-        scanEtaLabelLayout= QHBoxLayout()
+        scanEtaLabelLayout = QHBoxLayout()
 
         # Create a QLabel to display the ETA
         self._scanEtaLabel = QLabel()
-        self._scanEtaLabel.setText("Time Remaining: 00:00")  # Initialize with default text
+        self._scanEtaLabel.setText(
+            "Time Remaining: 00:00"
+        )  # Initialize with default text
         self._scanEtaLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the text
 
         # Optionally, set a custom stylesheet for the label to customize its appearance
@@ -90,4 +92,3 @@ class ScanProgressInfoFrame(QFrame):
     def on_scan_finished(self):
         """Slot to handle scan finished signal."""
         self._startScanButton.setText("Start Scan")
-
