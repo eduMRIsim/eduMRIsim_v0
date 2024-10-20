@@ -347,11 +347,11 @@ class GridCell(ZoomableView):
         self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
 
         self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                self.color_scale_label.y() - 5)
+                                  self.color_scale_label.y() - 5)
         self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+                                  self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
         self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                self.color_scale_label.y() + self.color_scale_label.height() - 20)
+                                  self.color_scale_label.y() + self.color_scale_label.height() - 20)
 
         self.min_value_label.adjustSize()
         self.mid_value_label.adjustSize()
@@ -359,30 +359,35 @@ class GridCell(ZoomableView):
 
         
     def updateColorScale(self, window_center, window_width):
-        """Update the color scale for window and level adjustments and set the text labels."""
+        """Updates the color scale bar based on the current color scale and window/level values."""
         
         if window_center is None:
             window_center = np.mean(self.array) if self.array is not None else 128
         if window_width is None:
             window_width = np.max(self.array) - np.min(self.array) if self.array is not None else 256
 
-        window_center = max(0, window_center)
-        window_width = max(1, window_width)
+        min_value = max(0, window_center - window_width / 2)
+        max_value = max(0, window_center + window_width / 2)
 
-        min_value = max(0, window_center - (window_width / 2))
-        max_value = max(0, window_center + (window_width / 2))
-
+        # Create pixmap for color scale bar
         pixmap = QPixmap(self.color_scale_label.size())
         pixmap.fill(Qt.GlobalColor.transparent)
-
         painter = QPainter(pixmap)
         gradient = QLinearGradient(0, 0, 0, self.color_scale_label.height())
 
-        min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
-        max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
-
-        gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
-        gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
+        if self.color_scale == 'bw':
+            min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
+            max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
+            gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
+            gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
+        
+        elif self.color_scale == 'rgb':
+            # Use the 'viridis' colormap to create the color gradient
+            cmap = plt.get_cmap('viridis')
+            for i in np.linspace(0, 1, 100):
+                color = cmap(i)
+                qcolor = QColor(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
+                gradient.setColorAt(i, qcolor)
 
         painter.fillRect(0, 0, self.color_scale_label.width(), self.color_scale_label.height(), gradient)
         painter.end()
@@ -403,35 +408,42 @@ class GridCell(ZoomableView):
             raise ValueError("Invalid color scale. Use 'bw' or 'rgb'.")
 
     def _displayArray(self, window_center=None, window_width=None):
+        """Display the image data with appropriate color scale."""
         if self.array is None:
             return
-
-        array_norm = (self.array[:, :] - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
         
+        # Normalize array
+        array_norm = (self.array - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
+        
+        # Update the color scale bar
         self.updateColorScale(window_center, window_width)
 
+        # Calculate window/level
         if window_center is None or window_width is None:
             window_center = np.mean(self.array)
             window_width = np.max(self.array) - np.min(self.array)
 
-        min_window = window_center - (window_width / 2)
-        max_window = window_center + (window_width / 2)
+        min_window = window_center - window_width / 2
+        max_window = window_center + window_width / 2
 
         array_clamped = np.clip(self.array, min_window, max_window)
         array_norm = (array_clamped - min_window) / (max_window - min_window)
 
         if self.color_scale == 'bw':
+            # Grayscale
             array_8bit = (array_norm * 255).astype(np.uint8)
             qimage = QImage(array_8bit.data, array_8bit.shape[1], array_8bit.shape[0], array_8bit.shape[1], QImage.Format.Format_Grayscale8)
-
         elif self.color_scale == 'rgb':
-            color_mapped_array = plt.get_cmap('viridis')(array_norm)[:, :, :3] 
+            # Apply colormap (viridis) to RGB
+            color_mapped_array = plt.get_cmap('viridis')(array_norm)[:, :, :3]  # Get RGB values from viridis
             array_rgb = (color_mapped_array * 255).astype(np.uint8)
             qimage = QImage(array_rgb.data, array_rgb.shape[1], array_rgb.shape[0], array_rgb.shape[1] * 3, QImage.Format.Format_RGB888)
 
+        # Set pixmap to display image
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
 
+        # Adjust view
         self.pixmap_item.setPos(0, 0)
         self.scene.setSceneRect(0, 0, qimage.width(), qimage.height())
         self.resetTransform()
