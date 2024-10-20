@@ -242,7 +242,7 @@ class ExportImageDialog(QDialog):
                 fs.add(ds)
 
                 if os.path.exists(
-                        os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")
+                    os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")
                 ):
                     fs.write()
                     log.info(f"Wrote to existing DICOMDIR file to {dicomdir_path}")
@@ -310,7 +310,7 @@ class ExportImageDialog(QDialog):
                     fs.add(ds)
 
                     if os.path.exists(
-                            os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")
+                        os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")
                     ):
                         fs.write()
                         log.info(f"Wrote to existing DICOMDIR file to {dicomdir_path}")
