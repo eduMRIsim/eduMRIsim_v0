@@ -92,7 +92,9 @@ class MainController:
         self.ui.startScanButton.clicked.connect(self.handle_startScanButton_clicked)
         self.scanner.scan_completed.connect(self.handle_scan_completed)
 
-        self.ui.importScanItemButton.clicked.connect(self.handle_importScanItemButton_clicked)
+        self.ui.importScanItemButton.clicked.connect(
+            self.handle_importScanItemButton_clicked
+        )
 
         # Connect signals to slots, i.e., define what happens when the user interacts with the UI by connecting
         # signals from UI to functions that handle the signals.
@@ -150,9 +152,15 @@ class MainController:
         )
 
         # change stack event from scan planning window
-        self.ui.scanPlanningWindow1.stackSignal.connect(self.handleStackActionFromWindow)
-        self.ui.scanPlanningWindow2.stackSignal.connect(self.handleStackActionFromWindow)
-        self.ui.scanPlanningWindow3.stackSignal.connect(self.handleStackActionFromWindow)
+        self.ui.scanPlanningWindow1.stackSignal.connect(
+            self.handleStackActionFromWindow
+        )
+        self.ui.scanPlanningWindow2.stackSignal.connect(
+            self.handleStackActionFromWindow
+        )
+        self.ui.scanPlanningWindow3.stackSignal.connect(
+            self.handleStackActionFromWindow
+        )
 
         self.ui.scanPlanningWindow2.dropEventSignal.connect(
             self.handle_scanPlanningWindow2_dropped
@@ -232,16 +240,24 @@ class MainController:
         )
 
         self.ui.scannedImageFrame.export_examination_with_dicomdir_action.triggered.connect(
-            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(
+                self.ui.scanner.examination
+            )
         )
         self.ui.scanPlanningWindow1.export_examination_with_dicomdir_action.triggered.connect(
-            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(
+                self.ui.scanner.examination
+            )
         )
         self.ui.scanPlanningWindow2.export_examination_with_dicomdir_action.triggered.connect(
-            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(
+                self.ui.scanner.examination
+            )
         )
         self.ui.scanPlanningWindow3.export_examination_with_dicomdir_action.triggered.connect(
-            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(
+                self.ui.scanner.examination
+            )
         )
 
     def prepare_model_data(self):
@@ -341,12 +357,22 @@ class MainController:
             self.ui.scanPlanningWindow2.delete_stack(delete_stack_index)
             self.ui.scanPlanningWindow3.delete_stack(delete_stack_index)
             # update stack parameters ui
-            index_position = self.scanner.active_scan_item.get_order_position_of_active_stack()
-            self.ui.stackParameterFormLayout.delete_stack_event(index_position, len(self.scanner.active_scan_item.scan_parameters))
+            index_position = (
+                self.scanner.active_scan_item.get_order_position_of_active_stack()
+            )
+            self.ui.stackParameterFormLayout.delete_stack_event(
+                index_position, len(self.scanner.active_scan_item.scan_parameters)
+            )
             # change active stacks in scan planning windows to other stack
-            self.ui.scanPlanningWindow1.change_stack(self.scanner.active_scan_item.selected_stack_index)
-            self.ui.scanPlanningWindow2.change_stack(self.scanner.active_scan_item.selected_stack_index)
-            self.ui.scanPlanningWindow3.change_stack(self.scanner.active_scan_item.selected_stack_index)
+            self.ui.scanPlanningWindow1.change_stack(
+                self.scanner.active_scan_item.selected_stack_index
+            )
+            self.ui.scanPlanningWindow2.change_stack(
+                self.scanner.active_scan_item.selected_stack_index
+            )
+            self.ui.scanPlanningWindow3.change_stack(
+                self.scanner.active_scan_item.selected_stack_index
+            )
 
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()
@@ -395,8 +421,8 @@ class MainController:
 
     def populate_stackFormLayout(self):
         stacks_params = {
-            "nr_of_stacks": len(self.scanner.active_scan_item.scan_parameters), 
-            "selected_stack_index": 0
+            "nr_of_stacks": len(self.scanner.active_scan_item.scan_parameters),
+            "selected_stack_index": 0,
         }
         self.ui.stackParameterFormLayout.set_stacks_params(stacks_params)
 
@@ -413,14 +439,14 @@ class MainController:
             self.ui.update_UI()
             # handle drops
             self.ui.gridViewingWindow.connect_drop_signals(self.handle_dropped_cells)
- 
+
     def handle_importScanItemButton_clicked(self):
         path = self.export_scanitem_dialog.open_file_dialog(save=False)
 
         # get filename from path
         filename = path.split("/")[-1].split(".")[0]
 
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             scan_parameters = json.load(f)
 
         self.scanner.scanlist.add_scanlist_element(filename, scan_parameters[0])
@@ -433,7 +459,7 @@ class MainController:
         # get filename from path
         filename = path.split("/")[-1].split(".")[0]
 
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             scan_parameters = json.load(f)
 
         self.scanner.scanlist.add_scanlist_element(filename, scan_parameters[0])
@@ -498,10 +524,12 @@ class MainController:
         params = self.scanner.active_scanlist_element.scan_item.scan_parameters
         path = self.export_scanitem_dialog.open_file_dialog()
 
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(params, f)
 
-        log.info(f"Item {self.scanner.active_scanlist_element.scan_item.name} parameters exported")
+        log.info(
+            f"Item {self.scanner.active_scanlist_element.scan_item.name} parameters exported"
+        )
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
@@ -575,7 +603,7 @@ class MainController:
         self.ui.state = UI_state.ExamState()
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
-            
+
     def handle_changeColorMapping(self, mapping):
         """
         Changes color mapping to("bw" or "rgb").
@@ -585,8 +613,12 @@ class MainController:
             for col in range(len(self.ui.gridViewingWindow.grid_cells[row])):
                 grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
                 if grid_cell is not None:
-                    grid_cell.setColorScale(mapping)  # Apply the color scale to the grid cell
-                    log.info(f"Color mapping changed to {mapping} for GridCell ({row}, {col})")
+                    grid_cell.setColorScale(
+                        mapping
+                    )  # Apply the color scale to the grid cell
+                    log.info(
+                        f"Color mapping changed to {mapping} for GridCell ({row}, {col})"
+                    )
         log.info(f"Color mapping changed to {mapping} for all GridCells.")
 
     def handle_viewingPortExport_triggered(self, index: int):
@@ -666,10 +698,10 @@ class MainController:
             self.ui._scannedImageFrame.measuring_enabled = False
             self.ui._scannedImageFrame.measure.hide_items()
             log.warn("Measuring disabled")
-            
+
     def handle_toggleWindowLevelButtonClicked(self):
         """Toggle the window-level mode"""
-        return #not used
+        return  # not used
 
     def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
         """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.

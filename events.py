@@ -37,12 +37,6 @@ class EventEnum(Enum):
     )  # Event for when the scan parameters of a scan item are changed
 
     # stack events
-    STACK_CHANGED = (
-        auto()
-    )
-    ADD_STACK = (
-        auto()
-    )
-    DELETE_STACK = (
-        auto()
-    )
+    STACK_CHANGED = auto()
+    ADD_STACK = auto()
+    DELETE_STACK = auto()

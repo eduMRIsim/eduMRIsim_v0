@@ -12,7 +12,7 @@ from PyQt6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
-    QLinearGradient
+    QLinearGradient,
 )
 from PyQt6.QtWidgets import (
     QGraphicsScene,
@@ -148,13 +148,19 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
-        self.export_image_with_dicomdir_action = QAction("Export image with DICOMDIR...")
+        self.export_image_with_dicomdir_action = QAction(
+            "Export image with DICOMDIR..."
+        )
         self.right_click_menu.addAction(self.export_image_with_dicomdir_action)
 
-        self.export_series_with_dicomdir_action = QAction("Export series with DICOMDIR...")
+        self.export_series_with_dicomdir_action = QAction(
+            "Export series with DICOMDIR..."
+        )
         self.right_click_menu.addAction(self.export_series_with_dicomdir_action)
 
-        self.export_examination_with_dicomdir_action = QAction("Export examination with DICOMDIR...")
+        self.export_examination_with_dicomdir_action = QAction(
+            "Export examination with DICOMDIR..."
+        )
         self.right_click_menu.addAction(self.export_examination_with_dicomdir_action)
 
         self.scene.installEventFilter(self)
@@ -246,14 +252,24 @@ class AcquiredSeriesViewer2D(ZoomableView):
         #     super().eventFilter(source, event)
         #     return True
 
-        if event.type() == QEvent.Type.GraphicsSceneMouseMove and self.get_stack_for_stack_id(self.selected_stack_indx) is not None:
+        if (
+            event.type() == QEvent.Type.GraphicsSceneMouseMove
+            and self.get_stack_for_stack_id(self.selected_stack_indx) is not None
+        ):
             # check if the stack is non
             # if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
             #     return RuntimeError("No stack found for selected stack index")
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
-            if self.get_stack_for_stack_id(self.selected_stack_indx).volume_display and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_rotating:
+            if (
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_rotating
+            ):
                 # self.scan_volume_display.handle_scene_mouse_move(event)
-                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.handle_scene_mouse_move(event)
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.handle_scene_mouse_move(event)
                 return True
 
             if (
@@ -267,11 +283,21 @@ class AcquiredSeriesViewer2D(ZoomableView):
                     self.selected_stack_indx
                 ).volume_display.scale_handle_move_event_handler(event)
                 return True
-        elif event.type() == QEvent.Type.GraphicsSceneMouseRelease and self.get_stack_for_stack_id(self.selected_stack_indx) is not None:
+        elif (
+            event.type() == QEvent.Type.GraphicsSceneMouseRelease
+            and self.get_stack_for_stack_id(self.selected_stack_indx) is not None
+        ):
             # if self.scan_volume_display and self.scan_volume_display.is_rotating:
-            if self.get_stack_for_stack_id(self.selected_stack_indx).volume_display and self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.is_rotating:
+            if (
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_rotating
+            ):
                 # self.scan_volume_display.handle_scene_mouse_release(event)
-                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display.handle_scene_mouse_release(event)
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.handle_scene_mouse_release(event)
             # if (
             #     self.scan_volume_display is not None
             #     and self.scan_volume_display.is_being_scaled
@@ -327,28 +353,36 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.scan_plane_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
+
     def position_color_scale_elements(self):
         """Ensure the color scale and labels are positioned correctly."""
-        padding = 20  
+        padding = 20
 
-        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+        self.color_scale_label.move(
+            padding, self.height() // 2 - self.color_scale_label.height() // 2
+        )
 
-        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                self.color_scale_label.y() - 5)
-        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
-        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                self.color_scale_label.y() + self.color_scale_label.height() - 20)
+        self.min_value_label.move(
+            self.color_scale_label.x() + self.color_scale_label.width() + 5,
+            self.color_scale_label.y() - 5,
+        )
+        self.mid_value_label.move(
+            self.color_scale_label.x() + self.color_scale_label.width() + 5,
+            self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10,
+        )
+        self.max_value_label.move(
+            self.color_scale_label.x() + self.color_scale_label.width() + 5,
+            self.color_scale_label.y() + self.color_scale_label.height() - 20,
+        )
 
         self.min_value_label.adjustSize()
         self.mid_value_label.adjustSize()
         self.max_value_label.adjustSize()
 
-
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
-        
+
         if self.array is not None:
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
@@ -405,8 +439,12 @@ class AcquiredSeriesViewer2D(ZoomableView):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
             # self.scan_volume.clamp_to_scanner_dimensions()
             # self._update_scan_volume_display()
-            self.get_scan_volume_for_stack_index(self.selected_stack_indx).clamp_to_scanner_dimensions()
-            self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).clamp_to_scanner_dimensions()
+            self._update_scan_volume_display(
+                self.get_stack_for_stack_id(self.selected_stack_indx)
+            )
             # self.viewport().update()
             # QApplication.processEvents()
 
@@ -499,7 +537,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
             )
             self.update_buttons_visibility()
 
-    def setAcquiredSeries(self, acquired_series: AcquiredSeries, completed_scan = False):
+    def setAcquiredSeries(self, acquired_series: AcquiredSeries, completed_scan=False):
         if acquired_series is not None:
             self.acquired_series = acquired_series
             self.displayed_image_index = 0
@@ -518,7 +556,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
                 self.acquired_series.list_acquired_images[self.displayed_image_index],
                 self.acquired_series.scan_plane,
                 self.acquired_series.series_name,
-                completed_scan
+                completed_scan,
             )
         else:
             self.acquired_series = None
@@ -536,7 +574,13 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.setAcquiredSeries(acquired_series)
         self.only_display_image = True
 
-    def setDisplayedImage(self, image: AcquiredImage, scan_plane="Unknown", series_name="Scan", completed=False):
+    def setDisplayedImage(
+        self,
+        image: AcquiredImage,
+        scan_plane="Unknown",
+        series_name="Scan",
+        completed=False,
+    ):
         previous_scan_plane = None
         if image is not None:
             previous_scan_plane = image.image_geometry.plane
@@ -584,8 +628,14 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.series_name_label.setText("")
 
         self._displayArray(self.window_center, self.window_width)
-        if self.only_display_image != True and self.displayed_image is not None and completed is not True:
-            self._update_scan_volume_display(self.get_stack_for_stack_id(self.selected_stack_indx))
+        if (
+            self.only_display_image != True
+            and self.displayed_image is not None
+            and completed is not True
+        ):
+            self._update_scan_volume_display(
+                self.get_stack_for_stack_id(self.selected_stack_indx)
+            )
             # if scan plane of new image is different, then we need to update also all stacks
             # if previous_scan_plane != self.displayed_image.image_geometry.plane:
             #     self.update_all_stack_displays()
@@ -710,9 +760,21 @@ class AcquiredSeriesViewer2D(ZoomableView):
             # for vol in self.scan_volumes:
             #     if vol.stack_index == stack_item.stack_index:
             #         scan_item_volume = vol
-            scan_item_volume = self.get_scan_volume_for_stack_index(stack_item.stack_index)
-            (intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords) = scan_item_volume.compute_intersection_with_acquired_image(self.displayed_image)
-            stack_item.update_objects_with_pixmap_coords(intersection_volume_edges_in_pixmap_coords, intersection_middle_edges_in_pixamp_coords, intersection_slice_edges_in_pixamp_coords)
+            scan_item_volume = self.get_scan_volume_for_stack_index(
+                stack_item.stack_index
+            )
+            (
+                intersection_volume_edges_in_pixmap_coords,
+                intersection_middle_edges_in_pixamp_coords,
+                intersection_slice_edges_in_pixamp_coords,
+            ) = scan_item_volume.compute_intersection_with_acquired_image(
+                self.displayed_image
+            )
+            stack_item.update_objects_with_pixmap_coords(
+                intersection_volume_edges_in_pixmap_coords,
+                intersection_middle_edges_in_pixamp_coords,
+                intersection_slice_edges_in_pixamp_coords,
+            )
         else:
             if stack_item is not None:
                 stack_item.clear_objects()

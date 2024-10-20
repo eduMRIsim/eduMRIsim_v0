@@ -9,7 +9,7 @@ from PyQt6.QtGui import (
     QDropEvent,
     QPen,
     QAction,
-    QLinearGradient
+    QLinearGradient,
 )
 from PyQt6.QtWidgets import (
     QFrame,
@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
     QGraphicsTextItem,
     QMenu,
     QLabel,
-    QCheckBox
+    QCheckBox,
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -88,7 +88,7 @@ class gridViewingWindowLayout(QFrame):
         else:
             log.error(f"Invalid cell access: row {i}, column {j}.")
             return None
-        
+
     def show_checkboxes(self):
         """Adds checkboxes to all cells in the grid."""
         for row in self.grid_cells:
@@ -100,10 +100,10 @@ class gridViewingWindowLayout(QFrame):
         for row in self.grid_cells:
             for cell in row:
                 cell.checkbox.setChecked(False)
-                cell.set_visibility_checkbox(False) 
+                cell.set_visibility_checkbox(False)
 
     def get_checked_cells(self):
-        """Stores a list of the checked cells. """
+        """Stores a list of the checked cells."""
         checked_cells = []
 
         for i in range(len(self.grid_cells)):
@@ -114,9 +114,9 @@ class gridViewingWindowLayout(QFrame):
                     log.debug(f"Checkbox is checked in cell [{i},{j}]")
 
         return checked_cells
-    
+
     def start_contrast_linking(self):
-        """Synchronizes window_levelling for the checked cells. """
+        """Synchronizes window_levelling for the checked cells."""
         linked_cells = self.get_checked_cells()
         self.linked_cells = []
         for i, j in linked_cells:
@@ -133,11 +133,13 @@ class gridViewingWindowLayout(QFrame):
                 # connect all cells to the same signal
                 if cell_j != cell_i:
                     cell_i.contrastChanged.connect(
-                        lambda window_center, window_width, cell = cell_j: self.synchronize_window_levelling(window_center, window_width, cell)
-                    ) 
-        
+                        lambda window_center, window_width, cell=cell_j: self.synchronize_window_levelling(
+                            window_center, window_width, cell
+                        )
+                    )
+
         log.info(f"Cells {len(linked_cells)} are contrast linked.")
-    
+
     def synchronize_window_levelling(self, window_center, window_width, cell):
         """Synchronizes the window levelling for all the linked cells ."""
         cell.window_center = window_center
@@ -145,18 +147,18 @@ class gridViewingWindowLayout(QFrame):
 
         cell._displayArray(window_center, window_width)
         cell.updateColorScale(window_center, window_width)
-    
+
     def stop_contrast_linking(self):
         """Stops contrast linking for the selected cells."""
         linked_cells = self.get_checked_cells()
-        
+
         if not linked_cells:
             log.warn("No cells selected for contrast linking!.")
             return
 
         for cell in self.linked_cells:
             try:
-                cell.contrastChanged.disconnect() 
+                cell.contrastChanged.disconnect()
             except Exception as e:
                 pass
 
@@ -165,11 +167,13 @@ class gridViewingWindowLayout(QFrame):
                 self.grid_cell = self.grid_cells[i][j]
                 self.grid_cell.resetTransform()
                 if self.grid_cell.pixmap_item:
-                    self.grid_cell.fitInView(cell.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+                    self.grid_cell.fitInView(
+                        cell.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio
+                    )
                     self.grid_cell.centerOn(cell.pixmap_item)
-                else: 
+                else:
                     log.error("The cell has no pixmap item. ")
-        
+
         log.info(f"Stopped contrast linking for {len(self.linked_cells)} cells.")
         self.linked_cells = []
         self.hide_checkboxes()
@@ -315,25 +319,27 @@ class GridCell(ZoomableView):
         self.row = row  # row index
         self.col = col  # col index
         self.parent_layout = parent_layout  # reference to the parent layout
-        
+
         # window level variables
         self.window_center = None
         self.window_width = None
         self.leveling_enabled = False
         self.previous_mouse_position = None
-        
+
         # color scale bar
-        self.color_scale = 'bw'
+        self.color_scale = "bw"
         self.color_scale_label = QLabel(self)
         self.color_scale_label.setFixedSize(20, 200)
-        self.color_scale_label.setStyleSheet("background: black; border: 1px solid white")
+        self.color_scale_label.setStyleSheet(
+            "background: black; border: 1px solid white"
+        )
         self.min_value_label = QLabel(self)
         self.min_value_label.setStyleSheet("color: white; font-size: 10px;")
         self.mid_value_label = QLabel(self)
         self.mid_value_label.setStyleSheet("color: white; font-size: 10px;")
         self.max_value_label = QLabel(self)
         self.max_value_label.setStyleSheet("color: white; font-size: 10px;")
-        self.position_color_scale_elements() 
+        self.position_color_scale_elements()
 
         # pixmap graphics
         self.scene = QGraphicsScene(self)
@@ -367,18 +373,18 @@ class GridCell(ZoomableView):
 
         # checkboxes for geometry linking
         self.checkbox = QCheckBox("Link", self)
-        self.checkbox.setVisible(False) # invisible by default
+        self.checkbox.setVisible(False)  # invisible by default
         self.checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_checkbox_position()
-        
+
     def set_visibility_checkbox(self, visible):
         """Show or hide the checkbox."""
         self.checkbox.setVisible(visible)
         if visible:
             self.update_checkbox_position()
-        
+
     def update_checkbox_position(self):
-        """Ensures the checkboxes are positioned in the right bottom corner. """
+        """Ensures the checkboxes are positioned in the right bottom corner."""
         if self.checkbox.isVisible():
             checkbox_height = self.checkbox.size().height()
             checkbox_width = self.checkbox.size().width()
@@ -387,8 +393,8 @@ class GridCell(ZoomableView):
             checkbox_width = 0
 
         padding = 10
-        x_pos = self.width() - checkbox_width- padding 
-        y_pos = self.height() - checkbox_height - padding 
+        x_pos = self.width() - checkbox_width - padding
+        y_pos = self.height() - checkbox_height - padding
         self.checkbox.move(x_pos, y_pos)
         self.checkbox.adjustSize()
 
@@ -440,7 +446,7 @@ class GridCell(ZoomableView):
         self.centerOn(self.pixmap_item)
         self.update_checkbox_position()
         self.position_color_scale_elements()
-        
+
     def toggle_window_level_mode(self):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
@@ -450,37 +456,48 @@ class GridCell(ZoomableView):
             if self.window_center is None or self.window_width is None:
                 self.window_center = np.mean(self.array)
                 self.window_width = np.max(self.array) - np.min(self.array)
-            
+
             self.position_color_scale_elements()
-            
+
         else:
             log.info("Window-level mode disabled")
 
     def position_color_scale_elements(self):
         """Ensure the color scale and labels are positioned correctly."""
-        padding = 20  
+        padding = 20
 
-        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+        self.color_scale_label.move(
+            padding, self.height() // 2 - self.color_scale_label.height() // 2
+        )
 
-        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                  self.color_scale_label.y() - 5)
-        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                  self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
-        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
-                                  self.color_scale_label.y() + self.color_scale_label.height() - 20)
+        self.min_value_label.move(
+            self.color_scale_label.x() + self.color_scale_label.width() + 5,
+            self.color_scale_label.y() - 5,
+        )
+        self.mid_value_label.move(
+            self.color_scale_label.x() + self.color_scale_label.width() + 5,
+            self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10,
+        )
+        self.max_value_label.move(
+            self.color_scale_label.x() + self.color_scale_label.width() + 5,
+            self.color_scale_label.y() + self.color_scale_label.height() - 20,
+        )
 
         self.min_value_label.adjustSize()
         self.mid_value_label.adjustSize()
         self.max_value_label.adjustSize()
 
-        
     def updateColorScale(self, window_center, window_width):
         """Updates the color scale bar based on the current color scale and window/level values."""
-        
+
         if window_center is None:
             window_center = np.mean(self.array) if self.array is not None else 128
         if window_width is None:
-            window_width = np.max(self.array) - np.min(self.array) if self.array is not None else 256
+            window_width = (
+                np.max(self.array) - np.min(self.array)
+                if self.array is not None
+                else 256
+            )
 
         min_value = max(0, window_center - window_width / 2)
         max_value = max(0, window_center + window_width / 2)
@@ -491,21 +508,33 @@ class GridCell(ZoomableView):
         painter = QPainter(pixmap)
         gradient = QLinearGradient(0, 0, 0, self.color_scale_label.height())
 
-        if self.color_scale == 'bw':
+        if self.color_scale == "bw":
             min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
             max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
-            gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
-            gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
-        
-        elif self.color_scale == 'rgb':
+            gradient.setColorAt(
+                0, QColor(min_grey_value, min_grey_value, min_grey_value)
+            )
+            gradient.setColorAt(
+                1, QColor(max_grey_value, max_grey_value, max_grey_value)
+            )
+
+        elif self.color_scale == "rgb":
             # Use the 'viridis' colormap to create the color gradient
-            cmap = plt.get_cmap('viridis')
+            cmap = plt.get_cmap("viridis")
             for i in np.linspace(0, 1, 100):
                 color = cmap(i)
-                qcolor = QColor(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
+                qcolor = QColor(
+                    int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)
+                )
                 gradient.setColorAt(i, qcolor)
 
-        painter.fillRect(0, 0, self.color_scale_label.width(), self.color_scale_label.height(), gradient)
+        painter.fillRect(
+            0,
+            0,
+            self.color_scale_label.width(),
+            self.color_scale_label.height(),
+            gradient,
+        )
         painter.end()
 
         self.color_scale_label.setPixmap(pixmap)
@@ -517,7 +546,7 @@ class GridCell(ZoomableView):
         self.position_color_scale_elements()
 
     def setColorScale(self, color: str):
-        if color in ['bw', 'rgb']:
+        if color in ["bw", "rgb"]:
             self.color_scale = color
             self._displayArray(self.window_center, self.window_width)
         else:
@@ -527,10 +556,12 @@ class GridCell(ZoomableView):
         """Display the image data with appropriate color scale."""
         if self.array is None:
             return
-        
+
         # Normalize array
-        array_norm = (self.array - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
-        
+        array_norm = (self.array - np.min(self.array)) / (
+            np.max(self.array) - np.min(self.array)
+        )
+
         # Update the color scale bar
         self.updateColorScale(window_center, window_width)
 
@@ -545,15 +576,29 @@ class GridCell(ZoomableView):
         array_clamped = np.clip(self.array, min_window, max_window)
         array_norm = (array_clamped - min_window) / (max_window - min_window)
 
-        if self.color_scale == 'bw':
+        if self.color_scale == "bw":
             # Grayscale
             array_8bit = (array_norm * 255).astype(np.uint8)
-            qimage = QImage(array_8bit.data, array_8bit.shape[1], array_8bit.shape[0], array_8bit.shape[1], QImage.Format.Format_Grayscale8)
-        elif self.color_scale == 'rgb':
+            qimage = QImage(
+                array_8bit.data,
+                array_8bit.shape[1],
+                array_8bit.shape[0],
+                array_8bit.shape[1],
+                QImage.Format.Format_Grayscale8,
+            )
+        elif self.color_scale == "rgb":
             # Apply colormap (viridis) to RGB
-            color_mapped_array = plt.get_cmap('viridis')(array_norm)[:, :, :3]  # Get RGB values from viridis
+            color_mapped_array = plt.get_cmap("viridis")(array_norm)[
+                :, :, :3
+            ]  # Get RGB values from viridis
             array_rgb = (color_mapped_array * 255).astype(np.uint8)
-            qimage = QImage(array_rgb.data, array_rgb.shape[1], array_rgb.shape[0], array_rgb.shape[1] * 3, QImage.Format.Format_RGB888)
+            qimage = QImage(
+                array_rgb.data,
+                array_rgb.shape[1],
+                array_rgb.shape[0],
+                array_rgb.shape[1] * 3,
+                QImage.Format.Format_RGB888,
+            )
 
         # Set pixmap to display image
         pixmap = QPixmap.fromImage(qimage)

@@ -10,7 +10,12 @@ import os
 
 from simulator.examination import Examination
 from utils.logger import log
-from simulator.scanlist import AcquiredImage, ImageGeometry, AcquiredSeries, ScanlistElement
+from simulator.scanlist import (
+    AcquiredImage,
+    ImageGeometry,
+    AcquiredSeries,
+    ScanlistElement,
+)
 
 
 class ExportImageDialog(QDialog):
@@ -219,14 +224,17 @@ class ExportImageDialog(QDialog):
                 image_geometry: ImageGeometry = image.image_geometry
 
                 # Normalize the image data for DICOM files
-                image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(
-                    image_data
+                image_data_normalized = (
+                    ExportImageDialog._normalize_image_data_for_dicom(image_data)
                 )
 
                 # Create a FileDataset instance and set some DICOM attributes on it
                 file_meta = ExportImageDialog._create_file_meta_for_dicom()
                 ds = FileDataset(
-                    "this_is_the_file_name", {}, file_meta=file_meta, preamble=b"\0" * 128
+                    "this_is_the_file_name",
+                    {},
+                    file_meta=file_meta,
+                    preamble=b"\0" * 128,
                 )
                 self._set_dicom_attributes(
                     ds,
@@ -287,14 +295,17 @@ class ExportImageDialog(QDialog):
                     image_geometry: ImageGeometry = image.image_geometry
 
                     # Normalize the image data for DICOM files
-                    image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(
-                        image_data
+                    image_data_normalized = (
+                        ExportImageDialog._normalize_image_data_for_dicom(image_data)
                     )
 
                     # Create a FileDataset instance and set some DICOM attributes on it
                     file_meta = ExportImageDialog._create_file_meta_for_dicom()
                     ds = FileDataset(
-                        "this_is_the_file_name", {}, file_meta=file_meta, preamble=b"\0" * 128
+                        "this_is_the_file_name",
+                        {},
+                        file_meta=file_meta,
+                        preamble=b"\0" * 128,
                     )
                     self._set_dicom_attributes(
                         ds,
@@ -450,7 +461,9 @@ class ExportImageDialog(QDialog):
         ds.RescaleType = "US"  # Unspecified, since modality is MR
         ds.PixelData = image_data_normalized.tobytes()
         ds.SliceThickness = parameters["SliceThickness_mm"]
-        ds.SpacingBetweenSlices = parameters["SliceGap_mm"] + parameters["SliceThickness_mm"]  # This is referred to as "Slice gap" in the scan parameters
+        ds.SpacingBetweenSlices = (
+            parameters["SliceGap_mm"] + parameters["SliceThickness_mm"]
+        )  # This is referred to as "Slice gap" in the scan parameters
         ds.ScanningSequence = parameters[
             "ScanTechnique"
         ]  # This is referred to as "Scan technique" in the scan parameters
@@ -460,10 +473,7 @@ class ExportImageDialog(QDialog):
         ds.ImagePositionPatient = list(image_geometry.origin_LPS)
         ds.ImageOrientationPatient = image_geometry.axisX_LPS.tolist()
         ds.ImageOrientationPatient.extend(image_geometry.axisY_LPS.tolist())
-        ds.PixelSpacing = [
-            image_geometry.resX_mm,
-            image_geometry.resY_mm
-        ]
+        ds.PixelSpacing = [image_geometry.resX_mm, image_geometry.resY_mm]
         ds.PatientName = "Test^Patient"
         ds.PatientID = "PT000000"
         ds.StudyID = str(study.study_id)

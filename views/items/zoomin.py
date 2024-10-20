@@ -6,7 +6,7 @@ from utils.logger import log
 
 
 class ZoomableView(QGraphicsView):
-    contrastChanged = pyqtSignal(float, float) # signal for window levelling
+    contrastChanged = pyqtSignal(float, float)  # signal for window levelling
 
     def __init__(self):
         super().__init__()
@@ -27,7 +27,7 @@ class ZoomableView(QGraphicsView):
         self.zooming_enabled = True
         self.max_zoom_out = 0.5
         self.max_zoom_in = 10
-        #self.zoom_factor = None
+        # self.zoom_factor = None
         self.zoom_factor = 1.0
 
         # needs to be overridden in the child class
@@ -152,7 +152,9 @@ class ZoomableView(QGraphicsView):
                 self.window_width += delta.x()  # Adjust window (horizontal movement)
 
                 # Ensure window center and width do not go below minimum values
-                self.window_center = max(0, self.window_center)  # Min window center is 0
+                self.window_center = max(
+                    0, self.window_center
+                )  # Min window center is 0
                 self.window_width = max(1, self.window_width)  # Min window width is 1
 
                 self._displayArray(self.window_center, self.window_width)

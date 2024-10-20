@@ -139,7 +139,7 @@ class AcquiredImage:
         image_geometry: ImageGeometry,
         acquisition_and_content_date: str,
         acquisition_and_content_time: str,
-        stack_index: int
+        stack_index: int,
     ):
         self.image_data = image_data
         self.image_geometry = image_geometry
@@ -420,7 +420,6 @@ class ScanItem:
             # print("END OF SCAN PARAMS SETTER " + str(self._scan_parameters[0]))
             self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
-
         # TODO: handle deletion of object in _scan_parameters list or deletion of scan volume in scan volumes' list if there was not corresponding
         # parameters object in the argument with specified stack index
         indices_to_delete = []
@@ -432,11 +431,11 @@ class ScanItem:
                 if int(param["StackIndex"]) == search_stack_index:
                     params_found = True
                     break
-            
+
             if not params_found:
                 stack_indices_to_delete.append(search_stack_index)
                 indices_to_delete.append(idx)
-        
+
         for index in indices_to_delete:
             del self._scan_parameters[index]
 
@@ -451,7 +450,7 @@ class ScanItem:
             for idx, parms in enumerate(self.scan_parameters_original):
                 if parms["StackIndex"] == stack_inx:
                     scan_parameters_original_indices_to_delete.append(idx)
-            
+
         for vol in scan_volume_indices_to_delete:
             del self.scan_volumes[vol]
         for parm_orig in scan_parameters_original_indices_to_delete:
@@ -504,7 +503,7 @@ class ScanItem:
                 return parms
 
         return None
-    
+
     def get_order_position_of_active_stack(self):
         for inx, itm in enumerate(self.scan_parameters):
             if itm["StackIndex"] == self.selected_stack_index:
@@ -536,7 +535,7 @@ class ScanItem:
         for indx, itm in enumerate(previous_scan_params):
             if itm["StackIndex"] == stack_index:
                 remove_index_scan_params = indx
-        
+
         if remove_index_scan_params is not None:
             del previous_scan_params[remove_index_scan_params]
 
@@ -548,7 +547,9 @@ class ScanItem:
         for idx, inx in enumerate(remaining_stack_indices):
             if inx >= self.selected_stack_index:
                 before_index_position = max(0, idx - 1)
-                self.selected_stack_index = remaining_stack_indices[before_index_position]
+                self.selected_stack_index = remaining_stack_indices[
+                    before_index_position
+                ]
                 stack_inx_updated = True
         if not stack_inx_updated:
             self.selected_stack_index = max(remaining_stack_indices)

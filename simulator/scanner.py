@@ -102,7 +102,8 @@ class Scanner(QObject):
         for parms in scan_item.scan_parameters:
             signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(
                 # scan_item.scan_parameters, self.model
-                parms, self.model
+                parms,
+                self.model,
             )
             # n_slices = int(scan_item.scan_parameters["NSlices"])
             n_slices = int(parms["NSlices"])
@@ -118,8 +119,12 @@ class Scanner(QObject):
                     image_geometry, self.model, signal_array
                 )
 
-                acquisition_and_content_date = datetime.datetime.now().strftime("%Y%m%d")
-                acquisition_and_content_time = datetime.datetime.now().strftime("%H%M%S.%f")
+                acquisition_and_content_date = datetime.datetime.now().strftime(
+                    "%Y%m%d"
+                )
+                acquisition_and_content_time = datetime.datetime.now().strftime(
+                    "%H%M%S.%f"
+                )
 
                 # Step 3: create acquired image
                 acquired_image = AcquiredImage(
@@ -127,7 +132,7 @@ class Scanner(QObject):
                     image_geometry,
                     acquisition_and_content_date,
                     acquisition_and_content_time,
-                    stack_index
+                    stack_index,
                 )
                 list_acquired_images.append(acquired_image)
         # Create an acquired series from the list of acquired images
