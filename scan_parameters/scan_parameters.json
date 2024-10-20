@@ -163,6 +163,14 @@
     "default_value": "90",
     "data_type": "float",
     "description": "This is the angle between the excitation pulse and the longitudinal axis of the magnetization vector."
+  },
+  {
+    "name": "Stack index",
+    "key": "StackIndex",
+    "editor": "QLineEdit",
+    "unit": "",
+    "default_value": "1",
+    "data_type": "int"
   }
 ]
 

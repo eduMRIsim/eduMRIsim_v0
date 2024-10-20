@@ -19,6 +19,7 @@ class Scanner(QObject):
     scan_progress = pyqtSignal(float)
     scan_started_signal = pyqtSignal()
     scan_finished_signal = pyqtSignal()
+    scan_completed = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -37,10 +38,11 @@ class Scanner(QObject):
         if not self.scan_started:
             self.scan_started = True
             scan_item = self.active_scan_item
+            active_stack_params = self.active_scan_item.get_current_active_parameters()
             self.scan_time = (
-                scan_item.scan_parameters["NSlices"]
-                * int(scan_item.scan_parameters["TR_ms"])
-                * round(scan_item.scan_parameters["FOVPE_mm"])
+                active_stack_params["NSlices"]
+                * int(active_stack_params["TR_ms"])
+                * round(active_stack_params["FOVPE_mm"])
             )
             self.scan_elapsed_time = 0
             self.scan_started_signal.emit()
@@ -79,6 +81,8 @@ class Scanner(QObject):
             self.scan_finished_signal.emit()
             # Set scan item status to COMPLETE
             self.active_scan_item.status = ScanItemStatusEnum.COMPLETE
+            # Emit scan completed signal
+            self.scan_completed.emit()
 
     def _perform_scan(self) -> AcquiredSeries:
         """Perform the actual scanning and return the acquired series."""
@@ -87,16 +91,26 @@ class Scanner(QObject):
         series_time = datetime.datetime.now().strftime("%H%M%S.%f")
         scan_item = self.active_scan_item
         series_name = scan_item.name
-        scan_plane = scan_item.scan_parameters["ScanPlane"]
+
+        active_params = scan_item.get_current_active_parameters()
+        # print("ACTIVE PARAMS " + active_params["ScanTechnique"])
+        # scan_plane = scan_item.scan_parameters["ScanPlane"]
+        scan_plane = active_params["ScanPlane"]
+
         signal_array = self.MRI_data_synthesiser.synthesise_MRI_data(
-            scan_item.scan_parameters, self.model
+            # scan_item.scan_parameters, self.model
+            active_params,
+            self.model,
         )
         list_acquired_images = []
-        n_slices = int(scan_item.scan_parameters["NSlices"])
+        # n_slices = int(scan_item.scan_parameters["NSlices"])
+        n_slices = int(active_params["NSlices"])
         for i in range(n_slices):
             # For each slice, create an acquired image
             # Step 1: create image geometry of slice
-            image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
+            # image_geometry = scan_item.scan_volume.get_image_geometry_of_slice(i)
+            scan_vol = scan_item.get_current_active_scan_volume()
+            image_geometry = scan_vol.get_image_geometry_of_slice(i)
             # Step 2: get image data of slice
             image_data = self._get_image_data_from_signal_array(
                 image_geometry, self.model, signal_array
@@ -243,6 +257,7 @@ class Scanner(QObject):
             scanlist_names = [
                 ele.name for ele in self.examination.scanlist.scanlist_elements
             ]
+            # TODO: ele.scan_item._scan_parameters is now list, does it change something for saving state
             scnalist_params = [
                 ele.scan_item._scan_parameters
                 for ele in self.examination.scanlist.scanlist_elements

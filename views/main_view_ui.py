@@ -130,6 +130,10 @@ class Ui_MainWindow(QMainWindow):
         return self._scanlistInfoFrame.addScanItemButton
 
     @property
+    def importScanItemButton(self):
+        return self._scanlistInfoFrame.importScanItemButton
+
+    @property
     def scanlistListWidget(self):
         return self._scanlistInfoFrame.scanlistListWidget
 
@@ -156,6 +160,10 @@ class Ui_MainWindow(QMainWindow):
     @property
     def scanParametersSaveChangesButton(self):
         return self._scanParametersWidget.scanParametersSaveChangesButton
+
+    @property
+    def scanParametersExportButton(self):
+        return self._scanParametersWidget.scanParametersExportButton
 
     @property
     def scanParametersCancelChangesButton(self):
@@ -271,8 +279,8 @@ class Ui_MainWindow(QMainWindow):
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
 
         self._scannedImageFrame = AcquiredSeriesViewer2D()
-        self._scannedImageFrame.zooming_enabled = False
-        # TODO change back to true
+        self._scannedImageFrame.zooming_enabled = True
+        self._scannedImageFrame.view_only_instance = True
         self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
         bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
 
