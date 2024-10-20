@@ -671,6 +671,12 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         if not self.is_rotating:
             return
 
+        # Access the rotation parameters of the plane the rotation is being performed on
+        image_geometry = self.viewer.displayed_image.image_geometry
+        RLAngle_deg = image_geometry.RLAngle_deg
+        APAngle_deg = image_geometry.APAngle_deg
+        FHAngle_deg = image_geometry.FHAngle_deg
+
         new_pos = event.scenePos()
         dx = new_pos.x() - self.centroid.x()
         dy = new_pos.y() - self.centroid.y()
@@ -685,11 +691,43 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         rotation_axis = self.get_rotation_axis()
 
-        self.notify_observers(
-            EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
-            rotation_angle_deg=angle_diff_deg,
-            rotation_axis=rotation_axis,
+        # Compute the projected rotation angle
+        incremental_angles_deg = compute_projected_rotation(
+            angle_diff_deg,
+            RLAngle_deg,
+            APAngle_deg,
+            FHAngle_deg,
+            rotation_axis,
         )
+
+        # Extract rotations for each seperate angle
+        incremental_RL_angle = incremental_angles_deg[0]
+        incremental_AP_angle = incremental_angles_deg[1]
+        incremental_FH_angle = incremental_angles_deg[2]
+
+
+        # Send signals for each angle
+        # A check for greater than 1e-6 to delete very small values of noise which can get generated due to calculation and rounding errors
+        if abs(incremental_RL_angle) > 1e-6:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+                rotation_angle_deg=incremental_RL_angle,
+                rotation_axis='RL',
+            )
+
+        if abs(incremental_AP_angle) > 1e-6:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+                rotation_angle_deg=incremental_AP_angle,
+                rotation_axis='AP',
+            )
+
+        if abs(incremental_FH_angle) > 1e-6:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+                rotation_angle_deg=incremental_FH_angle,
+                rotation_axis='FH',
+            )
 
         # Update display so the currently selected polygon also rotates
         self.viewer._update_scan_volume_display_for_active_stack_item()
@@ -769,3 +807,110 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def _interpolate_point(self, p1, p2, t):
         return QPointF(p1.x() + (p2.x() - p1.x()) * t, p1.y() + (p2.y() - p1.y()) * t)
+    
+# Compute the projected rotation based on the scan that the item is being rotated on
+def compute_projected_rotation(
+    angle_diff_deg, RLAngle_deg, APAngle_deg, FHAngle_deg, rotation_axis
+    ):
+    # Convert all angles to radians
+    angle_diff_rad = math.radians(angle_diff_deg)
+    RLAngle_rad = math.radians(RLAngle_deg)
+    APAngle_rad = math.radians(APAngle_deg)
+    FHAngle_rad = math.radians(FHAngle_deg)
+
+    # Compute the rotation matrices around each axis
+    R_RL = rotation_matrix_x(RLAngle_rad)
+    R_AP = rotation_matrix_y(APAngle_rad)
+    R_FH = rotation_matrix_z(FHAngle_rad)
+
+    # Compute the overall original rotation matrix
+    R_original =np.linalg.multi_dot(
+            [R_FH, R_AP, R_RL]
+        )
+
+    # Compute the rotation matrix for the angle difference around the rotation axis, matrix before projection
+    R_diff = get_rotation_matrix(rotation_axis, angle_diff_rad)
+
+    # Compute the new rotation matrix after the projection
+    R_new = np.linalg.multi_dot([R_original, R_diff])
+    R_incremental = np.linalg.multi_dot([R_new, np.linalg.inv(R_original)])
+
+    # Extract rotation angles around all three axes
+    incremental_angles_rad = rotation_matrix_to_euler_angles(R_incremental)
+
+    # Convert to degrees
+    incremental_angles_deg = np.degrees(incremental_angles_rad)
+
+    return incremental_angles_deg  # Array with [RL_angle, AP_angle, FH_angle]
+    
+# Create rotation matrices for each plane
+def rotation_matrix_x(angle_rad):
+        c = np.cos(angle_rad)
+        s = np.sin(angle_rad)
+        return np.array([
+            [1, 0, 0],
+            [0, c, -s],
+            [0, s, c],
+        ])
+
+def rotation_matrix_y(angle_rad):
+    c = np.cos(angle_rad)
+    s = np.sin(angle_rad)
+    return np.array([
+        [c, 0, s],
+        [0, 1, 0],
+        [-s, 0, c],
+    ])
+
+def rotation_matrix_z(angle_rad):
+    c = np.cos(angle_rad)
+    s = np.sin(angle_rad)
+    return np.array([
+        [c, -s, 0],
+        [s, c, 0],
+        [0, 0, 1],
+    ])
+
+def get_rotation_matrix(axis, angle_rad):
+    if axis == "RL":
+        return rotation_matrix_x(angle_rad)
+    elif axis == "AP":
+        return rotation_matrix_y(angle_rad)
+    elif axis == "FH":
+        return rotation_matrix_z(angle_rad)
+    else:
+        raise ValueError(f"Unknown rotation axis: {axis}")
+
+def extract_rotation_angle(R, axis):
+    if axis == "RL":
+        # Rotation around X-axis
+        angle_rad = np.arctan2(R[2, 1], R[2, 2])
+    elif axis == "AP":
+        # Rotation around Y-axis
+        angle_rad = np.arctan2(-R[2, 0], np.sqrt(R[0, 0]**2 + R[1, 0]**2))
+    elif axis == "FH":
+        # Rotation around Z-axis
+        angle_rad = np.arctan2(R[1, 0], R[0, 0])
+    else:
+        raise ValueError(f"Unknown rotation axis: {axis}")
+    return angle_rad
+
+# Obtain seperate rotations as angles from the matrix to be sent as an event to the parameter checker
+def rotation_matrix_to_euler_angles(R):
+    """
+    Extract Euler angles (rotations around x, y, z axes) from a rotation matrix.
+    The rotation matrix should represent rotations in the order R = Rz * Ry * Rx.
+    """
+    sy = np.sqrt(R[0, 0]**2 + R[1, 0]**2)
+    singular = sy < 1e-6
+
+    if not singular:
+        x_angle = np.arctan2(R[2, 1], R[2, 2])
+        y_angle = np.arctan2(-R[2, 0], sy)
+        z_angle = np.arctan2(R[1, 0], R[0, 0])
+    else:
+        x_angle = np.arctan2(-R[1, 2], R[1, 1])
+        y_angle = np.arctan2(-R[2, 0], sy)
+        z_angle = 0
+
+    return np.array([x_angle, y_angle, z_angle])  # [RL_angle, AP_angle, FH_angle]
