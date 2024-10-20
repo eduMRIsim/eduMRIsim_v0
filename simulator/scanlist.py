@@ -1201,37 +1201,46 @@ class ScanVolume:
 
     def scale_scan_volume(
         self,
-        x_vector: float,
-        y_vector: float,
-        z_vector: float,
+        scale_factor_x: float,
+        scale_factor_y: float,
+        origin_plane: str,
+        handle_pos: QPointF,
+        center_pos: QPointF,
     ):
-        # Turn LPS to scan_volum
-        log.debug(x_vector, y_vector, z_vector)
-        x_scale, y_scale, z_scale = self.LPS_coords_to_scan_volume_mm_coords((x_vector, y_vector, z_vector))
-        log.debug(x_scale, y_scale, z_scale)
 
-        # Validation so that negative movement cannot reduce the scan volume to lower than limit
-        limit_low = 50
-        if self.extentX_mm + x_scale <= limit_low:
-            x_scale = 0
-        if self.extentY_mm + y_scale <= limit_low:
-            y_scale = 0
-        if self.slice_gap_mm * (self.N_slices - 1) + z_scale <= limit_low:
-            z_scale = 0
+        # Parameter validation
+        valid_planes = ("Axial", "Sagittal", "Coronal")
+        if origin_plane not in valid_planes:
+            raise ValueError(f'Invalid "original" scan plane: {origin_plane}')
+        top_down_plane = self.scanPlane
+        if top_down_plane not in valid_planes:
+            raise ValueError(f'Invalid "current" scan plane: {top_down_plane}')
 
-        # Validation so that enlargement cannot exceed scanner dimensions
-        limit_high = 240#max(self.scanner_AP_mm, self.scanner_RL_mm, self.scanner_FH_mm)
-        if self.extentX_mm + x_scale >= limit_high:
-            x_scale = 0
-        if self.extentY_mm + y_scale >= limit_high:
-            y_scale = 0
-        if self.slice_gap_mm * (self.N_slices - 1) + z_scale >= limit_high:
-            z_scale = 0
-
-        # Scale the scan volume by the scale vector
-        self.extentX_mm += x_scale
-        self.extentY_mm += y_scale
-        self.slice_gap_mm += (z_scale / self.N_slices)
+        # Scaling logic
+        if top_down_plane == origin_plane:
+            self.extentX_mm *= scale_factor_x
+            self.extentY_mm *= scale_factor_y
+        elif top_down_plane == "Axial":
+            if origin_plane == "Sagittal":
+                self.extentY_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == "Coronal":
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+        elif top_down_plane == "Sagittal":
+            if origin_plane == "Axial":
+                self.extentX_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+            elif origin_plane == "Coronal":
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
+        elif top_down_plane == "Coronal":
+            if origin_plane == "Axial":
+                self.extentX_mm *= scale_factor_x
+                self.slice_gap_mm *= scale_factor_y
+            elif origin_plane == "Sagittal":
+                self.extentY_mm *= scale_factor_y
+                self.slice_gap_mm *= scale_factor_x
 
         self.clamp_to_scanner_dimensions()
         self.notify_observers(EventEnum.SCAN_VOLUME_CHANGED)
