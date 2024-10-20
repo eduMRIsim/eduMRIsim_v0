@@ -1,4 +1,7 @@
-from PyQt6.QtGui import QAction, QActionGroup
+from PyQt6.QtGui import QAction, QActionGroup, QShortcut
+
+from views.ui.shortcut_dialog_ui import ShortcutDialog
+
 
 class MenuBar:
     __instance = None
@@ -25,7 +28,7 @@ class MenuBar:
         # Mark this instance as initialized to prevent reinitialization
         self._initialized = True
 
-    def add_section(self, section_name):
+    def add_section(self, section_name) -> 'Section':
         """Adds a section to the menu."""
         section = Section(self.menu_bar, section_name)
         self.sections[section_name] = section
@@ -40,6 +43,12 @@ class MenuBar:
         )
         session_section.add_action("Load session", self.load_examination_callback)
 
+        save_session_shortcut = QShortcut("Ctrl+S", self.main_view)
+        save_session_shortcut.activated.connect(self.main_controller.export_examination)
+
+        load_session_shortcut = QShortcut("Ctrl+L", self.main_view)
+        load_session_shortcut.activated.connect(self.load_examination_callback)
+
         # Mode section
         mode_section = self.add_section("Mode")
         mode_section.add_mode_action_group()
@@ -52,17 +61,45 @@ class MenuBar:
             "Viewing Mode", lambda: self.main_view._stackedLayout.setCurrentIndex(1)
         )
 
+        switch_modes_shortcut = QShortcut("Ctrl+M", self.main_view)
+        switch_modes_shortcut.activated.connect(lambda: self.main_view._stackedLayout.setCurrentIndex(1 if self.main_view._stackedLayout.currentIndex() == 0 else 0))
+
         # Tools section
         tools_section = self.add_section("Tools")
-        tools_section.add_mode_action_group()
-        tools_section.add_mode_action(
+        tools_section.add_action(
             "Measure Distance",
             lambda: self.main_controller.handle_measureDistanceButtonClicked(),
+            checkable=True,
         )
-        tools_section.add_mode_action(
-            "Window Level",
+        # measure_distance_shortcut = QShortcut("Ctrl+D", self.main_view)
+        # measure_distance_shortcut.activated.connect(lambda: self.main_controller.handle_measureDistanceButtonClicked())
+
+        window_level_action: QAction = tools_section.add_action(
+            "Window Level Mode",
             lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
+            checkable=True,
         )
+
+        def update_window_level_action():
+            window_level_action.toggle()
+            self.main_controller.handle_toggleWindowLevelButtonClicked()
+
+        window_level_shortcut = QShortcut("Ctrl+W", self.main_view)
+        window_level_shortcut.activated.connect(lambda: update_window_level_action())
+
+        # WARNING: not implemented yet
+        tools_section.add_action("Measure Area", self.test_action, checkable=False)
+        measure_area_shortcut = QShortcut("Ctrl+A", self.main_view)
+        measure_area_shortcut.activated.connect(self.test_action)
+
+        # Help section
+        help_section = self.add_section("Help")
+        help_section.add_action("Keyboard Shortcuts", lambda: ShortcutDialog().exec())
+        help_shortcut = QShortcut("Ctrl+H", self.main_view)
+        help_shortcut.activated.connect(lambda: ShortcutDialog().exec())
+
+    def test_action(self):
+        pass
 
         # Color Scale section
         color_scale_section = self.add_section("Color Scale")
@@ -97,7 +134,7 @@ class Section:
         self.actions = {}
         self.action_group = None
 
-    def add_action(self, action_name, triggered_function, checkable=False):
+    def add_action(self, action_name, triggered_function, checkable=False) -> QAction:
         """Adds a regular action to the section."""
         action = QAction(action_name, self.menu)
 
@@ -108,6 +145,8 @@ class Section:
         action.triggered.connect(triggered_function)
         self.actions[action_name] = action
         self.menu.addAction(action)
+
+        return action
 
     def add_mode_action_group(self):
         """Creates an action group for mutually exclusive actions."""
@@ -132,3 +171,4 @@ class Section:
 
         if checked:
             action.setChecked(True)
+

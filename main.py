@@ -3,7 +3,7 @@ import os
 import sys
 
 from PyQt6.QtCore import qInstallMessageHandler
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QShortcut, QAction
 from PyQt6.QtWidgets import QApplication
 from rich.traceback import install
 
@@ -15,6 +15,7 @@ from utils.logger import log, qt_message_handler, numpy_handler
 from views.main_view_ui import Ui_MainWindow
 from views.ui.menu_bar_ui import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
+from views.ui.shortcut_dialog_ui import ShortcutDialog
 
 
 class App(QApplication):
@@ -57,8 +58,8 @@ class App(QApplication):
         self.main_view.update_UI()
         self.main_view.show()
 
-        # Initialize MenuBar
         self.menu_bar = MenuBar(self.main_view, self.main_controller, self.load_examination)
+        # self.setup_menu_bar()
 
     def start_new_examination(self):
         """Start a new examination."""
@@ -77,6 +78,78 @@ class App(QApplication):
         self.settings_manager.setup_settings("settings.ini")
         self.starting_window.close()
         self.start_main_app()
+
+    # TODO all menu bar actions should be moved to the MenuBar class
+    # Set up the menu bar
+    def setup_menu_bar(self):
+        # Create the menu bar and sections
+        menu_bar = self.menu_bar
+
+        # Session section
+        session_section = menu_bar.add_section("Session")
+        session_section.add_action(
+            "Save session", self.main_controller.export_examination
+        )
+
+        session_section.add_action(
+            "Load session", self.load_examination
+        )
+
+        save_session_shortcut = QShortcut("Ctrl+S", self.main_view)
+        save_session_shortcut.activated.connect(self.main_controller.export_examination)
+
+        load_session_shortcut = QShortcut("Ctrl+L", self.main_view)
+        load_session_shortcut.activated.connect(self.load_examination)
+
+        # Mode section
+        mode_section = menu_bar.add_section("Mode")
+        mode_section.add_mode_action_group()
+
+        mode_section.add_mode_action(
+            "Scanning Mode",
+            lambda: self.main_view._stackedLayout.setCurrentIndex(0),
+            checked=True,
+        )
+        mode_section.add_mode_action(
+            "Viewing Mode", lambda: self.main_view._stackedLayout.setCurrentIndex(1)
+        )
+
+        switch_modes_shortcut = QShortcut("Ctrl+M", self.main_view)
+        switch_modes_shortcut.activated.connect(lambda: self.main_view._stackedLayout.setCurrentIndex(1 if self.main_view._stackedLayout.currentIndex() == 0 else 0))
+
+        # Tools section
+        tools_section = menu_bar.add_section("Tools")
+        tools_section.add_action(
+            "Measure Distance",
+            lambda: self.main_controller.handle_measureDistanceButtonClicked(),
+            checkable=True,
+        )
+        # measure_distance_shortcut = QShortcut("Ctrl+D", self.main_view)
+        # measure_distance_shortcut.activated.connect(lambda: self.main_controller.handle_measureDistanceButtonClicked())
+
+        window_level_action: QAction = tools_section.add_action(
+            "Window Level Mode",
+            lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
+            checkable=True,
+        )
+
+        def update_window_level_action():
+            window_level_action.toggle()
+            self.main_controller.handle_toggleWindowLevelButtonClicked()
+
+        window_level_shortcut = QShortcut("Ctrl+W", self.main_view)
+        window_level_shortcut.activated.connect(lambda: update_window_level_action())
+
+        # WARNING: not implemented yet
+        tools_section.add_action("Measure Area", self.test_action, checkable=False)
+        measure_area_shortcut = QShortcut("Ctrl+A", self.main_view)
+        measure_area_shortcut.activated.connect(self.test_action)
+
+        # Help section
+        help_section = menu_bar.add_section("Help")
+        help_section.add_action("Keyboard Shortcuts", lambda: ShortcutDialog().exec())
+        help_shortcut = QShortcut("Ctrl+H", self.main_view)
+        help_shortcut.activated.connect(lambda: ShortcutDialog().exec())
 
     def setup_scan_parameter_form(self):
         """Load and set up the scan parameter form."""
