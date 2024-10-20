@@ -11,8 +11,11 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QLabel,
     QComboBox,
+    QPushButton
 )
 
+from typing import Optional
+from events import EventEnum
 from utils.block_signals import block_signals
 from views.styled_widgets import (
     PrimaryActionButton,
@@ -33,6 +36,10 @@ class ScanParametersWidget(QWidget):
     @property
     def parameterFormLayout(self):
         return self.scanParametersTabWidget.parameterFormLayout
+    
+    @property
+    def stackParametersFormLayout(self):
+        return self.scanParametersTabWidget.stackParametersFormLayout
 
     @property
     def scanParametersSaveChangesButton(self):
@@ -79,11 +86,49 @@ class ScanParametersTabWidget(QTabWidget):
     def __init__(self):
         super().__init__()
         self.parameterTab = ParameterTab()
+        self.stackParametersTab = StackParametersTab()
         self.addTab(self.parameterTab, "Scan parameters")
+        self.addTab(self.stackParametersTab, "Stack parameters")
 
     @property
     def parameterFormLayout(self):
         return self.parameterTab.parameterFormLayout
+    
+    @property
+    def stackParametersFormLayout(self):
+        return self.stackParametersTab.stackParametersFormLayout
+
+class StackParametersTab(QScrollArea):
+    def __init__(self):
+        super().__init__()
+        container_widget = self.createContainerWidget()
+        self.setWidget(container_widget)
+        self.setWidgetResizable(True)
+
+    def createContainerWidget(self):
+        self.horizontalLayout = QHBoxLayout()
+        self.layout = QVBoxLayout()
+        self._stackParametersFormLayout = StackParametersFormLayout()
+        self.layout.addItem(
+            QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
+        self.layout.addLayout(self.stackParametersFormLayout)
+        self.layout.addItem(
+            QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
+        # self.horizontalLayout.addItem(QSpacerItem(10, 0,  QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.horizontalLayout.addLayout(self.layout)
+        self.horizontalLayout.addItem(
+            QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        )
+        self.setStyleSheet("QLineEdit { border: 1px solid  #BFBFBF; }")
+        containerWidget = QWidget()
+        containerWidget.setLayout(self.horizontalLayout)
+        return containerWidget
+
+    @property
+    def stackParametersFormLayout(self):
+        return self._stackParametersFormLayout
 
 
 class ParameterTab(QScrollArea):
@@ -121,13 +166,11 @@ class ParameterTab(QScrollArea):
 
 class ParameterFormLayout(QVBoxLayout):
     formActivatedSignal = pyqtSignal()
-    stackSignal = pyqtSignal(object)
 
     def __init__(self):
         super().__init__()
         self.isReadOnly = True
         self.editors = {}
-        self.nr_of_stacks = 1
 
     def createForm(self, parameters: dict) -> None:
         # Create form elements based on the data in "parameters".
@@ -144,9 +187,10 @@ class ParameterFormLayout(QVBoxLayout):
             if editor_type == "QLineEdit":
                 editor = QLineEdit()
                 editor.setText(default_value)
-                parameter_layout.addWidget(
-                    QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft
-                )
+                if parameter_key != "StackIndex":
+                    parameter_layout.addWidget(
+                        QLabel(name), 0, 0, Qt.AlignmentFlag.AlignLeft
+                    )
                 parameter_layout.addWidget(editor, 1, 0, Qt.AlignmentFlag.AlignLeft)
                 parameter_layout.addWidget(
                     HeaderLabel(unit), 1, 1, Qt.AlignmentFlag.AlignLeft
@@ -168,6 +212,8 @@ class ParameterFormLayout(QVBoxLayout):
                     f"Unknown editor type: {editor_type}"
                 )  # Raise an error if the editor type is unknown. If the error is raised, the program will stop executing.
 
+            if parameter_key == "StackIndex":
+                editor.setVisible(False)
             editor.setFixedHeight(30)
             editor.setFixedWidth(300)
             editor.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -184,20 +230,6 @@ class ParameterFormLayout(QVBoxLayout):
 
             # Store the editor widget in the dictionary for later access.
             self.editors[parameter_key] = editor
-
-        add_stack_button = PrimaryActionButton("Add stack")
-        add_stack_button.clicked.connect(
-            lambda: self.handle_add_new_stack_btn_clicked()
-        )
-        self.addWidget(add_stack_button)
-
-    def handle_add_new_stack_btn_clicked(self):
-        # print("ADD PRESS")
-        self.stackSignal.emit({"event": "ADD"})
-        self.add_new_stack()
-
-    def add_new_stack(self):
-        self.nr_of_stacks += 1
 
     def save_state(self):
         params = self.get_parameters()
@@ -251,3 +283,104 @@ class ParameterFormLayout(QVBoxLayout):
                     editor.clear()
                 elif isinstance(editor, QComboBox):
                     editor.setCurrentIndex(0)
+
+class StackParametersFormLayout(QVBoxLayout):
+    stackSignal = pyqtSignal(object)
+
+    def __init__(self):
+        super().__init__()
+        self.isReadOnly = True
+        self.editor: Optional[QComboBox] = None
+        self.nr_of_stacks = 1
+        self.delete_stack_btn: Optional[QPushButton] = None
+        self.selected_stack_index = 0
+        self.createForm()
+
+    def get_stacks_params(self) -> dict:
+        return {
+            "nr_of_stacks": self.nr_of_stacks,
+            "selected_stack_index": self.selected_stack_index
+        }
+    
+    def delete_stack_event(self, new_stack_index, nr_of_stacks):
+        # TODO: disable delete stack button when only one stack is left
+        self.editor.clear()
+        self.nr_of_stacks = nr_of_stacks
+        stack_indices = [str(stack_inx) for stack_inx in range(nr_of_stacks)]
+        self.editor.addItems(stack_indices)
+        self.selected_stack_index = new_stack_index
+        self.editor.setCurrentIndex(new_stack_index)
+        if nr_of_stacks == 1:
+            self.delete_stack_btn.setDisabled(True)
+    
+    def set_stacks_params(self, params: dict) -> dict:
+        if params.get("nr_of_stacks") is not None and params.get("selected_stack_index") is not None:
+            nr_of_stacks = params["nr_of_stacks"]
+            stack_indices = [str(stack_inx) for stack_inx in range(nr_of_stacks)]
+            self.selected_stack_index = params["selected_stack_index"]
+            self.nr_of_stacks = nr_of_stacks
+            if nr_of_stacks > 1:
+                self.delete_stack_btn.setDisabled(False)
+            else:
+                self.delete_stack_btn.setDisabled(True)
+            self.editor.clear()
+            self.editor.addItems(stack_indices)
+            self.editor.setCurrentIndex(params["selected_stack_index"])
+            # self.stack_change_handle(self.editor)
+    
+    def createForm(self) -> None:
+        parameter_layout = QGridLayout()
+        stack_indices_options = [str(stack_inx) for stack_inx in range(self.nr_of_stacks)]
+        editor = QComboBox()
+        editor.addItems(stack_indices_options)
+        editor.setCurrentIndex(self.selected_stack_index)
+        editor.currentIndexChanged.connect(
+            lambda: self.stack_change_handle(editor)
+        )
+
+        parameter_layout.addWidget(
+            QLabel("Stack index"), 0, 0, Qt.AlignmentFlag.AlignLeft
+        )
+        parameter_layout.addWidget(editor, 1, 0, Qt.AlignmentFlag.AlignLeft)
+
+        editor.setFixedHeight(30)
+        editor.setFixedWidth(300)
+        editor.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        # Add the editor widget to the layout.
+
+        self.addLayout(parameter_layout)
+
+        # Add a vertical spacer (with expandable space)
+        spacer = QSpacerItem(
+            20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        )
+        self.addSpacerItem(spacer)
+        self.editor = editor
+        
+        add_stack_button = PrimaryActionButton("Add stack")
+        add_stack_button.clicked.connect(self.add_stack_handle)
+        delete_stack_button = PrimaryActionButton("Delete stack")
+        delete_stack_button.clicked.connect(lambda: self.stackSignal.emit(
+            {"event": EventEnum.DELETE_STACK}
+        ))
+        self.delete_stack_btn = delete_stack_button
+        if self.nr_of_stacks == 1:
+            delete_stack_button.setDisabled(True)
+        self.addWidget(add_stack_button)
+        self.addSpacerItem(spacer)
+
+        self.addWidget(delete_stack_button)
+        self.addSpacerItem(spacer)
+
+    def add_stack_handle(self):
+        self.stackSignal.emit({"event": EventEnum.ADD_STACK})
+        self.editor.addItem(str(self.nr_of_stacks))
+        if self.nr_of_stacks == 1:
+            self.delete_stack_btn.setDisabled(False)
+        self.nr_of_stacks += 1
+
+    def stack_change_handle(self, editor):
+        stack_indices = [str(stack_inx) for stack_inx in range(self.nr_of_stacks)]
+        self.selected_stack_index = editor.currentIndex()
+        self.stackSignal.emit({"event": EventEnum.STACK_CHANGED, "stack_index": int(stack_indices[editor.currentIndex()])})

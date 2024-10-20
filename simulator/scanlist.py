@@ -139,6 +139,7 @@ class AcquiredImage:
         image_geometry: ImageGeometry,
         acquisition_and_content_date: str,
         acquisition_and_content_time: str,
+        stack_index: int
     ):
         self.image_data = image_data
         self.image_geometry = image_geometry
@@ -146,6 +147,7 @@ class AcquiredImage:
         self.acquisition_date = self.content_date = acquisition_and_content_date
         self.acquisition_time = self.content_time = acquisition_and_content_time
         self.instance_number = None
+        self.stack_index = stack_index
 
 
 class AcquiredSeries:
@@ -176,7 +178,7 @@ class AcquiredSeries:
 
 class Scanlist:
     def __init__(self):
-        self.scanlist_elements = []
+        self.scanlist_elements: List[ScanlistElement] = []
         self._active_idx = None
         self.observers = []
 
@@ -257,7 +259,7 @@ class ScanItemStatusEnum(Enum):
 
 class ScanlistElement:
     def __init__(self, name, scan_parameters):
-        self.scan_item = ScanItem(name, scan_parameters)
+        self.scan_item: ScanItem = ScanItem(name, scan_parameters)
         self.acquired_data = None
         self.name = name
 
@@ -286,9 +288,9 @@ class ScanItem:
         self.observers = []
         # self.scan_parameters = scan_parameters
         # TODO: does first time setting value also go through setter function as it is important for creating scan volumes object etc
-        self.scan_parameters: List[dict] = [scan_parameters]
         self._scan_parameters_original: List[dict] = []
         self.scan_parameters_original: List[dict] = [scan_parameters]
+        self.scan_parameters: List[dict] = [scan_parameters]
         self.messages = {}
         self.valid = True
         self._status = ScanItemStatusEnum.READY_TO_SCAN
@@ -418,8 +420,42 @@ class ScanItem:
             # print("END OF SCAN PARAMS SETTER " + str(self._scan_parameters[0]))
             self.notify_observers(EventEnum.SCAN_ITEM_PARAMETERS_CHANGED)
 
+
         # TODO: handle deletion of object in _scan_parameters list or deletion of scan volume in scan volumes' list if there was not corresponding
         # parameters object in the argument with specified stack index
+        indices_to_delete = []
+        stack_indices_to_delete = []
+        for idx, parms in enumerate(self.scan_parameters):
+            search_stack_index = parms["StackIndex"]
+            params_found = False
+            for param in scan_parameters:
+                if int(param["StackIndex"]) == search_stack_index:
+                    params_found = True
+                    break
+            
+            if not params_found:
+                stack_indices_to_delete.append(search_stack_index)
+                indices_to_delete.append(idx)
+        
+        for index in indices_to_delete:
+            del self._scan_parameters[index]
+
+        scan_volume_indices_to_delete = []
+        scan_parameters_original_indices_to_delete = []
+
+        # TODO: adjust stack indices of all scan volumes, scan parameters and scan parameters origincal that are after the deleted item
+        for stack_inx in stack_indices_to_delete:
+            for idx, vol in enumerate(self.scan_volumes):
+                if vol.stack_index == stack_inx:
+                    scan_volume_indices_to_delete.append(idx)
+            for idx, parms in enumerate(self.scan_parameters_original):
+                if parms["StackIndex"] == stack_inx:
+                    scan_parameters_original_indices_to_delete.append(idx)
+            
+        for vol in scan_volume_indices_to_delete:
+            del self.scan_volumes[vol]
+        for parm_orig in scan_parameters_original_indices_to_delete:
+            del self._scan_parameters_original[parm_orig]
 
         # TESTING ASSERTIONS
         # check if length of scan_parameters equals lenght of _scan_parameters finally and it should have eacb object with stack index
@@ -468,6 +504,11 @@ class ScanItem:
                 return parms
 
         return None
+    
+    def get_order_position_of_active_stack(self):
+        for inx, itm in enumerate(self.scan_parameters):
+            if itm["StackIndex"] == self.selected_stack_index:
+                return inx
 
     def add_stack(self):
         jsonFilePath = "repository/exam_cards/scan_items.json"
@@ -488,6 +529,32 @@ class ScanItem:
         previous_scan_params = self.scan_parameters.copy()
         previous_scan_params.append(new_params)
         self.scan_parameters = previous_scan_params
+
+    def delete_stack(self, stack_index):
+        previous_scan_params = self.scan_parameters.copy()
+        remove_index_scan_params = None
+        for indx, itm in enumerate(previous_scan_params):
+            if itm["StackIndex"] == stack_index:
+                remove_index_scan_params = indx
+        
+        if remove_index_scan_params is not None:
+            del previous_scan_params[remove_index_scan_params]
+
+        self.scan_parameters = previous_scan_params
+        # set the current stack index to stack index before the current index
+        remaining_stack_indices = [inx["StackIndex"] for inx in previous_scan_params]
+        remaining_stack_indices.sort()
+        stack_inx_updated = False
+        for idx, inx in enumerate(remaining_stack_indices):
+            if inx >= self.selected_stack_index:
+                before_index_position = max(0, idx - 1)
+                self.selected_stack_index = remaining_stack_indices[before_index_position]
+                stack_inx_updated = True
+        if not stack_inx_updated:
+            self.selected_stack_index = max(remaining_stack_indices)
+
+    def get_number_of_stacks(self):
+        return len(self.scan_parameters)
 
     def generate_unique_stack_index(self):
         stack_indices = []
@@ -570,11 +637,11 @@ class ScanItem:
     def validate_scan_parameters_single(self, scan_params):
         self.valid = True
         self.messages = {}
-        slice_index = scan_params["StackIndex"]
+        stack_inx = int(scan_params["StackIndex"])
         scan_params_copy = self._scan_parameters.copy()
         index_to_replace = None
         for inx, scan_parms in enumerate(scan_params_copy):
-            if scan_parms["StackIndex"] == slice_index:
+            if scan_parms["StackIndex"] == stack_inx:
                 index_to_replace = inx
                 break
 
@@ -585,6 +652,12 @@ class ScanItem:
 
         if self.valid == True:
             self.status = ScanItemStatusEnum.READY_TO_SCAN
+
+    def change_active_stack(self, inx: int):
+        if len(self.scan_parameters) > 0 and (len(self.scan_parameters) - 1) >= inx:
+            stack_index = self.scan_parameters[inx]["StackIndex"]
+            self.selected_stack_index = stack_index
+            return stack_index
 
     def cancel_changes(self):
         if self.valid == True:
