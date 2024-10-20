@@ -78,7 +78,7 @@ class ZoomableView(QGraphicsView):
             scene_pos = self.mapToScene(self.mapFromGlobal(cursor_pos))
             self.measure.start_measurement(scene_pos)
         elif event.key() == Qt.Key.Key_L:  # "L" key starts window leveling
-            print("Starting window leveling")
+            log.debug("Starting window leveling")
             self.leveling_key_pressed = True
             if self.window_center is None or self.window_width is None:
                 self.window_center = 128
@@ -92,7 +92,7 @@ class ZoomableView(QGraphicsView):
         elif event.key() == Qt.Key.Key_P:
             self.panning_key_pressed = False
         elif event.key() == Qt.Key.Key_L:  # "L" key stops window leveling
-            print("Stopping window leveling")
+            log.debug("Stopping window leveling")
             self.leveling_key_pressed = False
         else:
             super().keyReleaseEvent(event)
@@ -141,7 +141,7 @@ class ZoomableView(QGraphicsView):
         # handle window / level adjustments while "L" is being held
         elif self.leveling_key_pressed and not self.measure.is_measuring:
             if self.window_center is None or self.window_width is None:
-                print("Window center or width not set")
+                log.warn("Window center or width not set")
                 return
 
             if self.last_mouse_pos is not None:

@@ -111,7 +111,7 @@ class gridViewingWindowLayout(QFrame):
                 cell = self.grid_cells[i][j]
                 if cell.checkbox.isVisible() and cell.checkbox.isChecked():
                     checked_cells.append((i, j))
-                    print(f"Checkbox is checked in cell [{i},{j}]")
+                    log.debug(f"Checkbox is checked in cell [{i},{j}]")
 
         return checked_cells
     
@@ -126,7 +126,7 @@ class gridViewingWindowLayout(QFrame):
             log.warn("No cells selected for contrast linking!.")
             return
         else:
-            print(f"Contrast linking will be done for cells: {linked_cells}")
+            log.info(f"Contrast linking will be done for cells: {linked_cells}")
 
         for cell_i in self.linked_cells:
             for cell_j in self.linked_cells:
@@ -136,7 +136,7 @@ class gridViewingWindowLayout(QFrame):
                         lambda window_center, window_width, cell = cell_j: self.synchronize_window_levelling(window_center, window_width, cell)
                     ) 
         
-        print(f"Cells {len(linked_cells)} are contrast linked.")
+        log.info(f"Cells {len(linked_cells)} are contrast linked.")
     
     def synchronize_window_levelling(self, window_center, window_width, cell):
         """Synchronizes the window levelling for all the linked cells ."""
@@ -170,7 +170,7 @@ class gridViewingWindowLayout(QFrame):
                 else: 
                     log.error("The cell has no pixmap item. ")
         
-        print(f"Stopped contrast linking for {len(self.linked_cells)} cells.")
+        log.info(f"Stopped contrast linking for {len(self.linked_cells)} cells.")
         self.linked_cells = []
         self.hide_checkboxes()
 
