@@ -114,7 +114,6 @@ class ZoomableView(QGraphicsView):
 
                 if self.max_zoom_out <= new_zoom <= self.max_zoom_in:
                     self.scale(self.zoom_factor, self.zoom_factor)
-                    self.zoomChanged.emit(new_zoom)  # emit signal for the new zoom level
 
                 self.last_mouse_pos = current_pos
 
@@ -131,7 +130,6 @@ class ZoomableView(QGraphicsView):
                 self.horizontalScrollBar().setValue(h_pan)
                 self.verticalScrollBar().setValue(v_pan)
 
-                self.panChanged.emit(h_pan, v_pan)
                 self.last_mouse_pos = event.pos()
 
         # handle measuring tool

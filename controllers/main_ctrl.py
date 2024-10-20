@@ -378,6 +378,7 @@ class MainController:
 
     def handle_stop_contrastLinking(self):
         self.ui.gridViewingWindow.stop_contrast_linking()
+        self.handle_hide_checkboxes(True)
 
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED

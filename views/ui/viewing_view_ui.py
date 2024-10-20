@@ -44,6 +44,10 @@ class gridViewingWindowLayout(QFrame):
 
         self.grid_cells = []
 
+        # initialize limits for rows/columns
+        self.row_limit = 5
+        self.column_limit = 5
+
         # creates default 2x2 grid
         self.right_layout = QGridLayout()
         for i in range(2):
@@ -95,7 +99,7 @@ class gridViewingWindowLayout(QFrame):
         """Hides checkboxes in all cells."""
         for row in self.grid_cells:
             for cell in row:
-                cell.checkbox.setChecked(False) #uncheck all cells before hiding them
+                cell.checkbox.setChecked(False)
                 cell.set_visibility_checkbox(False) 
 
     def get_checked_cells(self):
@@ -112,7 +116,7 @@ class gridViewingWindowLayout(QFrame):
         return checked_cells
     
     def start_contrast_linking(self):
-        """Synchronizes zooming for the checked cells. """
+        """Synchronizes window_levelling for the checked cells. """
         linked_cells = self.get_checked_cells()
         self.linked_cells = []
         for i, j in linked_cells:
@@ -124,30 +128,26 @@ class gridViewingWindowLayout(QFrame):
         else:
             print(f"Contrast linking will be done for cells: {linked_cells}")
 
-        # cell that was checked first
-        #reference_cell = self.linked_cells[0]
-
         for cell_i in self.linked_cells:
             for cell_j in self.linked_cells:
-                # connect all cells to the reference_cell signal
+                # connect all cells to the same signal
                 if cell_j != cell_i:
                     cell_i.contrastChanged.connect(
-                        lambda window_center, window_width: self.synchronize_window_levelling(window_center, window_width, cell_j)
+                        lambda window_center, window_width, cell = cell_j: self.synchronize_window_levelling(window_center, window_width, cell)
                     ) 
         
         print(f"Cells {len(linked_cells)} are contrast linked.")
     
     def synchronize_window_levelling(self, window_center, window_width, cell):
         """Synchronizes the window levelling for all the linked cells ."""
-        #for cell in self.linked_cells:
-            #pass
         cell.window_center = window_center
         cell.window_width = window_width
+
         cell._displayArray(window_center, window_width)
         cell.updateColorScale(window_center, window_width)
     
     def stop_contrast_linking(self):
-        """Stops geometry linking for the selected cells."""
+        """Stops contrast linking for the selected cells."""
         linked_cells = self.get_checked_cells()
         
         if not linked_cells:
@@ -156,7 +156,7 @@ class gridViewingWindowLayout(QFrame):
 
         for cell in self.linked_cells:
             try:
-                cell.contrastChanged.disconnect(self.synchronize_window_levelling) 
+                cell.contrastChanged.disconnect() 
             except Exception as e:
                 pass
 
@@ -164,7 +164,11 @@ class gridViewingWindowLayout(QFrame):
             for j in range(len(self.grid_cells[i])):
                 self.grid_cell = self.grid_cells[i][j]
                 self.grid_cell.resetTransform()
-                #self.updateLabelPosition()
+                if self.grid_cell.pixmap_item:
+                    self.grid_cell.fitInView(cell.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+                    self.grid_cell.centerOn(cell.pixmap_item)
+                else: 
+                    log.error("The cell has no pixmap item. ")
         
         print(f"Stopped contrast linking for {len(self.linked_cells)} cells.")
         self.linked_cells = []
@@ -180,7 +184,7 @@ class gridViewingWindowLayout(QFrame):
         else:
             nr_columns = 0
 
-        if row_index < 5:
+        if row_index < self.row_limit:
             for j in range(nr_columns):
                 new_cell = GridCell(self, row_index, j)
                 if row_index > 0:
@@ -205,7 +209,7 @@ class gridViewingWindowLayout(QFrame):
 
         nr_rows = len(self.grid_cells)
 
-        if col_index < 5:
+        if col_index < self.column_limit:
             for i in range(nr_rows):
                 new_cell = GridCell(self, i, col_index)
                 if col_index > 0:
@@ -434,7 +438,7 @@ class GridCell(ZoomableView):
         self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
-        
+        self.update_checkbox_position()
         self.position_color_scale_elements()
         
     def toggle_window_level_mode(self):

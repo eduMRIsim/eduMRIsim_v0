@@ -80,10 +80,10 @@ class MenuBar:
         contrast_linking_section.menu.aboutToShow.connect(lambda: self.main_controller.handle_show_checkboxes(True))
         contrast_linking_section.add_mode_action_group()
         contrast_linking_section.add_mode_action(
-            "Start linking", lambda: self.main_controller.handle_start_contrastLinking()
+            "Start linking", lambda: self.main_controller.handle_start_contrastLinking(), checked=False
         )
         contrast_linking_section.add_mode_action(
-            "Stop linking", lambda: self.main_controller.handle_stop_contrastLinking()
+            "Stop linking", lambda: self.main_controller.handle_stop_contrastLinking(), checked= False
         )
 
 
