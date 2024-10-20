@@ -54,20 +54,17 @@ class MenuBar:
 
         # Tools section
         tools_section = self.add_section("Tools")
-        tools_section.add_action(
+        tools_section.add_mode_action_group()
+        
+        tools_section.add_mode_action(
             "Measure Distance",
             lambda: self.main_controller.handle_measureDistanceButtonClicked(),
-            checkable=True,
         )
 
-        tools_section.add_action(
-            "Window Level Mode",
+        tools_section.add_mode_action(
+            "Window Level",
             lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
-            checkable=True,
         )
-
-        # Placeholder for future actions
-        tools_section.add_action("Measure Area", lambda: None, checkable=False)
 
 
 class Section:
@@ -92,14 +89,14 @@ class Section:
         self.menu.addAction(action)
 
     def add_mode_action_group(self):
-        """Creates an action group for mutually exclusive mode actions."""
+        """Creates an action group for mutually exclusive actions."""
         self.action_group = QActionGroup(self.menu)
         self.action_group.setExclusive(
             True
         )  # Ensure only one action can be checked at a time
 
     def add_mode_action(self, action_name, triggered_function, checked=False):
-        """Adds an action to the mode group."""
+        """Adds an action to the action group with mutually exclusive checking."""
         if self.action_group is None:
             raise Exception("Call add_mode_action_group before adding mode actions.")
 
