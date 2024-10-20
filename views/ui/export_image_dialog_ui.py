@@ -178,6 +178,79 @@ class ExportImageDialog(QDialog):
                 fs.write(dicomdir_path)
                 log.info(f"Wrote to new DICOMDIR file at {dicomdir_path}")
 
+    def export_series_to_dicom_with_dicomdir(
+        self,
+        series: AcquiredSeries,
+        study: Examination,
+        parameters_list: list[dict],
+    ) -> None:
+        """
+        Export an acquired series of images to DICOM files with an associated DICOMDIR file.
+
+        Args:
+            series: The acquired series of images to save to DICOM files.
+            study: The examination study to which the series belongs.
+            parameters_list: A list of the scan parameters of each image in the acquired series.
+        """
+
+        # for i, image in enumerate(series.list_acquired_images):
+        #     self.export_to_dicom_with_dicomdir(image, series, study, parameters_list[i])
+
+        # Open a directory dialog so that the user can choose a directory to save the DICOM folder in.
+        # If a folder is selected that contains a valid DICOM folder, the existing DICOM folder is used instead of a new one.
+        dicomdir_path = QFileDialog.getExistingDirectory(
+            parent=self,
+            caption="Choose a directory for the DICOM folder with DICOMDIR file",
+        )
+
+        # Only if the user specified a directory, save the image in that directory.
+        if dicomdir_path:
+            dicomdir_path = os.path.join(dicomdir_path, "DICOM").replace("\\", "/")
+            fs = FileSet()
+            if os.path.exists(dicomdir_path):
+                fs.load(os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/"))
+                log.info(f"Loaded existing DICOMDIR file from {dicomdir_path}")
+
+            for i, image in enumerate(series.list_acquired_images):
+                parameters = parameters_list[i]
+
+                # Get the image data and image geometry from the acquired image
+                image_data: np.ndarray = image.image_data
+                image_geometry: ImageGeometry = image.image_geometry
+
+                # Normalize the image data for DICOM files
+                image_data_normalized = ExportImageDialog._normalize_image_data_for_dicom(
+                    image_data
+                )
+
+                # Create a FileDataset instance and set some DICOM attributes on it
+                file_meta = ExportImageDialog._create_file_meta_for_dicom()
+                ds = FileDataset(
+                    "this_is_the_file_name", {}, file_meta=file_meta, preamble=b"\0" * 128
+                )
+                self._set_dicom_attributes(
+                    ds,
+                    file_meta,
+                    image,
+                    image_data_normalized,
+                    image_geometry,
+                    parameters,
+                    series,
+                    study,
+                )
+
+                fs.add(ds)
+
+                if os.path.exists(
+                        os.path.join(dicomdir_path, "DICOMDIR").replace("\\", "/")
+                ):
+                    fs.write()
+                    log.info(f"Wrote to existing DICOMDIR file to {dicomdir_path}")
+                else:
+                    fs.write(dicomdir_path)
+                    log.info(f"Wrote to new DICOMDIR file at {dicomdir_path}")
+
+
     def export_to_dicom_file(
         self,
         file_name: str,

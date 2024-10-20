@@ -152,8 +152,11 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
-        self.export_dicomdir_action = QAction("Export using DICOMDIR...")
+        self.export_dicomdir_action = QAction("Export this image with DICOMDIR...")
         self.right_click_menu.addAction(self.export_dicomdir_action)
+
+        self.export_series_with_dicomdir_action = QAction("Export this series with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_series_with_dicomdir_action)
 
         self.scene.installEventFilter(self)
 
