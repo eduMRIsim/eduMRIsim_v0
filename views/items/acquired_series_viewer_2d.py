@@ -337,7 +337,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
         )
     def position_color_scale_elements(self):
         """Ensure the color scale and labels are positioned correctly."""
-        padding = 20
+        padding = 20  
 
         self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
 
@@ -356,7 +356,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
             return
-
+        
         if self.array is not None:
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
@@ -458,9 +458,11 @@ class AcquiredSeriesViewer2D(ZoomableView):
             )
 
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
-            x_vector = kwargs["x_vector"]
-            y_vector = kwargs['y_vector']
-            z_vector = kwargs["z_vector"]
+            scale_factor_x = kwargs["scale_factor_x"]
+            scale_factor_y = kwargs["scale_factor_y"]
+            origin_plane = kwargs["origin_plane"]
+            handle_pos = kwargs["handle_pos"]
+            center_pos = kwargs["center_pos"]
 
             # self.scan_volume.remove_observer(self)
             # self.scan_volume.scale_scan_volume(
@@ -471,7 +473,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.get_scan_volume_for_stack_index(
                 self.selected_stack_indx
             ).scale_scan_volume(
-                x_vector, y_vector, z_vector
+                scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos
             )
             self._update_scan_volume_display(
                 self.get_stack_for_stack_id(self.selected_stack_indx)
