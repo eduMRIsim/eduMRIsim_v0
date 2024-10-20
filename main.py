@@ -3,7 +3,7 @@ import os
 import sys
 
 from PyQt6.QtCore import qInstallMessageHandler
-from PyQt6.QtGui import QFont, QShortcut
+from PyQt6.QtGui import QFont, QShortcut, QAction
 from PyQt6.QtWidgets import QApplication
 from rich.traceback import install
 
@@ -127,13 +127,18 @@ class App(QApplication):
         # measure_distance_shortcut = QShortcut("Ctrl+D", self.main_view)
         # measure_distance_shortcut.activated.connect(lambda: self.main_controller.handle_measureDistanceButtonClicked())
 
-        tools_section.add_action(
+        window_level_action: QAction = tools_section.add_action(
             "Window Level Mode",
             lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
             checkable=True,
         )
+
+        def update_window_level_action():
+            window_level_action.toggle()
+            self.main_controller.handle_toggleWindowLevelButtonClicked()
+
         window_level_shortcut = QShortcut("Ctrl+W", self.main_view)
-        window_level_shortcut.activated.connect(lambda: self.main_controller.handle_toggleWindowLevelButtonClicked())
+        window_level_shortcut.activated.connect(lambda: update_window_level_action())
 
         # WARNING: not implemented yet
         tools_section.add_action("Measure Area", self.test_action, checkable=False)

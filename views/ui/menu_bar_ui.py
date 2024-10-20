@@ -24,7 +24,7 @@ class Section:
         self.actions = {}
         self.action_group = None
 
-    def add_action(self, action_name, triggered_function, checkable=False):
+    def add_action(self, action_name, triggered_function, checkable=False) -> QAction:
         """Adds a regular action to the section."""
         action = QAction(action_name, self.menu)
 
@@ -35,6 +35,8 @@ class Section:
         action.triggered.connect(triggered_function)
         self.actions[action_name] = action
         self.menu.addAction(action)
+
+        return action
 
     def add_mode_action_group(self):
         """Creates an action group for mutually exclusive mode actions."""
