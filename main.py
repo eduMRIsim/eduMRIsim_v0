@@ -57,8 +57,8 @@ class App(QApplication):
         self.main_view.update_UI()
         self.main_view.show()
 
-        self.menu_bar = MenuBar(self.main_view)
-        self.setup_menu_bar()
+        # Initialize MenuBar
+        self.menu_bar = MenuBar(self.main_view, self.main_controller, self.load_examination)
 
     def start_new_examination(self):
         """Start a new examination."""
@@ -77,51 +77,6 @@ class App(QApplication):
         self.settings_manager.setup_settings("settings.ini")
         self.starting_window.close()
         self.start_main_app()
-
-    # TODO all menu bar actions should be moved to the MenuBar class
-    # Set up the menu bar
-    def setup_menu_bar(self):
-        # Create the menu bar and sections
-        menu_bar = self.menu_bar
-
-        # Session section
-        session_section = menu_bar.add_section("Session")
-        session_section.add_action(
-            "Save session", self.main_controller.export_examination
-        )
-        session_section.add_action("Load session", self.load_examination)
-
-        # Mode section
-        mode_section = menu_bar.add_section("Mode")
-        mode_section.add_mode_action_group()
-        mode_section.add_mode_action(
-            "Scanning Mode",
-            lambda: self.main_view._stackedLayout.setCurrentIndex(0),
-            checked=True,
-        )
-        mode_section.add_mode_action(
-            "Viewing Mode", lambda: self.main_view._stackedLayout.setCurrentIndex(1)
-        )
-
-        # Tools section
-        tools_section = menu_bar.add_section("Tools")
-        tools_section.add_action(
-            "Measure Distance",
-            lambda: self.main_controller.handle_measureDistanceButtonClicked(),
-            checkable=True,
-        )
-
-        tools_section.add_action(
-            "Window Level Mode",
-            lambda: self.main_controller.handle_toggleWindowLevelButtonClicked(),
-            checkable=True,
-        )
-
-        # WARNING: not implemented yet
-        tools_section.add_action("Measure Area", self.test_action, checkable=False)
-
-    def test_action(self):
-        pass
 
     def setup_scan_parameter_form(self):
         """Load and set up the scan parameter form."""
