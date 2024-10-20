@@ -152,11 +152,14 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
-        self.export_dicomdir_action = QAction("Export this image with DICOMDIR...")
-        self.right_click_menu.addAction(self.export_dicomdir_action)
+        self.export_image_with_dicomdir_action = QAction("Export image with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_image_with_dicomdir_action)
 
-        self.export_series_with_dicomdir_action = QAction("Export this series with DICOMDIR...")
+        self.export_series_with_dicomdir_action = QAction("Export series with DICOMDIR...")
         self.right_click_menu.addAction(self.export_series_with_dicomdir_action)
+
+        self.export_examination_with_dicomdir_action = QAction("Export examination with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_examination_with_dicomdir_action)
 
         self.scene.installEventFilter(self)
 
@@ -698,10 +701,10 @@ class AcquiredSeriesViewer2D(ZoomableView):
         # Enable the export actions only if we have a displayed image that can be exported.
         if self.displayed_image is not None:
             self.export_action.setEnabled(True)
-            self.export_dicomdir_action.setEnabled(True)
+            self.export_image_with_dicomdir_action.setEnabled(True)
         else:
             self.export_action.setEnabled(False)
-            self.export_dicomdir_action.setEnabled(False)
+            self.export_image_with_dicomdir_action.setEnabled(False)
 
         # Execute and open the menu.
         action_performed = self.right_click_menu.exec(self.mapToGlobal(event.pos()))

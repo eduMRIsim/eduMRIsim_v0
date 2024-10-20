@@ -190,16 +190,16 @@ class MainController:
             lambda: self.handle_viewingPortExport_triggered(3)
         )
 
-        self.ui.scannedImageFrame.export_dicomdir_action.triggered.connect(
+        self.ui.scannedImageFrame.export_image_with_dicomdir_action.triggered.connect(
             lambda: self.handle_exportImageToDicomdir_triggered(0)
         )
-        self.ui.scanPlanningWindow1.export_dicomdir_action.triggered.connect(
+        self.ui.scanPlanningWindow1.export_image_with_dicomdir_action.triggered.connect(
             lambda: self.handle_exportImageToDicomdir_triggered(1)
         )
-        self.ui.scanPlanningWindow2.export_dicomdir_action.triggered.connect(
+        self.ui.scanPlanningWindow2.export_image_with_dicomdir_action.triggered.connect(
             lambda: self.handle_exportImageToDicomdir_triggered(2)
         )
-        self.ui.scanPlanningWindow3.export_dicomdir_action.triggered.connect(
+        self.ui.scanPlanningWindow3.export_image_with_dicomdir_action.triggered.connect(
             lambda: self.handle_exportImageToDicomdir_triggered(3)
         )
 
@@ -214,6 +214,19 @@ class MainController:
         )
         self.ui.scanPlanningWindow3.export_series_with_dicomdir_action.triggered.connect(
             lambda: self.handle_exportSeriesToDicomdir_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow1.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow2.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow3.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
         )
 
     def prepare_model_data(self):
@@ -501,7 +514,7 @@ class MainController:
             series = self.ui.scanPlanningWindow3.acquired_series
         parameters = self._return_parameters_from_image_in_scanlist(image)
         study = self.ui.scanner.examination
-        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(
+        self.export_image_dialog_ui.export_image_to_dicom_with_dicomdir(
             image, series, study, parameters
         )
 
