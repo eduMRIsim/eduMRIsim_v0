@@ -12,6 +12,7 @@ from PyQt6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
+    QLinearGradient
 )
 from PyQt6.QtWidgets import (
     QGraphicsScene,
@@ -70,11 +71,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
         # Initialize displayed image to None
         self.displayed_image = None
-
-        # window level mode
-        self.window_center = None
-        self.window_width = None
-        self.leveling_enabled = False
 
         # Initalize displayed series to None
         self.acquired_series = None
@@ -152,8 +148,14 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
-        self.export_dicomdir_action = QAction("Export using DICOMDIR...")
-        self.right_click_menu.addAction(self.export_dicomdir_action)
+        self.export_image_with_dicomdir_action = QAction("Export image with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_image_with_dicomdir_action)
+
+        self.export_series_with_dicomdir_action = QAction("Export series with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_series_with_dicomdir_action)
+
+        self.export_examination_with_dicomdir_action = QAction("Export examination with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_examination_with_dicomdir_action)
 
         self.scene.installEventFilter(self)
 
@@ -325,6 +327,23 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.scan_plane_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
+    def position_color_scale_elements(self):
+        """Ensure the color scale and labels are positioned correctly."""
+        padding = 20
+
+        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+
+        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() - 5)
+        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() - 20)
+
+        self.min_value_label.adjustSize()
+        self.mid_value_label.adjustSize()
+        self.max_value_label.adjustSize()
+
 
     def _displayArray(self, window_center=None, window_width=None):
         if self.array is None:
@@ -363,14 +382,6 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.resetTransform()
             self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
             self.centerOn(self.pixmap_item)
-
-    def toggle_window_level_mode(self):
-        """Toggles window-leveling mode."""
-        self.leveling_enabled = not self.leveling_enabled
-        if self.leveling_enabled:
-            log.info("Window-level mode enabled")
-        else:
-            log.info("Window-level mode disabled")
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
@@ -434,11 +445,9 @@ class AcquiredSeriesViewer2D(ZoomableView):
             )
 
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
-            scale_factor_x = kwargs["scale_factor_x"]
-            scale_factor_y = kwargs["scale_factor_y"]
-            origin_plane = kwargs["origin_plane"]
-            handle_pos = kwargs["handle_pos"]
-            center_pos = kwargs["center_pos"]
+            x_vector = kwargs["x_vector"]
+            y_vector = kwargs['y_vector']
+            z_vector = kwargs["z_vector"]
 
             # self.scan_volume.remove_observer(self)
             # self.scan_volume.scale_scan_volume(
@@ -449,7 +458,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
             self.get_scan_volume_for_stack_index(
                 self.selected_stack_indx
             ).scale_scan_volume(
-                scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos
+                x_vector, y_vector, z_vector
             )
             self._update_scan_volume_display(
                 self.get_stack_for_stack_id(self.selected_stack_indx)
@@ -711,13 +720,18 @@ class AcquiredSeriesViewer2D(ZoomableView):
 
         super().contextMenuEvent(event)
 
-        # Enable the export actions only if we have a displayed image that can be exported.
+        # Enable the export actions only if we have at least one displayed image that can be exported,
+        # in the window that was right-clicked on.
         if self.displayed_image is not None:
             self.export_action.setEnabled(True)
-            self.export_dicomdir_action.setEnabled(True)
+            self.export_image_with_dicomdir_action.setEnabled(True)
+            self.export_series_with_dicomdir_action.setEnabled(True)
+            self.export_examination_with_dicomdir_action.setEnabled(True)
         else:
             self.export_action.setEnabled(False)
-            self.export_dicomdir_action.setEnabled(False)
+            self.export_image_with_dicomdir_action.setEnabled(False)
+            self.export_series_with_dicomdir_action.setEnabled(False)
+            self.export_examination_with_dicomdir_action.setEnabled(False)
 
         # Execute and open the menu.
         action_performed = self.right_click_menu.exec(self.mapToGlobal(event.pos()))

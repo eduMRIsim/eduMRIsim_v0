@@ -139,8 +139,8 @@ class Ui_MainWindow(QMainWindow):
         return self._scanlistInfoFrame.scanlistListWidget
 
     @property
-    def scanProgressBar(self):
-        return self._scanProgressInfoFrame.scanProgressBar
+    def scanEtaLabel(self):
+        return self._scanProgressInfoFrame.scanEtaLabel
 
     @property
     def startScanButton(self):
@@ -317,7 +317,7 @@ class Ui_MainWindow(QMainWindow):
         # UI labels
         settings.setValue("examinationNameLabel", self.examinationNameLabel.text())
         settings.setValue("modelNameLabel", self.modelNameLabel.text())
-        settings.setValue("scanProgressBar", self.scanProgressBar.value())
+        settings.setValue("scanEtaLabel", self.scanEtaLabel.text())
 
         # AcquiredSeries widgets
         settings.setValue("acquiredSeries1", self.scanPlanningWindow1.acquired_series)
@@ -359,8 +359,8 @@ class Ui_MainWindow(QMainWindow):
             settings.value("examinationNameLabel", "", type=str)
         )
         self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
-        self.scanProgressBar.setValue(
-            int(settings.value("scanProgressBar", 0, type=int))
+        self.scanEtaLabel.setText(
+            "Time Remaining: 00:00"
         )
 
         # AcquiredSeries widgets

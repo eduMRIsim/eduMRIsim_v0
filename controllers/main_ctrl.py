@@ -205,17 +205,43 @@ class MainController:
             lambda: self.handle_viewingPortExport_triggered(3)
         )
 
-        self.ui.scannedImageFrame.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(0)
+        self.ui.scannedImageFrame.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(0)
         )
-        self.ui.scanPlanningWindow1.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(1)
+        self.ui.scanPlanningWindow1.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(1)
         )
-        self.ui.scanPlanningWindow2.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(2)
+        self.ui.scanPlanningWindow2.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(2)
         )
-        self.ui.scanPlanningWindow3.export_dicomdir_action.triggered.connect(
-            lambda: self.handle_exportToDicomdir_triggered(3)
+        self.ui.scanPlanningWindow3.export_image_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportImageToDicomdir_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(0)
+        )
+        self.ui.scanPlanningWindow1.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(1)
+        )
+        self.ui.scanPlanningWindow2.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(2)
+        )
+        self.ui.scanPlanningWindow3.export_series_with_dicomdir_action.triggered.connect(
+            lambda: self.handle_exportSeriesToDicomdir_triggered(3)
+        )
+
+        self.ui.scannedImageFrame.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow1.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow2.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
+        )
+        self.ui.scanPlanningWindow3.export_examination_with_dicomdir_action.triggered.connect(
+            lambda: self.export_image_dialog_ui.export_examination_to_dicom_with_dicomdir(self.ui.scanner.examination)
         )
 
     def prepare_model_data(self):
@@ -226,11 +252,11 @@ class MainController:
 
     def export_examination(self):
         default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
-        options = (
-            QFileDialog.FileMode.Options()
-        )  # Use native dialog for a more modern look
+        # options = (
+        #     QFileDialog.FileMode.Options()
+        # )  # Use native dialog for a more modern look
         file_path, _ = QFileDialog.getSaveFileName(
-            self.ui, "Save Session", default_filename, options=options
+            self.ui, "Save Session", default_filename
         )
 
         # If canceled, return without doing anything
@@ -346,10 +372,17 @@ class MainController:
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
 
     # Sync progress bar to scan progress
-    def update_scan_progress(self, progress: float):
+    def update_scan_progress(self, remaining_time: float):
         """Update the progress bar during scanning."""
-        # Assuming the progress bar ranges from 0 to 100
-        self.ui.scanProgressBar.setValue(int(progress * 100))
+        if remaining_time <= 0:
+            # Scan is complete
+            self.ui.scanEtaLabel.setText("Scan Complete")
+        else:
+            seconds_remaining = int(round(remaining_time / 1000))
+            # Format the time as mm:ss
+            minutes, seconds = divmod(seconds_remaining, 60)
+            eta_display = f"Time Remaining: {minutes:02d}:{seconds:02d}"
+            self.ui.scanEtaLabel.setText(eta_display)
 
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
@@ -439,6 +472,21 @@ class MainController:
         # Used to reconnect all cells to accept drops after rows/columns have been removed
         self.ui.gridViewingWindow.reconnect_all_signals(self.handle_dropped_cells)
 
+    def handle_show_checkboxes(self, checked):
+        if checked:
+            self.ui.gridViewingWindow.show_checkboxes()
+
+    def handle_hide_checkboxes(self, checked):
+        if checked:
+            self.ui.gridViewingWindow.hide_checkboxes()
+
+    def handle_start_contrastLinking(self):
+        self.ui.gridViewingWindow.start_contrast_linking()
+
+    def handle_stop_contrastLinking(self):
+        self.ui.gridViewingWindow.stop_contrast_linking()
+        self.handle_hide_checkboxes(True)
+
     def handle_parameterFormLayout_activated(self):
         self.scanner.active_scan_item.status = ScanItemStatusEnum.BEING_MODIFIED
 
@@ -527,18 +575,19 @@ class MainController:
         self.ui.state = UI_state.ExamState()
         self.ui.examinationNameLabel.setText(exam_name)
         self.ui.modelNameLabel.setText(model_name)
-
-    def handle_toggleWindowLevelButtonClicked(self):
-        """Toggle the window-level mode"""
-        if hasattr(self.ui.scannedImageFrame, "leveling_enabled"):
-            if not self.ui.scannedImageFrame.leveling_enabled:
-                self.ui.scannedImageFrame.leveling_enabled = True
-                log.info("Window-level mode enabled")
-            else:
-                self.ui.scannedImageFrame.leveling_enabled = False
-                log.info("Window-level mode disabled")
-        else:
-            log.error("Error with window-level mode")
+            
+    def handle_changeColorMapping(self, mapping):
+        """
+        Changes color mapping to("bw" or "rgb").
+        """
+        # Loop through all grid cells and apply the color scale change
+        for row in range(len(self.ui.gridViewingWindow.grid_cells)):
+            for col in range(len(self.ui.gridViewingWindow.grid_cells[row])):
+                grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
+                if grid_cell is not None:
+                    grid_cell.setColorScale(mapping)  # Apply the color scale to the grid cell
+                    log.info(f"Color mapping changed to {mapping} for GridCell ({row}, {col})")
+        log.info(f"Color mapping changed to {mapping} for all GridCells.")
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
@@ -562,7 +611,7 @@ class MainController:
         study = self.ui.scanner.examination
         self.export_image_dialog_ui.export_file_dialog(image, series, study, parameters)
 
-    def handle_exportToDicomdir_triggered(self, index: int):
+    def handle_exportImageToDicomdir_triggered(self, index: int):
         if index not in range(0, 4):
             raise ValueError(
                 f"Index {index} does not refer to a valid image viewing port"
@@ -582,8 +631,31 @@ class MainController:
             series = self.ui.scanPlanningWindow3.acquired_series
         parameters = self._return_parameters_from_image_in_scanlist(image)
         study = self.ui.scanner.examination
-        self.export_image_dialog_ui.export_to_dicom_with_dicomdir(
+        self.export_image_dialog_ui.export_image_to_dicom_with_dicomdir(
             image, series, study, parameters
+        )
+
+    def handle_exportSeriesToDicomdir_triggered(self, index: int):
+        if index not in range(0, 4):
+            raise ValueError(
+                f"Index {index} does not refer to a valid image viewing port"
+            )
+
+        if index == 0:
+            series = self.ui.scannedImageFrame.acquired_series
+        elif index == 1:
+            series = self.ui.scanPlanningWindow1.acquired_series
+        elif index == 2:
+            series = self.ui.scanPlanningWindow2.acquired_series
+        else:
+            series = self.ui.scanPlanningWindow3.acquired_series
+        parameters_list = []
+        for image in series.list_acquired_images:
+            parameters = self._return_parameters_from_image_in_scanlist(image)
+            parameters_list.append(parameters)
+        study = self.ui.scanner.examination
+        self.export_image_dialog_ui.export_series_to_dicom_with_dicomdir(
+            series, study, parameters_list
         )
 
     def handle_measureDistanceButtonClicked(self):
@@ -594,6 +666,10 @@ class MainController:
             self.ui._scannedImageFrame.measuring_enabled = False
             self.ui._scannedImageFrame.measure.hide_items()
             log.warn("Measuring disabled")
+            
+    def handle_toggleWindowLevelButtonClicked(self):
+        """Toggle the window-level mode"""
+        return #not used
 
     def _return_parameters_from_image_in_scanlist(self, image: AcquiredImage) -> dict:
         """Find an image in the current scan list, and return the parameters of the scan list item associated with the image.

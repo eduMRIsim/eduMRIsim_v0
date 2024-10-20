@@ -9,6 +9,7 @@ from PyQt6.QtGui import (
     QDropEvent,
     QPen,
     QAction,
+    QLinearGradient
 )
 from PyQt6.QtWidgets import (
     QFrame,
@@ -20,6 +21,8 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QMenu,
+    QLabel,
+    QCheckBox
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -27,6 +30,8 @@ from views.items.measurement_tool import MeasurementTool
 from views.items.zoomin import ZoomableView
 from views.ui.scanlist_ui import ScanlistListWidget
 from utils.logger import log
+
+import matplotlib.pyplot as plt
 
 
 class gridViewingWindowLayout(QFrame):
@@ -38,6 +43,10 @@ class gridViewingWindowLayout(QFrame):
         rightLayout = QVBoxLayout()
 
         self.grid_cells = []
+
+        # initialize limits for rows/columns
+        self.row_limit = 5
+        self.column_limit = 5
 
         # creates default 2x2 grid
         self.right_layout = QGridLayout()
@@ -79,6 +88,91 @@ class gridViewingWindowLayout(QFrame):
         else:
             log.error(f"Invalid cell access: row {i}, column {j}.")
             return None
+        
+    def show_checkboxes(self):
+        """Adds checkboxes to all cells in the grid."""
+        for row in self.grid_cells:
+            for cell in row:
+                cell.set_visibility_checkbox(True)
+
+    def hide_checkboxes(self):
+        """Hides checkboxes in all cells."""
+        for row in self.grid_cells:
+            for cell in row:
+                cell.checkbox.setChecked(False)
+                cell.set_visibility_checkbox(False) 
+
+    def get_checked_cells(self):
+        """Stores a list of the checked cells. """
+        checked_cells = []
+
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                cell = self.grid_cells[i][j]
+                if cell.checkbox.isVisible() and cell.checkbox.isChecked():
+                    checked_cells.append((i, j))
+                    log.debug(f"Checkbox is checked in cell [{i},{j}]")
+
+        return checked_cells
+    
+    def start_contrast_linking(self):
+        """Synchronizes window_levelling for the checked cells. """
+        linked_cells = self.get_checked_cells()
+        self.linked_cells = []
+        for i, j in linked_cells:
+            self.linked_cells.append(self.grid_cells[i][j])
+
+        if not linked_cells:
+            log.warn("No cells selected for contrast linking!.")
+            return
+        else:
+            log.info(f"Contrast linking will be done for cells: {linked_cells}")
+
+        for cell_i in self.linked_cells:
+            for cell_j in self.linked_cells:
+                # connect all cells to the same signal
+                if cell_j != cell_i:
+                    cell_i.contrastChanged.connect(
+                        lambda window_center, window_width, cell = cell_j: self.synchronize_window_levelling(window_center, window_width, cell)
+                    ) 
+        
+        log.info(f"Cells {len(linked_cells)} are contrast linked.")
+    
+    def synchronize_window_levelling(self, window_center, window_width, cell):
+        """Synchronizes the window levelling for all the linked cells ."""
+        cell.window_center = window_center
+        cell.window_width = window_width
+
+        cell._displayArray(window_center, window_width)
+        cell.updateColorScale(window_center, window_width)
+    
+    def stop_contrast_linking(self):
+        """Stops contrast linking for the selected cells."""
+        linked_cells = self.get_checked_cells()
+        
+        if not linked_cells:
+            log.warn("No cells selected for contrast linking!.")
+            return
+
+        for cell in self.linked_cells:
+            try:
+                cell.contrastChanged.disconnect() 
+            except Exception as e:
+                pass
+
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                self.grid_cell = self.grid_cells[i][j]
+                self.grid_cell.resetTransform()
+                if self.grid_cell.pixmap_item:
+                    self.grid_cell.fitInView(cell.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+                    self.grid_cell.centerOn(cell.pixmap_item)
+                else: 
+                    log.error("The cell has no pixmap item. ")
+        
+        log.info(f"Stopped contrast linking for {len(self.linked_cells)} cells.")
+        self.linked_cells = []
+        self.hide_checkboxes()
 
     def add_row(self):
         """Adds a new row of GridCell instances into the grid."""
@@ -90,7 +184,7 @@ class gridViewingWindowLayout(QFrame):
         else:
             nr_columns = 0
 
-        if row_index < 5:
+        if row_index < self.row_limit:
             for j in range(nr_columns):
                 new_cell = GridCell(self, row_index, j)
                 if row_index > 0:
@@ -115,7 +209,7 @@ class gridViewingWindowLayout(QFrame):
 
         nr_rows = len(self.grid_cells)
 
-        if col_index < 5:
+        if col_index < self.column_limit:
             for i in range(nr_rows):
                 new_cell = GridCell(self, i, col_index)
                 if col_index > 0:
@@ -208,7 +302,6 @@ class gridViewingWindowLayout(QFrame):
 
 class GridCell(ZoomableView):
     dropEventSignal = pyqtSignal(int, int, int)
-    rowRemoveSignal = pyqtSignal(int)  # signal for removed rows
 
     def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
@@ -222,6 +315,25 @@ class GridCell(ZoomableView):
         self.row = row  # row index
         self.col = col  # col index
         self.parent_layout = parent_layout  # reference to the parent layout
+        
+        # window level variables
+        self.window_center = None
+        self.window_width = None
+        self.leveling_enabled = False
+        self.previous_mouse_position = None
+        
+        # color scale bar
+        self.color_scale = 'bw'
+        self.color_scale_label = QLabel(self)
+        self.color_scale_label.setFixedSize(20, 200)
+        self.color_scale_label.setStyleSheet("background: black; border: 1px solid white")
+        self.min_value_label = QLabel(self)
+        self.min_value_label.setStyleSheet("color: white; font-size: 10px;")
+        self.mid_value_label = QLabel(self)
+        self.mid_value_label.setStyleSheet("color: white; font-size: 10px;")
+        self.max_value_label = QLabel(self)
+        self.max_value_label.setStyleSheet("color: white; font-size: 10px;")
+        self.position_color_scale_elements() 
 
         # pixmap graphics
         self.scene = QGraphicsScene(self)
@@ -252,6 +364,33 @@ class GridCell(ZoomableView):
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
+
+        # checkboxes for geometry linking
+        self.checkbox = QCheckBox("Link", self)
+        self.checkbox.setVisible(False) # invisible by default
+        self.checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_checkbox_position()
+        
+    def set_visibility_checkbox(self, visible):
+        """Show or hide the checkbox."""
+        self.checkbox.setVisible(visible)
+        if visible:
+            self.update_checkbox_position()
+        
+    def update_checkbox_position(self):
+        """Ensures the checkboxes are positioned in the right bottom corner. """
+        if self.checkbox.isVisible():
+            checkbox_height = self.checkbox.size().height()
+            checkbox_width = self.checkbox.size().width()
+        else:
+            checkbox_height = 0
+            checkbox_width = 0
+
+        padding = 10
+        x_pos = self.width() - checkbox_width- padding 
+        y_pos = self.height() - checkbox_height - padding 
+        self.checkbox.move(x_pos, y_pos)
+        self.checkbox.adjustSize()
 
     def add_row(self):
         """Trigger add_row method of the parent."""
@@ -299,40 +438,130 @@ class GridCell(ZoomableView):
         self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
-
-    def _displayArray(self):
-        if self.array is not None:
-
-            # Normalize the slice values for display
-            array_norm = (self.array[:, :] - np.min(self.array)) / (
-                np.max(self.array) - np.min(self.array)
-            )
-            array_8bit = (array_norm * 255).astype(np.uint8)
-
-            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
-            image = np.ascontiguousarray(np.array(array_8bit))
-            height, width = image.shape
-            qimage = QImage(
-                image.data, width, height, width, QImage.Format.Format_Grayscale8
-            )
-
-            # Create a QPixmap - a pixmap which can be displayed in a GUI
-            pixmap = QPixmap.fromImage(qimage)
-            self.pixmap_item.setPixmap(pixmap)
-
-            self.pixmap_item.setPos(0, 0)  # Ensure the pixmap item is at (0, 0)
-            self.scene.setSceneRect(
-                0, 0, width, height
-            )  # Adjust the scene rectangle to match the pixmap dimensions
-
+        self.update_checkbox_position()
+        self.position_color_scale_elements()
+        
+    def toggle_window_level_mode(self):
+        """Toggles window-leveling mode."""
+        self.leveling_enabled = not self.leveling_enabled
+        if self.leveling_enabled:
+            log.info("Window-level mode enabled")
+            # Initialize default values if they are None
+            if self.window_center is None or self.window_width is None:
+                self.window_center = np.mean(self.array)
+                self.window_width = np.max(self.array) - np.min(self.array)
+            
+            self.position_color_scale_elements()
+            
         else:
-            # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
-            black_image.fill(Qt.GlobalColor.black)
-            pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)
-            self.scene.setSceneRect(0, 0, 1, 1)
+            log.info("Window-level mode disabled")
 
+    def position_color_scale_elements(self):
+        """Ensure the color scale and labels are positioned correctly."""
+        padding = 20  
+
+        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+
+        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                  self.color_scale_label.y() - 5)
+        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                  self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                  self.color_scale_label.y() + self.color_scale_label.height() - 20)
+
+        self.min_value_label.adjustSize()
+        self.mid_value_label.adjustSize()
+        self.max_value_label.adjustSize()
+
+        
+    def updateColorScale(self, window_center, window_width):
+        """Updates the color scale bar based on the current color scale and window/level values."""
+        
+        if window_center is None:
+            window_center = np.mean(self.array) if self.array is not None else 128
+        if window_width is None:
+            window_width = np.max(self.array) - np.min(self.array) if self.array is not None else 256
+
+        min_value = max(0, window_center - window_width / 2)
+        max_value = max(0, window_center + window_width / 2)
+
+        # Create pixmap for color scale bar
+        pixmap = QPixmap(self.color_scale_label.size())
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        gradient = QLinearGradient(0, 0, 0, self.color_scale_label.height())
+
+        if self.color_scale == 'bw':
+            min_grey_value = max(0, int(255 * (min_value / max(1, max_value))))
+            max_grey_value = max(0, int(255 * (max_value / max(1, max_value))))
+            gradient.setColorAt(0, QColor(min_grey_value, min_grey_value, min_grey_value))
+            gradient.setColorAt(1, QColor(max_grey_value, max_grey_value, max_grey_value))
+        
+        elif self.color_scale == 'rgb':
+            # Use the 'viridis' colormap to create the color gradient
+            cmap = plt.get_cmap('viridis')
+            for i in np.linspace(0, 1, 100):
+                color = cmap(i)
+                qcolor = QColor(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
+                gradient.setColorAt(i, qcolor)
+
+        painter.fillRect(0, 0, self.color_scale_label.width(), self.color_scale_label.height(), gradient)
+        painter.end()
+
+        self.color_scale_label.setPixmap(pixmap)
+
+        self.min_value_label.setText(f"{int(min_value)}")
+        self.mid_value_label.setText(f"{int(window_center)}")
+        self.max_value_label.setText(f"{int(max_value)}")
+
+        self.position_color_scale_elements()
+
+    def setColorScale(self, color: str):
+        if color in ['bw', 'rgb']:
+            self.color_scale = color
+            self._displayArray(self.window_center, self.window_width)
+        else:
+            raise ValueError("Invalid color scale. Use 'bw' or 'rgb'.")
+
+    def _displayArray(self, window_center=None, window_width=None):
+        """Display the image data with appropriate color scale."""
+        if self.array is None:
+            return
+        
+        # Normalize array
+        array_norm = (self.array - np.min(self.array)) / (np.max(self.array) - np.min(self.array))
+        
+        # Update the color scale bar
+        self.updateColorScale(window_center, window_width)
+
+        # Calculate window/level
+        if window_center is None or window_width is None:
+            window_center = np.mean(self.array)
+            window_width = np.max(self.array) - np.min(self.array)
+
+        min_window = window_center - window_width / 2
+        max_window = window_center + window_width / 2
+
+        array_clamped = np.clip(self.array, min_window, max_window)
+        array_norm = (array_clamped - min_window) / (max_window - min_window)
+
+        if self.color_scale == 'bw':
+            # Grayscale
+            array_8bit = (array_norm * 255).astype(np.uint8)
+            qimage = QImage(array_8bit.data, array_8bit.shape[1], array_8bit.shape[0], array_8bit.shape[1], QImage.Format.Format_Grayscale8)
+        elif self.color_scale == 'rgb':
+            # Apply colormap (viridis) to RGB
+            color_mapped_array = plt.get_cmap('viridis')(array_norm)[:, :, :3]  # Get RGB values from viridis
+            array_rgb = (color_mapped_array * 255).astype(np.uint8)
+            qimage = QImage(array_rgb.data, array_rgb.shape[1], array_rgb.shape[0], array_rgb.shape[1] * 3, QImage.Format.Format_RGB888)
+
+        # Set pixmap to display image
+        pixmap = QPixmap.fromImage(qimage)
+        self.pixmap_item.setPixmap(pixmap)
+
+        # Adjust view
+        self.pixmap_item.setPos(0, 0)
+        self.scene.setSceneRect(0, 0, qimage.width(), qimage.height())
         self.resetTransform()
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.centerOn(self.pixmap_item)
