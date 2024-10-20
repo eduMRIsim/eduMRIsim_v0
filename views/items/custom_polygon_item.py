@@ -672,10 +672,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             return
 
         # Access the rotation parameters of the plane the rotation is being performed on
-        image_geometry = self.viewer.displayed_image.image_geometry
-        RLAngle_deg = image_geometry.RLAngle_deg
-        APAngle_deg = image_geometry.APAngle_deg
-        FHAngle_deg = image_geometry.FHAngle_deg
+        RLAngle_deg = self.viewer.displayed_image.image_geometry.RLAngle_deg
+        APAngle_deg = self.viewer.displayed_image.image_geometry.APAngle_deg
+        FHAngle_deg = self.viewer.displayed_image.image_geometry.FHAngle_deg
 
         new_pos = event.scenePos()
         dx = new_pos.x() - self.centroid.x()
