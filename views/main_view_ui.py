@@ -24,6 +24,7 @@ from views.UI_MainWindowState import (
 from views.UI_MainWindowState import (
     ReadyToScanState,
     BeingModifiedState,
+    BeingScannedState,
     ScanCompleteState,
     IdleState,
 )
@@ -129,12 +130,16 @@ class Ui_MainWindow(QMainWindow):
         return self._scanlistInfoFrame.addScanItemButton
 
     @property
+    def importScanItemButton(self):
+        return self._scanlistInfoFrame.importScanItemButton
+
+    @property
     def scanlistListWidget(self):
         return self._scanlistInfoFrame.scanlistListWidget
 
     @property
-    def scanProgressBar(self):
-        return self._scanProgressInfoFrame.scanProgressBar
+    def scanEtaLabel(self):
+        return self._scanProgressInfoFrame.scanEtaLabel
 
     @property
     def startScanButton(self):
@@ -155,6 +160,10 @@ class Ui_MainWindow(QMainWindow):
     @property
     def scanParametersSaveChangesButton(self):
         return self._scanParametersWidget.scanParametersSaveChangesButton
+
+    @property
+    def scanParametersExportButton(self):
+        return self._scanParametersWidget.scanParametersExportButton
 
     @property
     def scanParametersCancelChangesButton(self):
@@ -270,8 +279,8 @@ class Ui_MainWindow(QMainWindow):
         bottomLayout.addLayout(self._editingStackedLayout, stretch=1)
 
         self._scannedImageFrame = AcquiredSeriesViewer2D()
-        self._scannedImageFrame.zooming_enabled = False
-        # TODO change back to true
+        self._scannedImageFrame.zooming_enabled = True
+        self._scannedImageFrame.view_only_instance = True
         self._scannedImageWidget = ScannedImageWidget(self._scannedImageFrame)
         bottomLayout.addWidget(self._scannedImageWidget, stretch=1)
 
@@ -300,7 +309,7 @@ class Ui_MainWindow(QMainWindow):
         # UI labels
         settings.setValue("examinationNameLabel", self.examinationNameLabel.text())
         settings.setValue("modelNameLabel", self.modelNameLabel.text())
-        settings.setValue("scanProgressBar", self.scanProgressBar.value())
+        settings.setValue("scanEtaLabel", self.scanEtaLabel.text())
 
         # AcquiredSeries widgets
         settings.setValue("acquiredSeries1", self.scanPlanningWindow1.acquired_series)
@@ -337,8 +346,8 @@ class Ui_MainWindow(QMainWindow):
             settings.value("examinationNameLabel", "", type=str)
         )
         self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
-        self.scanProgressBar.setValue(
-            int(settings.value("scanProgressBar", 0, type=int))
+        self.scanEtaLabel.setText(
+            "Time Remaining: 00:00"
         )
 
         # AcquiredSeries widgets
@@ -393,6 +402,8 @@ class Ui_MainWindow(QMainWindow):
             self.state = ScanCompleteState()
         elif state_name == "BeingModifiedState":
             self.state = BeingModifiedState()
+        elif state_name == "BeingScannedState":
+            self.state = BeingScannedState()
         elif state_name == "ReadyToScanState":
             self.state = ReadyToScanState()
         elif state_name == "ExamState":

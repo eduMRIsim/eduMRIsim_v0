@@ -21,6 +21,9 @@ class ExamState(UI_MainWindowState):
         context.scanlistListWidget.setEnabled(True)
         context.addScanItemButton.setVisible(True)
         context.addScanItemButton.setEnabled(True)
+        context.importScanItemButton.setVisible(True)
+        context.importScanItemButton.setEnabled(True)
+
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(True)
@@ -39,11 +42,14 @@ class ReadyToScanAgainState(ExamState):
         context.scanlistListWidget.setEnabled(True)
         context.addScanItemButton.setVisible(True)
         context.addScanItemButton.setEnabled(True)
+        context.importScanItemButton.setVisible(True)
+        context.importScanItemButton.setEnabled(True)
         context.startScanButton.setEnabled(True)
         context.stopScanButton.setEnabled(True)
         context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersExportButton.setEnabled(True)
         context.scanParametersResetButton.setEnabled(True)
-        context.scanProgressBar.setValue(0)
+        context.scanEtaLabel.setText("Time Remaining: 00:00")
         context.scannedImageFrame.setAcquiredSeries(None)
         context.scanPlanningWindow1.setAcquiredSeries(None)
         context.scanPlanningWindow2.setAcquiredSeries(None)
@@ -58,6 +64,7 @@ class ReadyToScanState(ExamState):
         context.startScanButton.setEnabled(True)
         context.stopScanButton.setEnabled(True)
         context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersExportButton.setEnabled(True)
         context.scanParametersResetButton.setEnabled(True)
 
 
@@ -70,12 +77,33 @@ class BeingModifiedState(ExamState):
         context.viewingModeButton.setEnabled(False)
         context.scanlistListWidget.setEnabled(False)
         context.addScanItemButton.setEnabled(False)
+        context.importScanItemButton.setEnabled(False)
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(False)
         context.scanParametersCancelChangesButton.setEnabled(True)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(True)
         context.scanParametersSaveChangesButton.setEnabled(True)
+
+
+class BeingScannedState(ExamState):
+    name = "BeingScannedState"
+
+    def update_UI(self, context) -> None:
+        super().update_UI(context)
+        context.scanningModeButton.setEnabled(False)
+        context.viewingModeButton.setEnabled(False)
+        context.scanlistListWidget.setEnabled(False)
+        context.addScanItemButton.setEnabled(False)
+        context.importScanItemButton.setEnabled(False)
+        context.startScanButton.setEnabled(True)
+        context.stopScanButton.setEnabled(False)
+        context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersCancelChangesButton.setEnabled(False)
+        context.scanParametersExportButton.setEnabled(False)
+        context.scanParametersResetButton.setEnabled(False)
+        context.scanParametersSaveChangesButton.setEnabled(False)
 
 
 class InvalidParametersState(ExamState):
@@ -84,6 +112,7 @@ class InvalidParametersState(ExamState):
     def update_UI(self, context) -> None:
         super().update_UI(context)
         context.parameterFormLayout.setReadOnly(False)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(True)
 
 
@@ -108,6 +137,7 @@ class ViewState(UI_MainWindowState):
         context.scanlistListWidget.setVisible(True)
         context.scanlistListWidget.setEnabled(True)
         context.addScanItemButton.setVisible(False)
+        context.importScanItemButton.setVisible(False)
         context.addScanItemButton.setEnabled(False)
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
@@ -125,14 +155,16 @@ class IdleState(UI_MainWindowState):
         context.scanlistListWidget.setVisible(False)
         context.scanlistListWidget.clear()
         context.addScanItemButton.setVisible(False)
+        context.importScanItemButton.setVisible(False)
         context.startScanButton.setEnabled(False)
         context.stopScanButton.setEnabled(False)
         context.parameterFormLayout.setReadOnly(True)
         context.parameterFormLayout.clearForm()
         context.scanParametersCancelChangesButton.setEnabled(False)
         context.scanParametersSaveChangesButton.setEnabled(False)
+        context.scanParametersExportButton.setEnabled(False)
         context.scanParametersResetButton.setEnabled(False)
-        context.scanProgressBar.setValue(0)
+        context.scanEtaLabel.setText("Time Remaining: 00:00") 
         context.scannedImageFrame.setAcquiredSeries(None)
         context.scanPlanningWindow1.setAcquiredSeries(None)
         context.scanPlanningWindow2.setAcquiredSeries(None)
@@ -140,6 +172,11 @@ class IdleState(UI_MainWindowState):
         context.scanPlanningWindow1ExportButton.setEnabled(False)
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
+
+        # HIDE EXPORT BUTTONS FOR THE SCAN PLANNING WINDOWS
+        context.scanPlanningWindow1ExportButton.setVisible(False)
+        context.scanPlanningWindow2ExportButton.setVisible(False)
+        context.scanPlanningWindow3ExportButton.setVisible(False)
 
 
 class MRIfortheBrainState(UI_MainWindowState):
@@ -151,6 +188,7 @@ class MRIfortheBrainState(UI_MainWindowState):
         context.scanPlanningWindow1ExportButton.setEnabled(False)
         context.scanPlanningWindow2ExportButton.setEnabled(False)
         context.scanPlanningWindow3ExportButton.setEnabled(False)
+
         context.scannedImageWidget.acquiredImageExportButton.setEnabled(False)
 
         if (
@@ -171,3 +209,8 @@ class MRIfortheBrainState(UI_MainWindowState):
             is not None
         ):
             context.scanPlanningWindow3ExportButton.setEnabled(True)
+
+        # HIDE EXPORT BUTTONS FOR THE SCAN PLANNING WINDOWS
+        context.scanPlanningWindow1ExportButton.setVisible(False)
+        context.scanPlanningWindow2ExportButton.setVisible(False)
+        context.scanPlanningWindow3ExportButton.setVisible(False)

@@ -31,6 +31,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         self.slice_lines = []
         self.scan_volume = None
         self.displayed_image = None
+        self.is_active_stack = False
 
         # Added viewer to update the scan view of the scan area with the selected rotation handler
         # It does not rotate when the other do without this viewer
@@ -56,6 +57,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle.mousePressEvent = (
                 lambda event, h=handle: self.handle_rotation_handle_press(event, h)
             )
+            handle.setVisible(False)
             self.rotation_handles.append(handle)
 
         # Initial positioning of the rotation handle
@@ -76,6 +78,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
                     event, hdl
                 )
             )
+            handle.setVisible(False)
             self.scale_handles.append(handle)
         self.scale_handle_offsets = []
         self.active_scale_handle = None
@@ -88,8 +91,39 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Set the initial position of the scale handles.
         self.update_scale_handle_positions()
 
+        # Create and set the (initial) position of the middle point of the scan volume
+        self.middle_point = QGraphicsEllipseItem(-5, -5, 10, 10, parent=self)
+        self.middle_point.setBrush(Qt.GlobalColor.yellow)
+        self.middle_point.setVisible(False)
+        self.update_middle_point_position()
+
+    def set_movability(self, isMovable: bool):
+        if isMovable:
+            # print("make movable")
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        else:
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
+
+    def set_color(self, color):
+        self.setPen(color)
+
     def setScanVolume(self, scan_volume):
         self.scan_volume = scan_volume
+
+    def set_handles_invisible(self):
+        # print("SET HANDLES INVISIBLE")
+        for h in self.rotation_handles:
+            h.setVisible(False)
+        for h in self.scale_handles:
+            h.setVisible(False)
+
+    def set_handles_visible(self):
+        for h in self.rotation_handles:
+            h.setVisible(True)
+        for h in self.scale_handles:
+            h.setVisible(True)
 
     def update_rotation_handle_positions(self):
         """Update the positions of the rotation handlers"""
@@ -120,7 +154,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.rotation_handles[i]
             handle_pos_local = centroid_local + offset
             handle.setPos(handle_pos_local)
-            handle.setVisible(True)
+            if self.is_active_stack:
+                handle.setVisible(True)
 
         # Hide any extra handles
         for i in range(len(self.rotation_handle_offsets), len(self.rotation_handles)):
@@ -142,6 +177,19 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         """
         This function updates the scale handle positions so that they are moved to their new positions.
         """
+
+        # If the polygon is empty, clear the scale handles and exit early. This check prevents a crash.
+        if self.polygon().isEmpty() or not self.scale_handle_offsets:
+            return
+        if not self.isVisible():
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            return
+
+        if self.polygon().isEmpty() or not self.scale_handle_offsets:
+            for handle in self.scale_handles:
+                handle.setVisible(False)
+            return
 
         # Get the current polygon and its number of points.
         polygon = self.polygon()
@@ -165,11 +213,31 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             handle = self.scale_handles[i]
             handle_pos_local = local_center + offset
             handle.setPos(handle_pos_local)
-            handle.setVisible(True)
+            if self.is_active_stack:
+                handle.setVisible(True)
 
         # Hide the remaining handles.
         for i in range(len(self.scale_handle_offsets), len(self.scale_handles)):
             self.scale_handles[i].setVisible(False)
+
+    def update_middle_point_position(self) -> None:
+        """
+        Update the position of the middle point of the polygon.
+
+        This method calculates the centroid of the polygon and sets the middle point
+        to this position. If the polygon is not visible or is empty, the middle point
+        is hidden.
+        """
+        polygon = self.polygon()
+        if not self.isVisible() or polygon.isEmpty():
+            self.middle_point.setVisible(False)
+            return
+        new_middle_point = QPointF(
+            sum(point.x() for point in polygon) / len(polygon),
+            sum(point.y() for point in polygon) / len(polygon),
+        )
+        self.middle_point.setPos(new_middle_point)
+        self.middle_point.setVisible(True)
 
     def scale_handle_press_event_handler(self, event: QGraphicsSceneMouseEvent, handle):
         """
@@ -435,6 +503,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             y_vector=y_move,
             z_vector=z_move
         )
+        self.viewer._update_scan_volume_display_for_active_stack_item()
+        self.viewer.viewport().update()
+        # QApplication.processEvents()
 
         # Update the scale handle positions.
         self.update_scale_handle_positions()
@@ -442,8 +513,6 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         # Check if size has been updated
         if previous_sizes == (self.scan_volume.extentX_mm, self.scan_volume.extentY_mm, self.scan_volume.slice_gap_mm):
             self.is_being_scaled = False
-        
-        print(self.is_being_scaled)
 
     def scale_handle_release_event_handler(self):
         """
@@ -481,7 +550,8 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def setPolygon(self, polygon_in_polygon_coords: QPolygonF):
         n_points = len(polygon_in_polygon_coords)
-        # If the polygon is empty, clear the rotation and scaling handles, and exit early. This check prevents a crash
+        # If the polygon is empty, clear the rotation and scaling handles, as well as the middle point, and exit early.
+        # This check prevents a crash.
         if n_points == 0:
             super().setPolygon(polygon_in_polygon_coords)
             for handle in self.rotation_handles:
@@ -490,6 +560,7 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             for handle in self.scale_handles:
                 handle.setVisible(False)
             self.scale_handle_offsets = []
+            self.middle_point.setVisible(False)
             return
         super().setPolygon(polygon_in_polygon_coords)
         self.previous_position_in_pixmap_coords = self.pos()
@@ -525,6 +596,9 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         self.update_scale_handle_positions()
 
+        # Update the middle point position
+        self.update_middle_point_position()
+
     def setPolygonFromPixmapCoords(self, polygon_in_pixmap_coords: list[np.array]):
         polygon_in_polygon_coords = QPolygonF()
         for pt in polygon_in_pixmap_coords:
@@ -558,11 +632,14 @@ class CustomPolygonItem(QGraphicsPolygonItem):
             )
         )
         # apply volume updates also for current scan planning window polygon
-        self.viewer._update_scan_volume_display()
+
         self.notify_observers(
             EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED,
             direction_vector_in_lps_coords=direction_vec_in_lps,
         )
+        self.viewer._update_scan_volume_display_for_active_stack_item()
+        self.viewer.viewport().update()
+        # QApplication.processEvents()
 
     # on press show "size all" cursor
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
@@ -612,6 +689,11 @@ class CustomPolygonItem(QGraphicsPolygonItem):
         if not self.is_rotating:
             return
 
+        # Access the rotation parameters of the plane the rotation is being performed on
+        RLAngle_deg = self.viewer.displayed_image.image_geometry.RLAngle_deg
+        APAngle_deg = self.viewer.displayed_image.image_geometry.APAngle_deg
+        FHAngle_deg = self.viewer.displayed_image.image_geometry.FHAngle_deg
+
         new_pos = event.scenePos()
         dx = new_pos.x() - self.centroid.x()
         dy = new_pos.y() - self.centroid.y()
@@ -626,14 +708,46 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
         rotation_axis = self.get_rotation_axis()
 
-        self.notify_observers(
-            EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
-            rotation_angle_deg=angle_diff_deg,
-            rotation_axis=rotation_axis,
+        # Compute the projected rotation angle
+        incremental_angles_deg = compute_projected_rotation(
+            angle_diff_deg,
+            RLAngle_deg,
+            APAngle_deg,
+            FHAngle_deg,
+            rotation_axis,
         )
 
+        # Extract rotations for each seperate angle
+        incremental_RL_angle = incremental_angles_deg[0]
+        incremental_AP_angle = incremental_angles_deg[1]
+        incremental_FH_angle = incremental_angles_deg[2]
+
+
+        # Send signals for each angle
+        # A check for greater than 1e-6 to delete very small values of noise which can get generated due to calculation and rounding errors
+        if abs(incremental_RL_angle) > 1e-6:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+                rotation_angle_deg=incremental_RL_angle,
+                rotation_axis='RL',
+            )
+
+        if abs(incremental_AP_angle) > 1e-6:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+                rotation_angle_deg=incremental_AP_angle,
+                rotation_axis='AP',
+            )
+
+        if abs(incremental_FH_angle) > 1e-6:
+            self.notify_observers(
+                EventEnum.SCAN_VOLUME_DISPLAY_ROTATED,
+                rotation_angle_deg=incremental_FH_angle,
+                rotation_axis='FH',
+            )
+
         # Update display so the currently selected polygon also rotates
-        self.viewer._update_scan_volume_display()
+        self.viewer._update_scan_volume_display_for_active_stack_item()
         self.viewer.viewport().update()
         QApplication.processEvents()
         self.update_rotation_handle_positions()
@@ -710,3 +824,110 @@ class CustomPolygonItem(QGraphicsPolygonItem):
 
     def _interpolate_point(self, p1, p2, t):
         return QPointF(p1.x() + (p2.x() - p1.x()) * t, p1.y() + (p2.y() - p1.y()) * t)
+    
+# Compute the projected rotation based on the scan that the item is being rotated on
+def compute_projected_rotation(
+    angle_diff_deg, RLAngle_deg, APAngle_deg, FHAngle_deg, rotation_axis
+    ):
+    # Convert all angles to radians
+    angle_diff_rad = math.radians(angle_diff_deg)
+    RLAngle_rad = math.radians(RLAngle_deg)
+    APAngle_rad = math.radians(APAngle_deg)
+    FHAngle_rad = math.radians(FHAngle_deg)
+
+    # Compute the rotation matrices around each axis
+    R_RL = rotation_matrix_x(RLAngle_rad)
+    R_AP = rotation_matrix_y(APAngle_rad)
+    R_FH = rotation_matrix_z(FHAngle_rad)
+
+    # Compute the overall original rotation matrix
+    R_original =np.linalg.multi_dot(
+            [R_FH, R_AP, R_RL]
+        )
+
+    # Compute the rotation matrix for the angle difference around the rotation axis, matrix before projection
+    R_diff = get_rotation_matrix(rotation_axis, angle_diff_rad)
+
+    # Compute the new rotation matrix after the projection
+    R_new = np.linalg.multi_dot([R_original, R_diff])
+    R_incremental = np.linalg.multi_dot([R_new, np.linalg.inv(R_original)])
+
+    # Extract rotation angles around all three axes
+    incremental_angles_rad = rotation_matrix_to_euler_angles(R_incremental)
+
+    # Convert to degrees
+    incremental_angles_deg = np.degrees(incremental_angles_rad)
+
+    return incremental_angles_deg  # Array with [RL_angle, AP_angle, FH_angle]
+    
+# Create rotation matrices for each plane
+def rotation_matrix_x(angle_rad):
+        c = np.cos(angle_rad)
+        s = np.sin(angle_rad)
+        return np.array([
+            [1, 0, 0],
+            [0, c, -s],
+            [0, s, c],
+        ])
+
+def rotation_matrix_y(angle_rad):
+    c = np.cos(angle_rad)
+    s = np.sin(angle_rad)
+    return np.array([
+        [c, 0, s],
+        [0, 1, 0],
+        [-s, 0, c],
+    ])
+
+def rotation_matrix_z(angle_rad):
+    c = np.cos(angle_rad)
+    s = np.sin(angle_rad)
+    return np.array([
+        [c, -s, 0],
+        [s, c, 0],
+        [0, 0, 1],
+    ])
+
+def get_rotation_matrix(axis, angle_rad):
+    if axis == "RL":
+        return rotation_matrix_x(angle_rad)
+    elif axis == "AP":
+        return rotation_matrix_y(angle_rad)
+    elif axis == "FH":
+        return rotation_matrix_z(angle_rad)
+    else:
+        raise ValueError(f"Unknown rotation axis: {axis}")
+
+def extract_rotation_angle(R, axis):
+    if axis == "RL":
+        # Rotation around X-axis
+        angle_rad = np.arctan2(R[2, 1], R[2, 2])
+    elif axis == "AP":
+        # Rotation around Y-axis
+        angle_rad = np.arctan2(-R[2, 0], np.sqrt(R[0, 0]**2 + R[1, 0]**2))
+    elif axis == "FH":
+        # Rotation around Z-axis
+        angle_rad = np.arctan2(R[1, 0], R[0, 0])
+    else:
+        raise ValueError(f"Unknown rotation axis: {axis}")
+    return angle_rad
+
+# Obtain seperate rotations as angles from the matrix to be sent as an event to the parameter checker
+def rotation_matrix_to_euler_angles(R):
+    """
+    Extract Euler angles (rotations around x, y, z axes) from a rotation matrix.
+    The rotation matrix should represent rotations in the order R = Rz * Ry * Rx.
+    """
+    sy = np.sqrt(R[0, 0]**2 + R[1, 0]**2)
+    singular = sy < 1e-6
+
+    if not singular:
+        x_angle = np.arctan2(R[2, 1], R[2, 2])
+        y_angle = np.arctan2(-R[2, 0], sy)
+        z_angle = np.arctan2(R[1, 0], R[0, 0])
+    else:
+        x_angle = np.arctan2(-R[1, 2], R[1, 1])
+        y_angle = np.arctan2(-R[2, 0], sy)
+        z_angle = 0
+
+    return np.array([x_angle, y_angle, z_angle])  # [RL_angle, AP_angle, FH_angle]

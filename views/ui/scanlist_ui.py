@@ -19,13 +19,19 @@ class ScanlistInfoFrame(QFrame):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._addScanItemButton = PrimaryActionButton("Add Scan Item")
+        self._importScanItemButton = PrimaryActionButton("Import Scan")
         self._scanlistListWidget = ScanlistListWidget()
         self.layout.addWidget(self._scanlistListWidget)
         self.layout.addWidget(self._addScanItemButton)
+        self.layout.addWidget(self._importScanItemButton)
 
     @property
     def addScanItemButton(self):
         return self._addScanItemButton
+
+    @property
+    def importScanItemButton(self):
+        return self._importScanItemButton
 
     @property
     def scanlistListWidget(self):
@@ -39,7 +45,7 @@ class ScanlistListWidget(QListWidget):
         super().__init__()
         self.setStyleSheet("border: none;")
         self.setDragDropMode(self.DragDropMode.DragDrop)
-        self.setSelectionMode(self.SelectionMode.SingleSelection)
+        self.setSelectionMode(self.SelectionMode.ExtendedSelection)
         self.setAcceptDrops(True)
 
     def mouseDoubleClickEvent(self, event):

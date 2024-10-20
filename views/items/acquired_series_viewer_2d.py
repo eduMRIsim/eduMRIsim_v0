@@ -12,9 +12,9 @@ from PyQt6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
+    QLinearGradient
 )
 from PyQt6.QtWidgets import (
-    QGraphicsView,
     QGraphicsScene,
     QGraphicsPixmapItem,
     QSizePolicy,
@@ -25,20 +25,25 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QGraphicsOpacityEffect,
+    QApplication,
 )
 
+from typing import List, Optional
 from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, ScanVolume
 from utils.logger import log
-from views.items.measurement_tool import MeasurementTool
 from views.items.custom_polygon_item import CustomPolygonItem
-from views.items.stacks_item import StacksItem
-from views.ui.scanlist_ui import ScanlistListWidget
+from views.items.measurement_tool import MeasurementTool
 from views.items.middle_line_item import MiddleLineItem
+from views.items.stacks_item import SlicecItem
+from views.items.zoomin import ZoomableView
+from views.items.stacks_item import SlicecItem
+from views.ui.scanlist_ui import ScanlistListWidget
 
 
-class AcquiredSeriesViewer2D(QGraphicsView):
+class AcquiredSeriesViewer2D(ZoomableView):
+    testSignal = pyqtSignal(int)
     """Displays an acquired series of 2D images in a QGraphicsView. The user can scroll through the images using the mouse wheel. The viewer also displays the intersection of the scan volume with the image in the viewer. The intersection is represented with a CustomPolygonItem. The CustomPolygonItem is movable and sends geometry changes to the observers. Each acquired image observes the CustomPolygonItem and updates the scan volume when the CustomPolygonItem is moved."""
 
     def __init__(self):
@@ -71,7 +76,13 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.acquired_series = None
 
         # Initalize scan volume to None
-        self.scan_volume = None
+        # self.scan_volume = None
+        self.scan_volumes: List[ScanVolume] = []
+
+        # STACKS
+        # Set active stack index to 0
+        self.selected_stack_indx = 0
+        self.stacks: List[StackItem] = []
 
         # Initialize array attribute to None
         self.array = None
@@ -87,7 +98,7 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.pixmap_item
         )  # adds middle lines of current scan volume
         # self.stacks_display = StacksItem(self.pixmap_item)
-        self.stacks_displays = []
+        self.slices_display = []
 
         self.scan_volume_display.add_observer(self)
 
@@ -137,87 +148,32 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.right_click_menu = QMenu(self)
         self.export_action = QAction("Export...")
         self.right_click_menu.addAction(self.export_action)
+        self.export_image_with_dicomdir_action = QAction("Export image with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_image_with_dicomdir_action)
+
+        self.export_series_with_dicomdir_action = QAction("Export series with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_series_with_dicomdir_action)
+
+        self.export_examination_with_dicomdir_action = QAction("Export examination with DICOMDIR...")
+        self.right_click_menu.addAction(self.export_examination_with_dicomdir_action)
 
         self.scene.installEventFilter(self)
-
-        # zoom controls
-        self.zooming_enabled = False
-        self.mouse_pressed = False
-        self.last_mouse_pos = None
-        self.zoom_sensitivity = 0.005
-
-        # Measurement tool
-        self.measuring_enabled = False
 
         self.line_item = QGraphicsLineItem()
         self.line_item.setPen(QPen(QColor(255, 0, 0), 2))
         self.scene.addItem(self.line_item)
 
         self.text_item = QGraphicsTextItem()
-        self.text_item.setDefaultTextColor(QColor(255, 0, 0))
+        self.text_item.setDefaultTextColor(QColor(255, 165, 0))
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
 
-    # start zoom when pressed
-    def mousePressEvent(self, event):
-        # TODO the user should not be able to zoom in and out when the measuring tool is active
-        if self.zooming_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.mouse_pressed = True
-                self.last_mouse_pos = event.pos()
-        if self.measuring_enabled:
-            self.measure.start_measurement(self.mapToScene(event.pos()))
-            self.measure.show_items()
-        else:
-            super().mousePressEvent(event)
+        self.only_display_image = False
+        self.view_only_instance = False
 
-    # stop zoom when released
-    def mouseReleaseEvent(self, event):
-        if self.zooming_enabled:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.mouse_pressed = False
-                self.last_mouse_pos = None
-        if self.measuring_enabled:
-            self.measure.end_measurement()
-        else:
-            super().mouseReleaseEvent(event)
-
-    def mouseMoveEvent(self, event):
-        if self.zooming_enabled:
-            """Handle zoom when the mouse is being dragged."""
-            if self.mouse_pressed and self.last_mouse_pos is not None:
-
-                max_zoom_out = 0.5
-                max_zoom_in = 10
-                current_pos = event.pos()
-                delta_y = current_pos.y() - self.last_mouse_pos.y()
-
-                # cursor_pos = self.mapToScene(current_pos)
-                zoom_factor = 1 + (delta_y * self.zoom_sensitivity)
-
-                # get current zoom level (scaling factor)
-                current_zoom = self.transform().m11()
-
-                new_zoom = current_zoom * zoom_factor
-                if max_zoom_out <= new_zoom <= max_zoom_in:
-                    self.scale(zoom_factor, zoom_factor)
-
-                # update the last mouse position
-                self.last_mouse_pos = current_pos
-        elif self.measuring_enabled and self.measure.is_measuring:
-            self.measure.update_measurement(self.mapToScene(event.pos()))
-        else:
-            super().mouseMoveEvent(event)
-
-    def zoom_in(self, center_point):
-        if self.transform().m11() < self.max_zoom_in:
-            self.scale(self.zoom_factor, self.zoom_factor)
-
-    def zoom_out(self, center_point):
-        if self.transform().m11() > self.max_zoom_out:
-            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
-            self.centerOn(center_point)
+    def sendTestSignal(self):
+        self.testSignal.emit(0)
 
     def update_buttons_visibility(self):
         if self.acquired_series is None:
@@ -281,32 +237,85 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.update_buttons_visibility()
 
     # Eventfilter used for Rotation. Making the rotation handlers moveable with mouse move events did not work well
+    # TODO: get current active stack scan volume display
     def eventFilter(self, source, event):
+        # If this instance is only for displaying images, do not allow any interaction with the CustomPolygonItem
+        # instead, the events are passed to the ZoomableView to enable measurements and zooming mouse events etc.
+        if self.view_only_instance:
+            return super().eventFilter(source, event)
+
+        if self.get_stack_for_stack_id(self.selected_stack_indx) == None:
+            super().eventFilter(source, event)
+            return True
+
         if event.type() == QEvent.Type.GraphicsSceneMouseMove:
-            if self.scan_volume_display and self.scan_volume_display.is_rotating:
-                self.scan_volume_display.handle_scene_mouse_move(event)
-                return True
+            # check if the stack is non
+            if self.get_stack_for_stack_id(self.selected_stack_indx) is None:
+                return RuntimeError("No stack found for selected stack index")
             if (
-                self.scan_volume_display is not None
-                and self.scan_volume_display.is_being_scaled
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_rotating
             ):
-                self.scan_volume_display.scale_handle_move_event_handler(event)
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.handle_scene_mouse_move(event)
+                return True
+
+            if (
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                is not None
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_being_scaled
+            ):
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.scale_handle_move_event_handler(event)
                 return True
         elif event.type() == QEvent.Type.GraphicsSceneMouseRelease:
-            if self.scan_volume_display and self.scan_volume_display.is_rotating:
-                self.scan_volume_display.handle_scene_mouse_release(event)
             if (
-                self.scan_volume_display is not None
-                and self.scan_volume_display.is_being_scaled
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_rotating
             ):
-                self.scan_volume_display.scale_handle_release_event_handler()
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.handle_scene_mouse_release(event)
+            if (
+                self.get_stack_for_stack_id(self.selected_stack_indx).volume_display
+                is not None
+                and self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.is_being_scaled
+            ):
+                self.get_stack_for_stack_id(
+                    self.selected_stack_indx
+                ).volume_display.scale_handle_release_event_handler()
                 return True
         return super().eventFilter(source, event)
+
+    def get_stack_for_stack_id(self, stack_index):
+        # print("STACKS " + str(self.stacks))
+        for stack in self.stacks:
+            if stack.stack_index == stack_index:
+                return stack
+
+        return None
+
+    def get_scan_volume_for_stack_index(self, stack_index):
+        for vol in self.scan_volumes:
+            if vol.stack_index == stack_index:
+                return vol
+
+        return None
 
     def resizeEvent(self, event: QResizeEvent):
         """This method is called whenever the graphics view is resized. It ensures that the image is always scaled to fit the view."""
         super().resizeEvent(event)
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
         self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.updateLabelPosition()
 
@@ -326,19 +335,47 @@ class AcquiredSeriesViewer2D(QGraphicsView):
         self.scan_plane_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
+    def position_color_scale_elements(self):
+        """Ensure the color scale and labels are positioned correctly."""
+        padding = 20
 
-    def _displayArray(self):
-        width, height = 0, 0
+        self.color_scale_label.move(padding, self.height() // 2 - self.color_scale_label.height() // 2)
+
+        self.min_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() - 5)
+        self.mid_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() // 2 - 10)
+        self.max_value_label.move(self.color_scale_label.x() + self.color_scale_label.width() + 5,
+                                self.color_scale_label.y() + self.color_scale_label.height() - 20)
+
+        self.min_value_label.adjustSize()
+        self.mid_value_label.adjustSize()
+        self.max_value_label.adjustSize()
+
+
+    def _displayArray(self, window_center=None, window_width=None):
+        if self.array is None:
+            return
+
         if self.array is not None:
-
-            # Normalize the slice values for display
             array_norm = (self.array[:, :] - np.min(self.array)) / (
                 np.max(self.array) - np.min(self.array)
             )
             array_8bit = (array_norm * 255).astype(np.uint8)
 
-            # Convert the array to QImage for display. This is because you cannot directly set a QPixmap from a NumPy array. You need to convert the array to a QImage first.
-            image = np.ascontiguousarray(np.array(array_8bit))
+            if window_center is None or window_width is None:
+                window_center = np.mean(self.array)
+                window_width = np.max(self.array) - np.min(self.array)
+
+            min_window = window_center - (window_width / 2)
+            max_window = window_center + (window_width / 2)
+
+            array_clamped = np.clip(self.array, min_window, max_window)
+            array_norm = (array_clamped - min_window) / (max_window - min_window)
+            array_8bit = (array_norm * 255).astype(np.uint8)
+
+            # Create QImage and display
+            image = np.ascontiguousarray(array_8bit)
             height, width = image.shape
             qimage = QImage(
                 image.data, width, height, width, QImage.Format.Format_Grayscale8
@@ -348,30 +385,11 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             pixmap = QPixmap.fromImage(qimage)
             self.pixmap_item.setPixmap(pixmap)
 
-            self.pixmap_item.setPos(0, 0)  # Ensure the pixmap item is at (0, 0)
-            self.scene.setSceneRect(
-                0, 0, width, height
-            )  # Adjust the scene rectangle to match the pixmap dimensions
-
-        else:
-            # Set a black image when self.array is None
-            black_image = QImage(1, 1, QImage.Format.Format_Grayscale8)
-            black_image.fill(Qt.GlobalColor.black)
-            pixmap = QPixmap.fromImage(black_image)
-            self.pixmap_item.setPixmap(pixmap)
-            self.scene.setSceneRect(0, 0, 1, 1)
-
-        self.resetTransform()
-        # self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-        self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
-        self.centerOn(self.pixmap_item)
-
-        # Adjust the scene rectangle and center the image.  The arguments (0, 0, width, height) specify the left, top, width, and height of the scene rectangle.
-        # self.scene.setSceneRect(0, 0, width, height)
-        # The centerOn method is used to center the view on a particular point within the scene.
-        # self.centerOn(width / 2, height / 2)
-
-        # calculate LPS direction vector from the moved direction vector
+            self.pixmap_item.setPos(0, 0)
+            self.scene.setSceneRect(0, 0, width, height)
+            self.resetTransform()
+            self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+            self.centerOn(self.pixmap_item)
 
     def handle_calculate_direction_vector_from_move_event(
         self, direction_vector_in_pixmap_coords: QPointF
@@ -390,35 +408,74 @@ class AcquiredSeriesViewer2D(QGraphicsView):
 
         return direction_vector_in_LPS_coords
 
+    # TODO: call methods on current active stack index scan volume instead
     def update(self, event: EventEnum, **kwargs):
         if event == EventEnum.SCAN_VOLUME_CHANGED:
-            self.scan_volume.clamp_to_scanner_dimensions()
-            self._update_scan_volume_display()
+            # self.scan_volume.clamp_to_scanner_dimensions()
+            # self._update_scan_volume_display()
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).clamp_to_scanner_dimensions()
+            self._update_scan_volume_display(
+                self.get_stack_for_stack_id(self.selected_stack_indx)
+            )
+            self.testSignal.emit(1)
+            # self.viewport().update()
+            # QApplication.processEvents()
 
         if event == EventEnum.SCAN_VOLUME_DISPLAY_TRANSLATED:
-            self.scan_volume.remove_observer(self)
-            self.scan_volume.translate_scan_volume(
+            # self.scan_volume.remove_observer(self)
+            # self.scan_volume.translate_scan_volume(
+            #     kwargs[Keys.SCAN_VOLUME_DIRECTION_VECTOR_IN_COORDS.value]
+            # )
+            # self.scan_volume.add_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).remove_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).translate_scan_volume(
                 kwargs[Keys.SCAN_VOLUME_DIRECTION_VECTOR_IN_COORDS.value]
             )
-            self.scan_volume.add_observer(self)
+            self.get_scan_volume_for_stack_index(self.selected_stack_indx).add_observer(
+                self
+            )
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_ROTATED:
             rotation_angle_deg = kwargs["rotation_angle_deg"]
             rotation_axis = kwargs["rotation_axis"]
             rotation_angle_rad = np.deg2rad(rotation_angle_deg)
-            self.scan_volume.remove_observer(self)
-            self.scan_volume.rotate_scan_volume(rotation_angle_rad, rotation_axis)
-            self.scan_volume.add_observer(self)
+            # self.scan_volume.remove_observer(self)
+            # self.scan_volume.rotate_scan_volume(rotation_angle_rad, rotation_axis)
+            # self.scan_volume.add_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).remove_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).rotate_scan_volume(rotation_angle_rad, rotation_axis)
+            self.get_scan_volume_for_stack_index(self.selected_stack_indx).add_observer(
+                self
+            )
+
         elif event == EventEnum.SCAN_VOLUME_DISPLAY_SCALED:
             x_vector = kwargs["x_vector"]
             y_vector = kwargs['y_vector']
             z_vector = kwargs["z_vector"]
 
             # self.scan_volume.remove_observer(self)
-            self.scan_volume.scale_scan_volume(
+            # self.scan_volume.scale_scan_volume(
+            #     scale_factor_x, scale_factor_y, origin_plane, handle_pos, center_pos
+            # )
+            # self._update_scan_volume_display()
+            # self.scan_volume.add_observer(self)
+            self.get_scan_volume_for_stack_index(
+                self.selected_stack_indx
+            ).scale_scan_volume(
                 x_vector, y_vector, z_vector
             )
-            self._update_scan_volume_display()
-            # self.scan_volume.add_observer(self)
+            self._update_scan_volume_display(
+                self.get_stack_for_stack_id(self.selected_stack_indx)
+            )
 
     def wheelEvent(self, event):
         # Check if the array is None
@@ -459,6 +516,15 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.displayed_image_index = 0
             self.update_buttons_visibility()
 
+            # TODO: is this all code in if condition needed
+            if len(self.stacks) == 0:
+                self.scan_volumes = []
+                new_stack = StackItem(self.pixmap_item, self, 0)
+                new_scan_vol = ScanVolume(0)
+                self.scan_volumes.append(new_scan_vol)
+                new_stack.volume_display.setScanVolume(new_scan_vol)
+                self.stacks.append(new_stack)
+
             self.setDisplayedImage(
                 self.acquired_series.list_acquired_images[self.displayed_image_index],
                 self.acquired_series.scan_plane,
@@ -468,10 +534,33 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.acquired_series = None
             self.setDisplayedImage(None)
 
+    def setScanCompleteAcquiredData(self, acquired_series: AcquiredSeries):
+        if len(self.stacks) == 0:
+            self.scan_volumes = []
+            new_stack = StackItem(self.pixmap_item, self, 0)
+            new_scan_vol = ScanVolume(0)
+            self.scan_volumes.append(new_scan_vol)
+            new_stack.volume_display.setScanVolume(new_scan_vol)
+            self.stacks.append(new_stack)
+
+        self.setAcquiredSeries(acquired_series)
+        self.only_display_image = True
+
     def setDisplayedImage(self, image, scan_plane="Unknown", series_name="Scan"):
         self.displayed_image = image
         if image is not None:
             self.array = image.image_data
+
+            # self.scan_volume_display.set_displayed_image(image)
+            # TODO: set scan volume display image of current active stack instead
+            self.get_stack_for_stack_id(
+                self.selected_stack_indx
+            ).volume_display.set_displayed_image(image)
+
+            # Set default window and level values
+            self.window_center = np.mean(self.array)
+            self.window_width = np.max(self.array) - np.min(self.array)
+
             self.scan_volume_display.set_displayed_image(image)
 
             # Determine the scan plane
@@ -496,9 +585,42 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_plane_label.clear()
             self.series_name_label.setText("")
 
-        self._displayArray()
-        self._update_scan_volume_display()
+        self._displayArray(self.window_center, self.window_width)
+        if self.only_display_image != True and self.displayed_image is not None:
+            self._update_scan_volume_display(
+                self.get_stack_for_stack_id(self.selected_stack_indx)
+            )
 
+    def setScanVolumes(self, scan_volumes: List[ScanVolume]):
+        if len(self.scan_volumes) > 0:
+            # remove observers from current scan volumes as changes shouldn't be emitted anymore from these volumes
+            for scan_vol in self.scan_volumes:
+                scan_vol.remove_observer(self)
+        # IMPORTANT: need to set both stacks and scan volumes arrays to empty lists as scan item was switched
+        self.scan_volumes = []
+        # I hope Python's automatic garbage collection destroys previous stack items that were in the list if we set list to empty list
+        # as we don't want previous stack items anymore
+        self.stacks = []
+
+        # add observers to each scan volume
+        for scan_vol in scan_volumes:
+            scan_vol.add_observer(self)
+            self.scan_volumes.append(scan_vol)
+            # new stack object for each volume
+            stack = StackItem(self.pixmap_item, self, scan_vol.stack_index)
+            stack.volume_display.set_scan_volume(scan_vol)
+            self.stacks.append(stack)
+
+        inx = 0
+        for stack in self.stacks:
+            if inx == 0:
+                stack.set_active_settings()
+            else:
+                stack.set_inactive_settings()
+            inx += 1
+            self._update_scan_volume_display(stack)
+
+    # TODO: clean current scan volumes and initialize new array of scan volumes of ScanItem and also create StackItems for each scan volume and
     def setScanVolume(self, scan_volume: ScanVolume):
         # remove the observer from the previous scan volume
         if self.scan_volume is not None:
@@ -512,49 +634,85 @@ class AcquiredSeriesViewer2D(QGraphicsView):
             self.scan_volume_display.set_scan_volume(None)
         self._update_scan_volume_display()
 
-    def _update_scan_volume_display(self):
+    def _update_scan_volume_display_for_active_stack_item(self):
+        self._update_scan_volume_display(
+            self.get_stack_for_stack_id(self.selected_stack_indx)
+        )
+
+    def _update_scan_volume_display(self, stack_item: "StackItem"):
+        # TODO: call these methods on StackItem instead
         """Updates the intersection polygon between the scan volume and the displayed image."""
-        if self.displayed_image is not None and self.scan_volume is not None:
+        # if self.displayed_image is not None and self.scan_volume is not None:
+        #     (
+        #         intersection_volume_edges_in_pixmap_coords,
+        #         intersection_middle_edges_in_pixamp_coords,
+        #         intersection_slice_edges_in_pixamp_coords,
+        #     ) = self.scan_volume.compute_intersection_with_acquired_image(
+        #         self.displayed_image
+        #     )
+        #     self.scan_volume_display.setPolygonFromPixmapCoords(
+        #         intersection_volume_edges_in_pixmap_coords
+        #     )
+        #     self.middle_lines_display.setPolygonFromPixmapCoords(
+        #         intersection_middle_edges_in_pixamp_coords
+        #     )
+        #     for stack in self.slices_display:
+        #         stack.setPolygon(QPolygonF())
+        #     self.slices_display = []
+        #     for slice_edges in intersection_slice_edges_in_pixamp_coords:
+        #         slice_item = SlicecItem(self.pixmap_item)
+        #         slice_item.setPolygonFromPixmapCoords(slice_edges)
+        #         self.slices_display.append(slice_item)
+        #         # self.stacks_display.setPolygonFromPixmapCoords(intersection_slice_edges_in_pixamp_coords)
+        # else:
+        #     self.scan_volume_display.setPolygon(QPolygonF())
+        #     self.middle_lines_display.setPolygon(QPolygonF())
+        #     # self.stacks_display.setPolygon(QPolygonF())
+        #     for stack in self.slices_display:
+        #         stack.setPolygon(QPolygonF())
+        #     self.slices_display = []
+        # self.scan_volume_display.update_slice_lines()
+        if self.displayed_image is not None and stack_item is not None:
+            # scan_item_volume = None
+            # for vol in self.scan_volumes:
+            #     if vol.stack_index == stack_item.stack_index:
+            #         scan_item_volume = vol
+            scan_item_volume = self.get_scan_volume_for_stack_index(
+                stack_item.stack_index
+            )
             (
                 intersection_volume_edges_in_pixmap_coords,
                 intersection_middle_edges_in_pixamp_coords,
                 intersection_slice_edges_in_pixamp_coords,
-            ) = self.scan_volume.compute_intersection_with_acquired_image(
+            ) = scan_item_volume.compute_intersection_with_acquired_image(
                 self.displayed_image
             )
-            self.scan_volume_display.setPolygonFromPixmapCoords(
-                intersection_volume_edges_in_pixmap_coords
+            stack_item.update_objects_with_pixmap_coords(
+                intersection_volume_edges_in_pixmap_coords,
+                intersection_middle_edges_in_pixamp_coords,
+                intersection_slice_edges_in_pixamp_coords,
             )
-            self.middle_lines_display.setPolygonFromPixmapCoords(
-                intersection_middle_edges_in_pixamp_coords
-            )
-            for stack in self.stacks_displays:
-                stack.setPolygon(QPolygonF())
-            self.stacks_displays = []
-            for slice_edges in intersection_slice_edges_in_pixamp_coords:
-                stack_item = StacksItem(self.pixmap_item)
-                stack_item.setPolygonFromPixmapCoords(slice_edges)
-                self.stacks_displays.append(stack_item)
-                # self.stacks_display.setPolygonFromPixmapCoords(intersection_slice_edges_in_pixamp_coords)
         else:
-            self.scan_volume_display.setPolygon(QPolygonF())
-            self.middle_lines_display.setPolygon(QPolygonF())
-            # self.stacks_display.setPolygon(QPolygonF())
-            for stack in self.stacks_displays:
-                stack.setPolygon(QPolygonF())
-            self.stacks_displays = []
-        # self.scan_volume_display.update_slice_lines()
+            if stack_item is not None:
+                stack_item.clear_objects()
 
     def contextMenuEvent(self, event):
         """Event handler for if the user requests to open the right-click context menu."""
 
         super().contextMenuEvent(event)
 
-        # Enable the export button only if we have a displayed image that can be exported.
+        # Enable the export actions only if we have at least one displayed image that can be exported,
+        # in the window that was right-clicked on.
         if self.displayed_image is not None:
             self.export_action.setEnabled(True)
+            self.export_image_with_dicomdir_action.setEnabled(True)
+            self.export_series_with_dicomdir_action.setEnabled(True)
+            self.export_examination_with_dicomdir_action.setEnabled(True)
         else:
             self.export_action.setEnabled(False)
+            self.export_image_with_dicomdir_action.setEnabled(False)
+            self.export_series_with_dicomdir_action.setEnabled(False)
+            self.export_examination_with_dicomdir_action.setEnabled(False)
 
         # Execute and open the menu.
         action_performed = self.right_click_menu.exec(self.mapToGlobal(event.pos()))
@@ -621,3 +779,80 @@ class DropAcquiredSeriesViewer2D(AcquiredSeriesViewer2D):
             self.ui.scanPlanningWindow3ExportButton.setEnabled(True)
 
         event.accept()
+
+
+class StackItem:
+    volume_display: Optional[CustomPolygonItem] = None
+    middle_line_display: Optional[MiddleLineItem] = None
+    slices_display: List[SlicecItem] = []
+    activ_stack = False
+    stack_index = 0
+
+    def __init__(self, pixmap_item, series_viewer, stack_index):
+        self.pixmap_item = pixmap_item
+        self.series_viewer = series_viewer
+        self.volume_display = CustomPolygonItem(pixmap_item, series_viewer)
+        # TODO: I think need to add viewer as observer for volume display as well
+        self.volume_display.add_observer(series_viewer)
+        self.volume_display.set_color(Qt.GlobalColor.red)
+        self.volume_display.set_movability(False)
+        self.middle_line_display = MiddleLineItem(pixmap_item)
+        self.stack_index = stack_index
+
+    # clear all the visual elements connected to this stack before removing this stack item
+    def __del__(self):
+        self.clear_objects()
+
+    # show this scan volume in yellow as selected scan volume and hide slices and middle lines, make it movable
+    def set_active_settings(self):
+        self.activ_stack = True
+        self.volume_display.set_color(Qt.GlobalColor.yellow)
+        self.volume_display.set_movability(True)
+        self.middle_line_display.setVisible(True)
+        self.volume_display.set_handles_visible()
+        self.volume_display.is_active_stack = True
+
+    # unselect this scan volume so set it red and make non-movable
+    def set_inactive_settings(self):
+        self.activ_stack = False
+        self.volume_display.set_color(Qt.GlobalColor.red)
+        self.volume_display.set_movability(False)
+        self.middle_line_display.setPolygon(QPolygonF())
+        self.middle_line_display.setVisible(False)
+        # self.stacks_display.setPolygon(QPolygonF())
+        for slice in self.slices_display:
+            slice.setPolygon(QPolygonF())
+        self.slices_display = []
+        self.volume_display.set_handles_invisible()
+        self.volume_display.is_active_stack = False
+
+    # update stack item display component with coordinates
+    def update_objects_with_pixmap_coords(
+        self, volume_edges, middle_edges, slice_edges
+    ):
+        self.volume_display.setPolygon(QPolygonF())
+        self.series_viewer.sendTestSignal()
+
+        self.volume_display.setPolygonFromPixmapCoords(volume_edges)
+        self.middle_line_display.setPolygonFromPixmapCoords(middle_edges)
+        for slice in self.slices_display:
+            slice.setPolygon(QPolygonF())
+        self.slices_display = []
+        if self.activ_stack:
+            for slice_edges in slice_edges:
+                slice_item = SlicecItem(self.pixmap_item)
+                slice_item.setPolygonFromPixmapCoords(slice_edges)
+                self.slices_display.append(slice_item)
+
+        # TODO: try to update viewer here, it sometimes happens that polygon is set with coordinates, but views are not updated
+        self.series_viewer.viewport().update()
+        # QApplication.processEvents()
+
+    # clear all objects for this stack item
+    def clear_objects(self):
+        self.volume_display.setPolygon(QPolygonF())
+        self.middle_line_display.setPolygon(QPolygonF())
+        # self.stacks_display.setPolygon(QPolygonF())
+        for slice in self.slices_display:
+            slice.setPolygon(QPolygonF())
+        self.slices_display = []

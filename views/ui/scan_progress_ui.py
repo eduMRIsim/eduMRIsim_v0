@@ -1,4 +1,5 @@
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QProgressBar
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QProgressBar, QLabel
+from PyQt6.QtCore import Qt, pyqtSlot
 
 from utils.logger import log
 from views.styled_widgets import SecondaryActionButton, DestructiveActionButton
@@ -18,12 +19,14 @@ class ScanProgressInfoFrame(QFrame):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.scanner = scanner
-        self._createProgressBar()
+        self._createEtaLabel()
         self._createScanButtons()
+        self.scanner.scan_started_signal.connect(self.on_scan_started)
+        self.scanner.scan_finished_signal.connect(self.on_scan_finished)
 
     @property
-    def scanProgressBar(self):
-        return self._scanProgressBar
+    def scanEtaLabel(self):
+        return self._scanEtaLabel
 
     @property
     def startScanButton(self):
@@ -33,35 +36,37 @@ class ScanProgressInfoFrame(QFrame):
     def stopScanButton(self):
         return self._stopScanButton
 
-    def _createProgressBar(self):
-        scanProgressBarLayout = QHBoxLayout()
+    def _createEtaLabel(self):
+        # Create a horizontal layout to hold the ETA label
+        scanEtaLabelLayout= QHBoxLayout()
 
-        self._scanProgressBar = QProgressBar()
+        # Create a QLabel to display the ETA
+        self._scanEtaLabel = QLabel()
+        self._scanEtaLabel.setText("Time Remaining: 00:00")  # Initialize with default text
+        self._scanEtaLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the text
 
-        self._scanProgressBar.setValue(0)
-        # Set a custom stylesheet for the progress bar to customize its appearance
-        self._scanProgressBar.setStyleSheet(
+        # Optionally, set a custom stylesheet for the label to customize its appearance
+        self._scanEtaLabel.setStyleSheet(
             """
-            QProgressBar {
-                border: 2px solid grey;
-                background-color: #f0f0f0;
-                text-align: center;
+            QLabel {
+                font-size: 14px;
+                color: #333333;
             }
-            QProgressBar::chunk {
-                background-color: #6bcc7a; /* Set the color of the progress bar chunk */
-            }
-        """
+            """
         )
-        scanProgressBarLayout.addWidget(self._scanProgressBar)
 
-        self.layout.addLayout(scanProgressBarLayout)
+        # Add the ETA label to the layout
+        scanEtaLabelLayout.addWidget(self._scanEtaLabel)
+
+        # Add the layout to the parent layout
+        self.layout.addLayout(scanEtaLabelLayout)
 
     def save_state(self):
-        return {"progress": self._scanProgressBar.value()}
+        return {"progress": self._scanEtaLabel.text()}
 
     def restore_state(self, state):
         if state is not None:
-            self._scanProgressBar.setValue(state.get("progress", 0))
+            self._scanEtaLabel.setText(state.get("progress", 0))
         else:
             log.warning("No state found for ScanProgressInfoFrame.")
 
@@ -75,3 +80,14 @@ class ScanProgressInfoFrame(QFrame):
         scanButtonsLayout.addWidget(self._stopScanButton)
 
         self.layout.addLayout(scanButtonsLayout)
+
+    @pyqtSlot()
+    def on_scan_started(self):
+        """Slot to handle scan started signal."""
+        self._startScanButton.setText("Fast Forward")
+
+    @pyqtSlot()
+    def on_scan_finished(self):
+        """Slot to handle scan finished signal."""
+        self._startScanButton.setText("Start Scan")
+

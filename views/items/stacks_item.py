@@ -4,7 +4,7 @@ from PyQt6.QtGui import QPolygonF
 from PyQt6.QtWidgets import QGraphicsPolygonItem, QGraphicsPixmapItem
 
 
-class StacksItem(QGraphicsPolygonItem):
+class SlicecItem(QGraphicsPolygonItem):
     """Represents the intersection of the yellow middle stack of the volume with the image in the viewer as a polygon."""
 
     def __init__(self, parent: QGraphicsPixmapItem):
