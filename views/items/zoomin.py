@@ -70,10 +70,10 @@ class ZoomableView(QGraphicsView):
         elif event.key() == Qt.Key.Key_P:
             self.panning_key_pressed = True
         elif event.key() == Qt.Key.Key_M and self.measure.is_measuring:
-            log.warn(f"{self.__class__.__name__} - Measuring tool disabled")
+            log.info(f"{self.__class__.__name__} - Measuring tool disabled")
             self.measure.end_measurement()
         elif event.key() == Qt.Key.Key_M and not self.measure.is_measuring:
-            log.warn(f"{self.__class__.__name__} - Measuring tool enabled")
+            log.info(f"{self.__class__.__name__} - Measuring tool enabled")
             # The keypress event is registered but move the measuring tool is not started
             cursor_pos = QCursor.pos()
             scene_pos = self.mapToScene(self.mapFromGlobal(cursor_pos))
@@ -132,7 +132,7 @@ class ZoomableView(QGraphicsView):
 
         # handle measuring tool
         elif self.measure.is_measuring and not self.leveling_enabled:
-            log.warn(f"{self.__class__.__name__} - Measuring tool updating")
+            log.debug(f"{self.__class__.__name__} - Measuring tool updating")
             self.measure.update_measurement(self.mapToScene(event.pos()))
         elif self.leveling_enabled and not self.measure.is_measuring:
             if self.window_center is None or self.window_width is None:

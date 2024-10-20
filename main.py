@@ -58,8 +58,8 @@ class App(QApplication):
         self.main_view.update_UI()
         self.main_view.show()
 
-        self.menu_bar = MenuBar(self.main_view)
-        self.setup_menu_bar()
+        self.menu_bar = MenuBar(self.main_view, self.main_controller, self.load_examination)
+        # self.setup_menu_bar()
 
     def start_new_examination(self):
         """Start a new examination."""
@@ -150,9 +150,6 @@ class App(QApplication):
         help_section.add_action("Keyboard Shortcuts", lambda: ShortcutDialog().exec())
         help_shortcut = QShortcut("Ctrl+H", self.main_view)
         help_shortcut.activated.connect(lambda: ShortcutDialog().exec())
-
-    def test_action(self):
-        pass
 
     def setup_scan_parameter_form(self):
         """Load and set up the scan parameter form."""
