@@ -21,7 +21,7 @@ class ShortcutDialog(QDialog):
             ("Ctrl+M", "Switch between scanning mode and viewing mode"),
             # ("Ctrl+D", "Measure distance"),
             ("Ctrl+W", "Toggle window leveling"),
-            ("Ctrl+A", "Measure area"),
+            # ("Ctrl+A", "Measure area"),
             ("Ctrl+H", "Show keyboard shortcuts (this dialog)"),
             ("M", "Measure a distance in an image:\n"
                   "1. Left click into a planning view window.\n"
@@ -65,7 +65,7 @@ class ShortcutDialog(QDialog):
         # Resize the table to fit its contents, and add padding
         for row in range(table.rowCount()):
             table.setRowHeight(row, table.rowHeight(row) + 20)
-            if row == 6 or row == 7 or row == 8:
+            if row == 5 or row == 6 or row == 7:
                 table.setRowHeight(row, table.rowHeight(row) + 50)
         table.resizeColumnsToContents()
         for column in range(table.columnCount()):
