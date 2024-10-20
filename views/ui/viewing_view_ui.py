@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QGraphicsTextItem,
     QMenu,
     QLabel,
+    QCheckBox
 )
 
 from simulator.scanlist import AcquiredSeries
@@ -83,6 +84,92 @@ class gridViewingWindowLayout(QFrame):
         else:
             log.error(f"Invalid cell access: row {i}, column {j}.")
             return None
+        
+    def show_checkboxes(self):
+        """Adds checkboxes to all cells in the grid."""
+        for row in self.grid_cells:
+            for cell in row:
+                cell.set_visibility_checkbox(True)
+
+    def hide_checkboxes(self):
+        """Hides checkboxes in all cells."""
+        for row in self.grid_cells:
+            for cell in row:
+                cell.checkbox.setChecked(False)
+                cell.set_visibility_checkbox(False) 
+
+    def get_checked_cells(self):
+        """Stores a list of the checked cells. """
+        checked_cells = []
+
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                cell = self.grid_cells[i][j]
+                if cell.checkbox.isVisible() and cell.checkbox.isChecked():
+                    checked_cells.append((i, j))
+                    print(f"Checkbox is checked in cell [{i},{j}]")
+
+        return checked_cells
+    
+    def start_geometry_linking(self):
+        """Synchronizes zooming for the checked cells. """
+        linked_cells = self.get_checked_cells()
+        self.linked_cells = []
+        for i, j in linked_cells:
+            self.linked_cells.append(self.grid_cells[i][j])
+
+        if not linked_cells:
+            log.warn("No cells selected for geometry linking!.")
+            return
+        else:
+            print(f"Geometry linking will be done for cells: {linked_cells}")
+
+        reference_cell = self.grid_cells[linked_cells[0][0]][linked_cells[0][1]]
+        reference_zoom_level = reference_cell.transform().m11()  # get zoom level
+
+        for cell in self.linked_cells:
+            # connect to zoom signal
+            cell.zoomChanged.connect(self.synchronize_zoom_to_all_cells) 
+
+            # apply the zoom level
+            #current_zoom = cell.transform().m11()
+            #if current_zoom != reference_zoom_level:
+                #cell.resetTransform()
+                #cell.updateLabelPosition() # do i need this
+                #zoom_factor = reference_zoom_level / 1.0
+                #cell.scale(zoom_factor, zoom_factor)
+        
+        print(f"Cells {len(linked_cells)} are geometry linked.")
+    
+    def synchronize_zoom_to_all_cells(self, zoom_level):
+        """Synchronizes the zoom level in the linked cells ."""
+        for cell in self.linked_cells:
+            current_zoom = cell.transform().m11()
+            if current_zoom != zoom_level:
+                cell.resetTransform()
+                zoom_factor = zoom_level / 1.0
+                cell.scale(zoom_factor, zoom_factor)
+    
+    def stop_geometry_linking(self):
+        """Stops geometry linking for the selected cells."""
+        linked_cells = self.get_checked_cells()
+        
+        if not linked_cells:
+            log.warn("No cells selected for geometry linking!.")
+            return
+
+        for cell in self.linked_cells:
+            cell.zoomChanged.disconnect(self.synchronize_zoom_to_all_cells) # disconnects cells from zoom signal
+
+        for i in range(len(self.grid_cells)):
+            for j in range(len(self.grid_cells[i])):
+                self.grid_cell = self.grid_cells[i][j]
+                self.grid_cell.resetTransform()
+                #self.updateLabelPosition()
+        
+        print(f"Stopped geometry linking for {len(self.linked_cells)} cells.")
+        self.linked_cells = []
+        self.hide_checkboxes()
 
     def add_row(self):
         """Adds a new row of GridCell instances into the grid."""
@@ -212,7 +299,6 @@ class gridViewingWindowLayout(QFrame):
 
 class GridCell(ZoomableView):
     dropEventSignal = pyqtSignal(int, int, int)
-    rowRemoveSignal = pyqtSignal(int)  # signal for removed rows
 
     def __init__(self, parent_layout, row: int, col: int):
         super().__init__()
@@ -275,6 +361,30 @@ class GridCell(ZoomableView):
         self.scene.addItem(self.text_item)
 
         self.measure = MeasurementTool(self.line_item, self.text_item, self)
+
+        # checkboxes for geometry linking
+        self.checkbox = QCheckBox("Link", self)
+        self.checkbox.setVisible(False) # invisible by default
+        self.checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_checkbox_position()
+        
+    def set_visibility_checkbox(self, visible):
+        """Show or hide the checkbox."""
+        self.checkbox.setVisible(visible)
+        if visible:
+            self.update_checkbox_position()
+        
+    def update_checkbox_position(self):
+        if self.checkbox.isVisible():
+            checkbox_height = self.checkbox.size().height()
+        else:
+            checkbox_height = 0
+
+        padding = 10
+        x_pos = padding 
+        y_pos = self.height() - checkbox_height - padding 
+        self.checkbox.move(x_pos, y_pos)
+        self.checkbox.adjustSize()
 
     def add_row(self):
         """Trigger add_row method of the parent."""
