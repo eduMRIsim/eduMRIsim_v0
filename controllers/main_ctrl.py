@@ -332,10 +332,17 @@ class MainController:
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
 
     # Sync progress bar to scan progress
-    def update_scan_progress(self, progress: float):
+    def update_scan_progress(self, remaining_time: float):
         """Update the progress bar during scanning."""
-        # Assuming the progress bar ranges from 0 to 100
-        self.ui.scanProgressBar.setValue(int(progress * 100))
+        if remaining_time <= 0:
+            # Scan is complete
+            self.ui.scanEtaLabel.setText("Scan Complete")
+        else:
+            seconds_remaining = int(round(remaining_time / 1000))
+            # Format the time as mm:ss
+            minutes, seconds = divmod(seconds_remaining, 60)
+            eta_display = f"Time Remaining: {minutes:02d}:{seconds:02d}"
+            self.ui.scanEtaLabel.setText(eta_display)
 
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
