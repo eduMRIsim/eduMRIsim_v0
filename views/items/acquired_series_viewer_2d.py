@@ -881,7 +881,6 @@ class StackItem:
         self.volume_display.set_movability(False)
         self.middle_line_display = MiddleLineItem(pixmap_item)
         self.stack_index = stack_index
-
         self.volume_display.middle_point.setPen(Qt.GlobalColor.red)
 
     # clear all the visual elements connected to this stack before removing this stack item
@@ -896,7 +895,6 @@ class StackItem:
         self.middle_line_display.setVisible(True)
         self.volume_display.set_handles_visible()
         self.volume_display.is_active_stack = True
-
         self.volume_display.middle_point.setPen(Qt.GlobalColor.yellow)
 
     # unselect this scan volume so set it red and make non-movable
@@ -912,7 +910,6 @@ class StackItem:
         self.slices_display = []
         self.volume_display.set_handles_invisible()
         self.volume_display.is_active_stack = False
-
         self.volume_display.middle_point.setPen(Qt.GlobalColor.red)
 
     # update stack item display component with coordinates
