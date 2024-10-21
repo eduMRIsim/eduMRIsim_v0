@@ -77,7 +77,7 @@ class MainController:
             log.info("All scans completed.")
 
     def handle_scan_completed(self):
-        # Start the next scan 
+        # Start the next scan
         self.scan_next_item()
 
         # Reselect the scan item that just completed scanning
