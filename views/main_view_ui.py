@@ -345,45 +345,49 @@ class Ui_MainWindow(QMainWindow):
 
         settings.beginGroup("WidgetState")
 
-        # Scan parameters
-        self.parameterFormLayout.set_parameters(
-            settings.value("_parameterFormLayout_params", type=dict)
-        )
-        self.stackParameterFormLayout.set_stacks_params(
-            {
-                "nr_of_stacks": self.scanner.active_scan_item.get_number_of_stacks(),
-                "selected_stack_index": 0,
-            }
-            # can't restore stack parameters option values from settings as settings don't restore the previously selected scan item
-            # settings.value("_stackParameterFormLayout_params", type=dict)
-        )
+        state_name = settings.value("currentState", defaultValue="IdleState", type=str)
 
-        # UI labels
-        self.examinationNameLabel.setText(
-            settings.value("examinationNameLabel", "", type=str)
-        )
-        self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
-        self.scanEtaLabel.setText("Time Remaining: 00:00")
+        if state_name != "IdleState":
+            # log.warning(f"State '{state_name}' not found. Defaulting to IdleState.")
+            # Scan parameters
+            self.parameterFormLayout.set_parameters(
+                settings.value("_parameterFormLayout_params", type=dict)
+            )
+            self.stackParameterFormLayout.set_stacks_params(
+                {
+                    "nr_of_stacks": self.scanner.active_scan_item.get_number_of_stacks(),
+                    "selected_stack_index": 0,
+                }
+                # can't restore stack parameters option values from settings as settings don't restore the previously selected scan item
+                # settings.value("_stackParameterFormLayout_params", type=dict)
+            )
 
-        # AcquiredSeries widgets
-        self.scanPlanningWindow1.setAcquiredSeries(
-            acquired_series=settings.value("acquiredSeries1"), completed_scan=True
-        )
-        self.scanPlanningWindow2.setAcquiredSeries(
-            acquired_series=settings.value("acquiredSeries2"), completed_scan=True
-        )
-        self.scanPlanningWindow3.setAcquiredSeries(
-            acquired_series=settings.value("acquiredSeries3"), completed_scan=True
-        )
-        self.scanPlanningWindow1.displayed_image_index = settings.value(
-            "acquiredSeriesIDX1", type=int
-        )
-        self.scanPlanningWindow2.displayed_image_index = settings.value(
-            "acquiredSeriesIDX2", type=int
-        )
-        self.scanPlanningWindow3.displayed_image_index = settings.value(
-            "acquiredSeriesIDX3", type=int
-        )
+            # UI labels
+            self.examinationNameLabel.setText(
+                settings.value("examinationNameLabel", "", type=str)
+            )
+            self.modelNameLabel.setText(settings.value("modelNameLabel", "", type=str))
+            self.scanEtaLabel.setText("Time Remaining: 00:00")
+
+            # AcquiredSeries widgets
+            self.scanPlanningWindow1.setAcquiredSeries(
+                acquired_series=settings.value("acquiredSeries1"), completed_scan=True
+            )
+            self.scanPlanningWindow2.setAcquiredSeries(
+                acquired_series=settings.value("acquiredSeries2"), completed_scan=True
+            )
+            self.scanPlanningWindow3.setAcquiredSeries(
+                acquired_series=settings.value("acquiredSeries3"), completed_scan=True
+            )
+            self.scanPlanningWindow1.displayed_image_index = settings.value(
+                "acquiredSeriesIDX1", type=int
+            )
+            self.scanPlanningWindow2.displayed_image_index = settings.value(
+                "acquiredSeriesIDX2", type=int
+            )
+            self.scanPlanningWindow3.displayed_image_index = settings.value(
+                "acquiredSeriesIDX3", type=int
+            )
 
         settings.endGroup()
 
