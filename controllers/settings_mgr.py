@@ -48,6 +48,7 @@ class SettingsManager:
             scan_list_params = scannerState.get("params")
             scan_list_status = scannerState.get("status")
             scan_list_data = scannerState.get("data")
+            active_idx = scannerState.get("active_idx", 0)
 
             if scan_list_items is not None:
                 for i in range(len(scan_list_items)):
@@ -70,6 +71,8 @@ class SettingsManager:
                     self.scanner.scanlist.scanlist_elements[i].scan_item.status = (
                         scan_list_status[i]
                     )
+                    self.scanner.scanlist.scanlist_elements[i].scan_item.add_observer(self.main_controller)
+                    
                     self.main_controller.update(EventEnum.SCAN_ITEM_STATUS_CHANGED)
                     self.scanner.scanlist.notify_observers(
                         EventEnum.SCAN_ITEM_STATUS_CHANGED
@@ -78,6 +81,21 @@ class SettingsManager:
                     self.main_controller.update_scanlistListWidget(
                         self.scanner.scanlist
                     )
+                 # Set active scan item index
+
+            if len(self.scanner.scanlist.scanlist_elements) > 0:
+                # Ensure the active index is within valid range
+                if 0 <= active_idx < len(self.scanner.scanlist.scanlist_elements):
+                    self.scanner.scanlist.active_idx = active_idx
+                else:
+                    self.scanner.scanlist.active_idx = 0
+            else:
+                self.scanner.scanlist.active_idx = None
+
+            # Update the UI
+            self.main_controller.update(EventEnum.SCANLIST_ACTIVE_INDEX_CHANGED)
+            self.main_controller.update_scanlistListWidget(self.scanner.scanlist)
+
 
         self.main_view.restore_settings()
 

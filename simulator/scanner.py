@@ -278,12 +278,15 @@ class Scanner(QObject):
                 for ele in self.examination.scanlist.scanlist_elements
             ]
 
+            active_idx = self.examination.scanlist.active_idx
+
             # Serialize the state of the scanner
             state = {
                 "scanlist": scanlist_names,
                 "params": scnalist_params,
                 "data": scanlist_data,
                 "status": scanlist_status,
+                "active_idx": active_idx,
                 # 'model': self.model,
             }
             return state
