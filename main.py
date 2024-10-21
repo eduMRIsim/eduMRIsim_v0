@@ -40,6 +40,7 @@ class App(QApplication):
             file_name="settings.ini",
         )
 
+
         # Show the starting screen
         self.starting_window = StartingWindow(
             self.start_new_examination,
@@ -49,6 +50,8 @@ class App(QApplication):
 
         if not self.settings_manager.is_previous_session():
             self.starting_window.load_previous_examination_button.setDisabled(True)
+
+        self.start_main_app()
         self.starting_window.show()
 
         self.menu_bar = None
@@ -61,25 +64,23 @@ class App(QApplication):
         self.menu_bar = MenuBar(
             self.main_view, self.main_controller, self.load_examination
         )
-        # self.setup_menu_bar()
 
     def start_new_examination(self):
         """Start a new examination."""
         self.starting_window.close()
         self.main_controller.handle_newExaminationButton_clicked()
-        self.start_main_app()
 
     def load_examination(self):
         """Load an existing examination from a file."""
         self.starting_window.close()
-        self.start_main_app()
+        # self.start_main_app()
         self.main_controller.load_examination_dialog_ui.open_file_dialog()
 
     def load_prev_examination(self):
         """Load an existing examination from previous session."""
         self.settings_manager.setup_settings("settings.ini")
         self.starting_window.close()
-        self.start_main_app()
+        # self.start_main_app()
 
     # TODO all menu bar actions should be moved to the MenuBar class
     # Set up the menu bar
