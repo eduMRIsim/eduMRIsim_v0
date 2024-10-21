@@ -26,6 +26,8 @@ from views.main_view_ui import Ui_MainWindow
 from views.ui.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
 from views.ui.view_model_dialog_ui import ViewModelDialog
+from PyQt6 import QtGui
+
 
 
 class MainController:
@@ -391,7 +393,7 @@ class MainController:
     def update_scanlistListWidget(self, scanlist):
         self.ui.scanlistListWidget.clear()
         list = scanlist.scanlist_elements
-        for item in list:
+        for idx, item in enumerate(list):
             list_item = QListWidgetItem(item.name)
             if item.scan_item.status == ScanItemStatusEnum.READY_TO_SCAN:
                 list_item.setIcon(QIcon("resources/icons/checkmark-outline.png"))
@@ -405,6 +407,9 @@ class MainController:
                 list_item.setIcon(
                     QIcon("resources/icons/checkmark-circle-2-outline.png")
                 )
+            if idx in self.scan_indices_queue[self.current_scan_index:]:
+                # Highlight ongoing queue scanitems
+                list_item.setBackground(QtGui.QColor('#BFBFBF'))
             self.ui.scanlistListWidget.addItem(list_item)
         active_idx = self.scanner.scanlist.active_idx
         if active_idx is not None:
