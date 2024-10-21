@@ -630,10 +630,10 @@ class MainController:
                     grid_cell.setColorScale(
                         mapping
                     )  # Apply the color scale to the grid cell
-                    log.info(
+                    log.debug(
                         f"Color mapping changed to {mapping} for GridCell ({row}, {col})"
                     )
-        log.info(f"Color mapping changed to {mapping} for all GridCells.")
+        log.debug(f"Color mapping changed to {mapping} for all GridCells.")
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
