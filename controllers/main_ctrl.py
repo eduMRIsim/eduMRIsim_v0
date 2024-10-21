@@ -512,16 +512,25 @@ class MainController:
         # Used to reconnect all cells to accept drops after rows/columns have been removed
         self.ui.gridViewingWindow.reconnect_all_signals(self.handle_dropped_cells)
 
-    def handle_show_checkboxes(self, checked):
-        if checked:
-            self.ui.gridViewingWindow.show_checkboxes()
-
     def handle_hide_checkboxes(self, checked):
         if checked:
             self.ui.gridViewingWindow.hide_checkboxes()
 
     def handle_start_contrastLinking(self):
+        self.ui.gridViewingWindow.show_checkboxes()
         self.ui.gridViewingWindow.start_contrast_linking()
+
+        for row in self.ui.gridViewingWindow.grid_cells:
+            for cell in row:
+                cell.checkbox.stateChanged.connect(lambda state, cell=cell: self.handle_check_uncheck(state,cell))
+
+    def handle_check_uncheck(self, state, cell):
+        # used to connect/disconnect a cell depending on if it is checked or not;
+        # stateChanged ouputs 2 for checked and 0 for unchecked
+        if state == 2:
+            self.ui.gridViewingWindow.connect_cell(cell)
+        elif state == 0: #
+            self.ui.gridViewingWindow.disconnect_cell(cell)
 
     def handle_stop_contrastLinking(self):
         self.ui.gridViewingWindow.stop_contrast_linking()
