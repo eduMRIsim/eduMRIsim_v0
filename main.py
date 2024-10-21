@@ -40,7 +40,6 @@ class App(QApplication):
             file_name="settings.ini",
         )
 
-
         # Show the starting screen
         self.starting_window = StartingWindow(
             self.start_new_examination,
