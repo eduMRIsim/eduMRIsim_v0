@@ -102,9 +102,6 @@ class MenuBar:
         help_shortcut = QShortcut("Ctrl+H", self.main_view)
         help_shortcut.activated.connect(lambda: ShortcutDialog().exec())
 
-    def test_action(self):
-        pass
-
         # Color Scale section
         color_scale_section = self.add_section("Color Scale")
         color_scale_section.add_mode_action_group()
@@ -133,6 +130,9 @@ class MenuBar:
             lambda: self.main_controller.handle_stop_contrastLinking(),
             checked=False,
         )
+
+    def test_action(self):
+        pass
 
 
 class Section:
