@@ -77,13 +77,27 @@ class MainController:
             log.info("All scans completed.")
 
     def handle_scan_completed(self):
-        # Unselect the scanned item
-        if self.current_scan_index > 0:
-            index = self.scan_indices_queue[self.current_scan_index - 1]
-            item = self.ui.scanlistListWidget.item(index)
-            item.setSelected(False)
-        # Start the next scan if any
+        # Start the next scan 
         self.scan_next_item()
+
+        # Reselect the scan item that just completed scanning
+        if self.current_scan_index > 0:
+            # Get the index of the scan item that just completed
+            index = self.scan_indices_queue[self.current_scan_index - 1]
+            # Set the active index in the scanlist to reselect the scan item
+            self.scanner.scanlist.active_idx = index
+
+            # Update the UI to reflect the reselected scan item
+            current_list_item = self.ui.scanlistListWidget.item(index)
+            self.ui.scanlistListWidget.setCurrentItem(current_list_item)
+
+        # Since the scan item is now complete hide volumes
+        self.ui.scanPlanningWindow1.setScanVolumes([])
+        self.ui.scanPlanningWindow2.setScanVolumes([])
+        self.ui.scanPlanningWindow3.setScanVolumes([])
+
+        # Update the scan list widget to reflect any changes
+        self.update_scanlistListWidget(self.scanner.scanlist)
 
     def ui_signals(self):
         self.load_examination_dialog_ui = LoadExaminationDialog()
