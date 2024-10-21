@@ -76,7 +76,7 @@ class App(QApplication):
 
     def load_prev_examination(self):
         """Load an existing examination from previous session."""
-        self.settings_manager.setup_settings("settings.ini")
+        self.settings_manager.setup_settings()
         self.starting_window.close()
 
     # TODO all menu bar actions should be moved to the MenuBar class

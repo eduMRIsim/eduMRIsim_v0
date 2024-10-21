@@ -19,11 +19,9 @@ class ScanlistInfoFrame(QFrame):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._addScanItemButton = PrimaryActionButton("Add Scan Item")
-        self._importScanItemButton = PrimaryActionButton("Import Scan")
         self._scanlistListWidget = ScanlistListWidget()
         self.layout.addWidget(self._scanlistListWidget)
         self.layout.addWidget(self._addScanItemButton)
-        self.layout.addWidget(self._importScanItemButton)
 
     @property
     def addScanItemButton(self):
