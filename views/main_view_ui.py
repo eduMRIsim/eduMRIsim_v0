@@ -410,7 +410,7 @@ class Ui_MainWindow(QMainWindow):
     def restore_settings(self):
         settings = SettingsManager.get_instance().settings
 
-        self.restoreGeometry(settings.value("geometry", type=QByteArray))
+        self.showMaximized()
         self.restoreState(settings.value("windowState", type=QByteArray))
         state_name = settings.value("currentState", defaultValue="IdleState", type=str)
         state_class = globals().get(state_name)
