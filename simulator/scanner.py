@@ -67,7 +67,7 @@ class Scanner(QObject):
         remaining_time = self.scan_time - self.scan_elapsed_time
         if remaining_time < 0:
             remaining_time = 0
-        
+
         if self.scan_time > 0:
             progress_percentage = (self.scan_elapsed_time / self.scan_time) * 100
         else:

@@ -71,7 +71,7 @@ class ScanlistListWidget(QListWidget):
         # do not accept drops from itself
         if widget == self:
             e.ignore()
-        elif widget.__class__.__name__ == 'CustomListView':
+        elif widget.__class__.__name__ == "CustomListView":
             index = widget.selectedIndexes()
             for i in index:
                 self.fileDroppedEventSignal.emit(widget.model().filePath(i))

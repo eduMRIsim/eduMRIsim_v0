@@ -24,9 +24,7 @@ class SettingsManager:
 
             if file_name is None:
                 file_name = os.path.join(
-                    QStandardPaths.writableLocation(
-                        QStandardPaths.DocumentsLocation
-                    ),
+                    QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation),
                     "eduMRIsim",
                     "sessions",
                     "settings.ini",
@@ -38,8 +36,10 @@ class SettingsManager:
             self.settings = QSettings(file_name, QSettings.Format.IniFormat)
             self.initialized = True
 
-            self.os_settings_dir = QStandardPaths.writableLocation(
-                QStandardPaths.DocumentsLocation) + "/eduMRIsim/"
+            self.os_settings_dir = (
+                QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+                + "/eduMRIsim/"
+            )
 
             os.makedirs(self.os_settings_dir, exist_ok=True)
             log.info(f"SETTINGSDIR={self.os_settings_dir}")
@@ -54,7 +54,9 @@ class SettingsManager:
         # The settings file are for now saved in the working directory.
         # This might change in the future to a more appropriate location such as native app data directory.
         if settings_file is None:
-            settings_file = os.path.join(self.os_settings_dir, "sessions", "settings.ini")
+            settings_file = os.path.join(
+                self.os_settings_dir, "sessions", "settings.ini"
+            )
 
         self.settings = QSettings(settings_file, QSettings.Format.IniFormat)
 

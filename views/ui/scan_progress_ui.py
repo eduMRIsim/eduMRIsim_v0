@@ -1,4 +1,12 @@
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QProgressBar, QLabel, QWidget, QGridLayout
+from PyQt6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QHBoxLayout,
+    QProgressBar,
+    QLabel,
+    QWidget,
+    QGridLayout,
+)
 from PyQt6.QtCore import Qt, pyqtSlot
 
 from utils.logger import log
@@ -101,9 +109,9 @@ class ScanProgressInfoFrame(QFrame):
     # Sync progress bar to scan progress
     def update_scan_progress(self, remaining_time: float, progress_percentage: float):
         """Update the progress bar & ETA timer during scanning."""
-        
+
         self._scanProgressBar.setValue(int(progress_percentage))
-        
+
         if remaining_time <= 0:
             # Scan is complete
             self._scanEtaLabel.setText("Scan Complete")

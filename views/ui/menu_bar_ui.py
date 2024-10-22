@@ -119,10 +119,9 @@ class MenuBar:
         contrast_linking_section.menu.aboutToShow.connect(
             lambda: self.main_controller.handle_start_contrastLinking()
         )
-        #contrast_linking_section.add_mode_action_group()
+        # contrast_linking_section.add_mode_action_group()
         contrast_linking_section.add_action(
-            "Stop linking",
-            self.main_controller.handle_stop_contrastLinking
+            "Stop linking", self.main_controller.handle_stop_contrastLinking
         )
 
     def test_action(self):

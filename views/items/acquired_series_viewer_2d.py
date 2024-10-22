@@ -111,7 +111,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
             Qt.WidgetAttribute.WA_TransparentForMouseEvents, True
         )
         self.updateLabelPosition()
-        
+
         # window level variables
         self.window_center = None
         self.window_width = None
@@ -359,7 +359,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.scan_plane_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
-    
+
     def toggle_window_level_mode(self):
         """Toggles window-leveling mode."""
         self.leveling_enabled = not self.leveling_enabled
@@ -389,7 +389,13 @@ class AcquiredSeriesViewer2D(ZoomableView):
         array_norm = (array_clamped - min_window) / (max_window - min_window)
 
         array_8bit = (array_norm * 255).astype(np.uint8)
-        qimage = QImage(array_8bit.data, array_8bit.shape[1], array_8bit.shape[0], array_8bit.shape[1], QImage.Format.Format_Grayscale8)
+        qimage = QImage(
+            array_8bit.data,
+            array_8bit.shape[1],
+            array_8bit.shape[0],
+            array_8bit.shape[1],
+            QImage.Format.Format_Grayscale8,
+        )
 
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
