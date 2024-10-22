@@ -25,7 +25,7 @@ class SettingsManager:
 
             if file_name is None:
                 file_name = os.path.join(
-                    QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation),
+                    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation),
                     "eduMRIsim",
                     "sessions",
                     "settings.ini",
@@ -38,7 +38,7 @@ class SettingsManager:
             self.initialized = True
 
             self.os_settings_dir = (
-                QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+                QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
                 + "/eduMRIsim/"
             )
 

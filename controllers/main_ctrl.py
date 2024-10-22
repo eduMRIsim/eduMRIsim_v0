@@ -545,6 +545,10 @@ class MainController:
         params = self.scanner.active_scanlist_element.scan_item.scan_parameters
         path = self.export_scanitem_dialog.open_file_dialog()
 
+        if path is None or path == "":
+            log.info("No file selected")
+            return
+
         with open(path, "w") as f:
             json.dump(params, f)
 
