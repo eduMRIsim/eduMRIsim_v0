@@ -547,6 +547,13 @@ class MainController:
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()
+        
+        # Validate scan parameters
+        for param in scan_parameters:
+            if param != 'ScanPlane' or param != 'Rotation_lock' or param != 'ScanTechnique':
+                if isinstance(scan_parameters[param], str):
+                    raise ValueError(f"Parameter {param} must be an integer of float")
+
         self.scanner.scanlist.active_scan_item.validate_scan_parameters_single(
             scan_parameters
         )
