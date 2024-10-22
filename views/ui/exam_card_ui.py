@@ -1,7 +1,8 @@
-from PyQt6.QtCore import QDir
-from PyQt6.QtGui import QFileSystemModel
+from PyQt6.QtCore import QDir, pyqtSignal
+from PyQt6.QtGui import QFileSystemModel, QDropEvent
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QListView
 
+from utils.logger import log
 from views.styled_widgets import PrimaryActionButton
 
 
@@ -18,7 +19,7 @@ class SavedItemsTab(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self._savedItemsListView = QListView()
+        self._savedItemsListView = CustomListView()
         self._savedItemsListView.setDragDropMode(QListView.DragDropMode.DragOnly)
         self._savedItemsListView.setSelectionMode(
             QListView.SelectionMode.ExtendedSelection
@@ -32,6 +33,7 @@ class SavedItemsTab(QWidget):
 
         self._importScanItemButton = PrimaryActionButton("Import Scan")
         self.layout.addWidget(self._importScanItemButton)
+
 
     def populate_list(self, directory_path):
         model = QFileSystemModel()
@@ -63,3 +65,20 @@ class ExamCardTab(QWidget):
     @property
     def examCardListView(self):
         return self._examCardListView
+
+class CustomListView(QListView):
+    # fileDropped = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragEnabled(True)
+        # self.setAcceptDrops(True)
+
+    # def dropEvent(self, event: QDropEvent):
+    #     index = self.indexAt(event.position().toPoint())
+    #     if index.isValid():
+    #         file_path = self.model().filePath(index)
+    #         if file_path:
+    #             log.info(f"File dropped: {file_path}")
+    #             self.fileDropped.emit(file_path)
+    #     super().dropEvent(event)
