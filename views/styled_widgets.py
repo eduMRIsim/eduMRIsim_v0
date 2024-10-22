@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
+    QComboBox,
+    QMessageBox
 )
 
 
@@ -366,3 +368,22 @@ class HeaderLabel(QLabel):
         self.setFont(font)
         self.setStyleSheet("color: #7F7F7F")
         self.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+class NoScrollComboBox(QComboBox):
+    def wheelEvent(self, event):
+        # Ignore the scroll event
+        event.ignore()
+
+# class for pop-up window error for incorrect value
+class ScanParamErrorPopup(QWidget):
+    def show_error_message(parameter_name):
+        # Create a message box
+        msg = QMessageBox()
+        #msg.setIcon(QMessageBox.Critical)  # Set the icon for an error
+        msg.setText("An incorrect scan parameter was entered!")
+        msg.setInformativeText(f"The value for '{parameter_name}' must be a number. Reverted to previous value.")
+        msg.setWindowTitle("Error")
+        #msg.setStandardButtons(QMessageBox.Ok)
+
+        # Show the message box
+        msg.exec()
