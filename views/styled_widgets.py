@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
+    QComboBox,
 )
 
 
@@ -366,3 +367,8 @@ class HeaderLabel(QLabel):
         self.setFont(font)
         self.setStyleSheet("color: #7F7F7F")
         self.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+class NoScrollComboBox(QComboBox):
+    def wheelEvent(self, event):
+        # Ignore the scroll event
+        event.ignore()

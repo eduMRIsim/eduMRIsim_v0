@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QEvent
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -23,6 +23,7 @@ from views.styled_widgets import (
     DestructiveActionButton,
     HeaderLabel,
 )
+from views.styled_widgets import NoScrollComboBox
 
 
 class ScanParametersWidget(QWidget):
@@ -164,7 +165,6 @@ class ParameterTab(QScrollArea):
     def parameterFormLayout(self):
         return self._parameterFormLayout
 
-
 class ParameterFormLayout(QVBoxLayout):
     formActivatedSignal = pyqtSignal()
 
@@ -198,7 +198,7 @@ class ParameterFormLayout(QVBoxLayout):
                 )
                 editor.textChanged.connect(lambda: self.formActivatedSignal.emit())
             elif editor_type == "QComboBox":
-                editor = QComboBox()
+                editor = NoScrollComboBox()
                 editor.addItems(default_value)
                 editor.setCurrentIndex(0)
                 parameter_layout.addWidget(
