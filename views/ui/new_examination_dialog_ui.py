@@ -1,3 +1,4 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -7,8 +8,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QVBoxLayout,
 )
-
-from PyQt6.QtCore import Qt
 
 
 class NewExaminationDialog(QDialog):

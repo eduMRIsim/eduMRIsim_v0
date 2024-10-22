@@ -1,7 +1,8 @@
 import logging
-from rich.logging import RichHandler
-from PyQt6 import QtCore
+
 import numpy as np
+from PyQt6 import QtCore
+from rich.logging import RichHandler
 
 # Set up logging
 # To log messages, use "from utils.logger import log"

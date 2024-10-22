@@ -1,9 +1,9 @@
+import json
 import os
 from datetime import datetime
-import json
 
 import numpy as np
-from PyQt5.QtCore import QStandardPaths
+from PyQt6 import QtGui
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtWidgets import QListWidgetItem
@@ -20,16 +20,15 @@ from simulator.scanlist import (
     AcquiredSeries,
 )
 from simulator.scanner import Scanner
-from views.ui.color_scale import ColorScale
 from utils.logger import log
-from views.ui.export_scanitem_dialog_ui import ExportScanItemDialog
-from views.ui.export_image_dialog_ui import ExportImageDialog
-from views.ui.load_examination_dialog_ui import LoadExaminationDialog
 from views.main_view_ui import Ui_MainWindow
-from views.ui.new_examination_dialog_ui import NewExaminationDialog
 from views.qmodels import DictionaryModel
+from views.ui.color_scale import ColorScale
+from views.ui.export_image_dialog_ui import ExportImageDialog
+from views.ui.export_scanitem_dialog_ui import ExportScanItemDialog
+from views.ui.load_examination_dialog_ui import LoadExaminationDialog
+from views.ui.new_examination_dialog_ui import NewExaminationDialog
 from views.ui.view_model_dialog_ui import ViewModelDialog
-from PyQt6 import QtGui
 
 
 class MainController:

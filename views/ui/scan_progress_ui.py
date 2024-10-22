@@ -1,3 +1,4 @@
+from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtWidgets import (
     QFrame,
     QVBoxLayout,
@@ -7,7 +8,6 @@ from PyQt6.QtWidgets import (
     QWidget,
     QGridLayout,
 )
-from PyQt6.QtCore import Qt, pyqtSlot
 
 from utils.logger import log
 from views.styled_widgets import SecondaryActionButton, DestructiveActionButton

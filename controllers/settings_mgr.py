@@ -1,11 +1,12 @@
 import glob
 import os
-from utils.logger import log
 
 from PyQt5.QtCore import QStandardPaths
 from PyQt6.QtCore import QSettings
+
 from events import EventEnum
 from simulator.scanner import Scanner
+from utils.logger import log
 
 
 class SettingsManager:

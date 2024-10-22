@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import (
@@ -26,13 +27,11 @@ from PyQt6.QtWidgets import (
 )
 
 from simulator.scanlist import AcquiredSeries
-from views.ui.color_scale import ColorScale
+from utils.logger import log
 from views.items.measurement_tool import MeasurementTool
 from views.items.zoomin import ZoomableView
+from views.ui.color_scale import ColorScale
 from views.ui.scanlist_ui import ScanlistListWidget
-from utils.logger import log
-
-import matplotlib.pyplot as plt
 
 
 class gridViewingWindowLayout(QFrame):

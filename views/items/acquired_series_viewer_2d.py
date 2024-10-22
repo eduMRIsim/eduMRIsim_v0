@@ -1,3 +1,6 @@
+from typing import List, Optional
+
+import matplotlib.pyplot as plt
 import numpy as np
 from PyQt6.QtCore import Qt, QEvent, QPointF, pyqtSignal
 from PyQt6.QtGui import (
@@ -12,7 +15,6 @@ from PyQt6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
-    QLinearGradient,
 )
 from PyQt6.QtWidgets import (
     QGraphicsScene,
@@ -25,24 +27,20 @@ from PyQt6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsTextItem,
     QGraphicsOpacityEffect,
-    QApplication,
 )
 
-from typing import List, Optional
 from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, AcquiredImage, ScanVolume
 from utils.logger import log
-from views.ui.color_scale import ColorScale
 from views.items.custom_polygon_item import CustomPolygonItem
 from views.items.measurement_tool import MeasurementTool
 from views.items.middle_line_item import MiddleLineItem
 from views.items.stacks_item import SlicecItem
 from views.items.zoomin import ZoomableView
-from views.items.stacks_item import SlicecItem
+from views.ui.color_scale import ColorScale
 from views.ui.scanlist_ui import ScanlistListWidget
 
-import matplotlib.pyplot as plt
 
 class AcquiredSeriesViewer2D(ZoomableView):
     stackSignal = pyqtSignal(int)

@@ -13,8 +13,8 @@ from simulator.load import load_json
 from simulator.scanner import Scanner
 from utils.logger import log, qt_message_handler, numpy_handler
 from views.main_view_ui import Ui_MainWindow
-from views.ui.menu_bar_ui import MenuBar
 from views.starting_window import StartingWindow  # Import the StartingWindow
+from views.ui.menu_bar_ui import MenuBar
 from views.ui.shortcut_dialog_ui import ShortcutDialog
 
 
