@@ -8,6 +8,7 @@ from events import EventEnum
 from . import load
 import math as ma
 from utils.logger import log
+from views.styled_widgets import ScanParamErrorPopup
 
 from pydicom.uid import generate_uid
 
@@ -649,6 +650,16 @@ class ScanItem:
         if index_to_replace is not None:
             scan_params_copy[index_to_replace] = scan_params
 
+        # Validate scan parameters
+        for param in scan_params_copy[0]:
+            if param != 'ScanPlane' and param != 'Rotation_lock' and param != 'ScanTechnique':
+                if not isinstance(scan_params_copy[0][param], int) or not isinstance(scan_params_copy[0][param], float):
+                    try:
+                        scan_params_copy[0][param] = float(scan_params_copy[0][param])
+                    except:
+                        ScanParamErrorPopup.show_error_message(param)
+                        scan_params_copy[0][param] = self._scan_parameters_original[0][param]
+        
         self.scan_parameters = scan_params_copy
 
         if self.valid == True:
