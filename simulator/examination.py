@@ -1,10 +1,9 @@
-from simulator.scanlist import Scanlist
+import datetime
+import random
 
 from pydicom.uid import generate_uid
 
-import datetime
-
-import random
+from simulator.scanlist import Scanlist
 
 
 class Examination:

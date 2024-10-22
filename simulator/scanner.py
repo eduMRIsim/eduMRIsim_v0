@@ -1,7 +1,9 @@
+import datetime
+
 import numpy as np
-from scipy import interpolate
-from utils.logger import log
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer
+from scipy import interpolate
+
 from simulator.MRI_data_synthesiser import MRIDataSynthesiser
 from simulator.examination import Examination
 from simulator.model import Model
@@ -12,8 +14,7 @@ from simulator.scanlist import (
     ScanItem,
     ScanItemStatusEnum,
 )
-
-import datetime
+from utils.logger import log
 
 
 class Scanner(QObject):

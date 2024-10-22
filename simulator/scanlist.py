@@ -1,16 +1,14 @@
 from enum import Enum, auto
+from typing import List
 
 import numpy as np
 from PyQt6.QtCore import QPointF
-from typing import List
+from pydicom.uid import generate_uid
 
 from events import EventEnum
-from . import load
-import math as ma
 from utils.logger import log
 from views.styled_widgets import ScanParamErrorPopup
-
-from pydicom.uid import generate_uid
+from . import load
 
 
 class ImageGeometry:

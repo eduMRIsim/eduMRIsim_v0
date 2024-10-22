@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QStandardPaths
+from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QFileSystemModel
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QListView

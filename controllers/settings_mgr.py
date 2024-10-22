@@ -1,11 +1,12 @@
 import glob
 import os
-from utils.logger import log
 
-from PyQt5.QtCore import QStandardPaths
+from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtCore import QSettings
+
 from events import EventEnum
 from simulator.scanner import Scanner
+from utils.logger import log
 
 
 class SettingsManager:
@@ -24,7 +25,7 @@ class SettingsManager:
 
             if file_name is None:
                 file_name = os.path.join(
-                    QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation),
+                    QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation),
                     "eduMRIsim",
                     "sessions",
                     "settings.ini",
@@ -37,7 +38,7 @@ class SettingsManager:
             self.initialized = True
 
             self.os_settings_dir = (
-                QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+                QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
                 + "/eduMRIsim/"
             )
 

@@ -1,21 +1,22 @@
+import os
+
+import nibabel as nib
 import numpy as np
+import pydicom
 from PIL import Image
 from PyQt6.QtWidgets import QDialog, QFileDialog
-import pydicom
 from pydicom.dataset import FileDataset
 from pydicom.fileset import FileSet
 from pydicom.uid import ExplicitVRLittleEndian
-import nibabel as nib
-import os
 
 from simulator.examination import Examination
-from utils.logger import log
 from simulator.scanlist import (
     AcquiredImage,
     ImageGeometry,
     AcquiredSeries,
     ScanlistElement,
 )
+from utils.logger import log
 
 
 class ExportImageDialog(QDialog):

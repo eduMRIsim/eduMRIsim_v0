@@ -1,5 +1,3 @@
-from operator import index
-
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QListWidget

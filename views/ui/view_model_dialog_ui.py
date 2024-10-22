@@ -13,8 +13,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtWidgets import QMessageBox
 
-from views.ui.image_label_ui import ImageLabel
 from views.styled_widgets import PrimaryActionButton, HeaderLabel
+from views.ui.image_label_ui import ImageLabel
 
 
 class NoItemsToViewDialog(QMessageBox):

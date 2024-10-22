@@ -1,4 +1,6 @@
-from PyQt6.QtCore import pyqtSignal, Qt, QEvent
+from typing import Optional
+
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -14,16 +16,15 @@ from PyQt6.QtWidgets import (
     QPushButton,
 )
 
-from typing import Optional
 from events import EventEnum
 from utils.block_signals import block_signals
+from views.styled_widgets import NoScrollComboBox
 from views.styled_widgets import (
     PrimaryActionButton,
     SecondaryActionButton,
     DestructiveActionButton,
     HeaderLabel,
 )
-from views.styled_widgets import NoScrollComboBox
 
 
 class ScanParametersWidget(QWidget):

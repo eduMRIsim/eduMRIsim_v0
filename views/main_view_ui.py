@@ -1,6 +1,8 @@
 import os
+import ctypes
 
 from PyQt6.QtCore import QByteArray, QStandardPaths
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsView,
@@ -16,11 +18,6 @@ from PyQt6.QtWidgets import (
 from controllers.settings_mgr import SettingsManager
 from simulator.scanner import Scanner
 from utils.logger import log
-
-from views.items.acquired_series_viewer_2d import (
-    AcquiredSeriesViewer2D,
-    DropAcquiredSeriesViewer2D,
-)
 from views.UI_MainWindowState import (
     ExamState,
 )
@@ -31,6 +28,15 @@ from views.UI_MainWindowState import (
     ScanCompleteState,
     IdleState,
 )
+from views.items.acquired_series_viewer_2d import (
+    AcquiredSeriesViewer2D,
+    DropAcquiredSeriesViewer2D,
+)
+from views.styled_widgets import (
+    PrimaryActionButton,
+    TertiaryActionButton,
+    InfoFrame,
+)
 from views.ui.exam_card_ui import ExamCardTabWidget, ExamCardTab, SavedItemsTab
 from views.ui.examination_info_ui import (
     ExaminationInfoStackedLayout,
@@ -39,11 +45,6 @@ from views.ui.examination_info_ui import (
 from views.ui.scan_parameters_ui import ScanParametersWidget
 from views.ui.scan_progress_ui import ScanProgressInfoFrame
 from views.ui.scanlist_ui import ScanlistInfoFrame
-from views.styled_widgets import (
-    PrimaryActionButton,
-    TertiaryActionButton,
-    InfoFrame,
-)
 from views.ui.viewing_view_ui import gridViewingWindowLayout
 
 """Note about naming: PyQt uses camelCase for method names and variable names. This unfortunately conflicts with the 
@@ -74,6 +75,13 @@ class Ui_MainWindow(QMainWindow):
         self._createMainWindow()
         self._state = IdleState()
         self.update_UI()
+
+        self.setWindowIcon(QIcon("resources/icons/icon.ico"))
+
+        # This is a workaround for the Windows taskbar icon not showing up
+        if os.name == 'nt':
+            myappid = 'tueindhoven.eduMRIsim.1.0.0'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     def update_UI(self):
         self.state.update_UI(self)
