@@ -1,6 +1,8 @@
 import os
+import ctypes
 
 from PyQt6.QtCore import QByteArray, QStandardPaths
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsView,
@@ -73,6 +75,13 @@ class Ui_MainWindow(QMainWindow):
         self._createMainWindow()
         self._state = IdleState()
         self.update_UI()
+
+        self.setWindowIcon(QIcon("resources/icons/icon.ico"))
+
+        # This is a workaround for the Windows taskbar icon not showing up
+        if os.name == 'nt':
+            myappid = 'tueindhoven.eduMRIsim.1.0.0'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     def update_UI(self):
         self.state.update_UI(self)

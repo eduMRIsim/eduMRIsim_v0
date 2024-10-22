@@ -3,7 +3,7 @@ import os
 import sys
 
 from PyQt6.QtCore import qInstallMessageHandler
-from PyQt6.QtGui import QFont, QShortcut, QAction
+from PyQt6.QtGui import QFont, QShortcut, QAction, QIcon
 from PyQt6.QtWidgets import QApplication
 from rich.traceback import install
 
@@ -184,6 +184,11 @@ def main():
     # NOTE: set darkmode=2 to force the dark mode
     if os.name == "nt":
         app = App(sys.argv + ["--platform", "windows:darkmode=1"])
+
+        import ctypes
+
+        myappid = 'tueindhoven.eduMRIsim.1.0.0'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     else:
         app = App(sys.argv)
 
@@ -191,6 +196,7 @@ def main():
     default_font = QFont("Segoe UI", 11)
     default_font.setWeight(55)
     app.setFont(default_font)
+    app.setWindowIcon(QIcon("resources/icons/icon.ico"))
     app.setStyle("Fusion")
 
     sys.exit(app.exec())
