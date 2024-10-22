@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 from simulator.scanlist import AcquiredSeries
+from views.ui.color_scale import ColorScale
 from views.items.measurement_tool import MeasurementTool
 from views.items.zoomin import ZoomableView
 from views.ui.scanlist_ui import ScanlistListWidget
@@ -369,7 +370,7 @@ class GridCell(ZoomableView):
         self.previous_mouse_position = None
 
         # color scale bar
-        self.color_scale = "bw"
+        self.color_scale = ColorScale.get_color_scale()
         self.color_scale_label = QLabel(self)
         self.color_scale_label.setFixedSize(20, 200)
         self.color_scale_label.setStyleSheet(
@@ -586,18 +587,17 @@ class GridCell(ZoomableView):
         self.max_value_label.setText(f"{int(max_value)}")
 
         self.position_color_scale_elements()
-
+    
     def setColorScale(self, color: str):
-        if color in ["bw", "rgb"]:
-            self.color_scale = color
-            self._displayArray(self.window_center, self.window_width)
-        else:
-            raise ValueError("Invalid color scale. Use 'bw' or 'rgb'.")
+        self.color_scale = color
+        self._displayArray(self.window_center, self.window_width)
 
     def _displayArray(self, window_center=None, window_width=None):
         """Display the image data with appropriate color scale."""
         if self.array is None:
             return
+
+        color_scale = ColorScale.get_color_scale()
 
         # Normalize array
         array_norm = (self.array - np.min(self.array)) / (
@@ -618,7 +618,7 @@ class GridCell(ZoomableView):
         array_clamped = np.clip(self.array, min_window, max_window)
         array_norm = (array_clamped - min_window) / (max_window - min_window)
 
-        if self.color_scale == "bw":
+        if color_scale == "bw":
             # Grayscale
             array_8bit = (array_norm * 255).astype(np.uint8)
             qimage = QImage(
@@ -628,7 +628,7 @@ class GridCell(ZoomableView):
                 array_8bit.shape[1],
                 QImage.Format.Format_Grayscale8,
             )
-        elif self.color_scale == "rgb":
+        elif color_scale == "rgb":
             # Apply colormap (viridis) to RGB
             color_mapped_array = plt.get_cmap("viridis")(array_norm)[
                 :, :, :3

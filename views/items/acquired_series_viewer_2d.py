@@ -33,6 +33,7 @@ from events import EventEnum
 from keys import Keys
 from simulator.scanlist import AcquiredSeries, AcquiredImage, ScanVolume
 from utils.logger import log
+from views.ui.color_scale import ColorScale
 from views.items.custom_polygon_item import CustomPolygonItem
 from views.items.measurement_tool import MeasurementTool
 from views.items.middle_line_item import MiddleLineItem
@@ -41,6 +42,7 @@ from views.items.zoomin import ZoomableView
 from views.items.stacks_item import SlicecItem
 from views.ui.scanlist_ui import ScanlistListWidget
 
+import matplotlib.pyplot as plt
 
 class AcquiredSeriesViewer2D(ZoomableView):
     stackSignal = pyqtSignal(int)
@@ -113,6 +115,7 @@ class AcquiredSeriesViewer2D(ZoomableView):
         self.updateLabelPosition()
 
         # window level variables
+        self.color_scale = ColorScale.get_color_scale()
         self.window_center = None
         self.window_width = None
         self.leveling_enabled = False
@@ -371,11 +374,29 @@ class AcquiredSeriesViewer2D(ZoomableView):
                 self.window_width = np.max(self.array) - np.min(self.array)
         else:
             log.info("Window-level mode disabled")
+            
+    def setColorScale(self, color: str):
+        self.color_scale = color
+        self._displayArray(self.window_center, self.window_width)
+    
+    def setColorScale(self, color: str):
+        if color in ["bw", "rgb"]:
+            self.color_scale = color
+            self._displayArray(self.window_center, self.window_width)
+        else:
+            raise ValueError("Invalid color scale. Use 'bw' or 'rgb'.")
 
     def _displayArray(self, window_center=None, window_width=None):
-        """Display the image data with appropriate window and level adjustments."""
+        """Display the image data with appropriate color scale."""
         if self.array is None:
             return
+
+        color_scale = ColorScale.get_color_scale()
+
+        # Normalize array
+        array_norm = (self.array - np.min(self.array)) / (
+            np.max(self.array) - np.min(self.array)
+        )
 
         # Calculate window/level
         if window_center is None or window_width is None:
@@ -388,18 +409,35 @@ class AcquiredSeriesViewer2D(ZoomableView):
         array_clamped = np.clip(self.array, min_window, max_window)
         array_norm = (array_clamped - min_window) / (max_window - min_window)
 
-        array_8bit = (array_norm * 255).astype(np.uint8)
-        qimage = QImage(
-            array_8bit.data,
-            array_8bit.shape[1],
-            array_8bit.shape[0],
-            array_8bit.shape[1],
-            QImage.Format.Format_Grayscale8,
-        )
+        if color_scale == "bw":
+            # Grayscale
+            array_8bit = (array_norm * 255).astype(np.uint8)
+            qimage = QImage(
+                array_8bit.data,
+                array_8bit.shape[1],
+                array_8bit.shape[0],
+                array_8bit.shape[1],
+                QImage.Format.Format_Grayscale8,
+            )
+        elif color_scale == "rgb":
+            # Apply colormap (viridis) to RGB
+            color_mapped_array = plt.get_cmap("viridis")(array_norm)[
+                :, :, :3
+            ]  # Get RGB values from viridis
+            array_rgb = (color_mapped_array * 255).astype(np.uint8)
+            qimage = QImage(
+                array_rgb.data,
+                array_rgb.shape[1],
+                array_rgb.shape[0],
+                array_rgb.shape[1] * 3,
+                QImage.Format.Format_RGB888,
+            )
 
+        # Set pixmap to display image
         pixmap = QPixmap.fromImage(qimage)
         self.pixmap_item.setPixmap(pixmap)
 
+        # Adjust view
         self.pixmap_item.setPos(0, 0)
         self.scene.setSceneRect(0, 0, qimage.width(), qimage.height())
         self.resetTransform()

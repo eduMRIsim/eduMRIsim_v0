@@ -20,6 +20,7 @@ from simulator.scanlist import (
     AcquiredSeries,
 )
 from simulator.scanner import Scanner
+from views.ui.color_scale import ColorScale
 from utils.logger import log
 from views.ui.export_scanitem_dialog_ui import ExportScanItemDialog
 from views.ui.export_image_dialog_ui import ExportImageDialog
@@ -44,6 +45,7 @@ class MainController:
         self.ui_signals()
         self.scan_indices_queue = []
         self.current_scan_index = 0
+        self.color_scale = ColorScale.get_color_scale()
 
     def handle_startScanButton_clicked(self):
         if self.scanner.scan_started:
@@ -630,18 +632,29 @@ class MainController:
         """
         Changes color mapping to("bw" or "rgb").
         """
-        # Loop through all grid cells and apply the color scale change
+        ColorScale.set_color_scale(mapping)  # Update the global color scale
+
+        # Update the grid cells
         for row in range(len(self.ui.gridViewingWindow.grid_cells)):
             for col in range(len(self.ui.gridViewingWindow.grid_cells[row])):
                 grid_cell = self.ui.gridViewingWindow.get_grid_cell(row, col)
                 if grid_cell is not None:
-                    grid_cell.setColorScale(
-                        mapping
-                    )  # Apply the color scale to the grid cell
-                    log.debug(
-                        f"Color mapping changed to {mapping} for GridCell ({row}, {col})"
-                    )
-        log.debug(f"Color mapping changed to {mapping} for all GridCells.")
+                    grid_cell.setColorScale(ColorScale.get_color_scale())
+                    log.debug(f"Color mapping changed to {mapping} for GridCell ({row}, {col})")
+
+        # Apply the color scale to all AcquiredSeriesViewer2D instances
+        viewers = [
+            self.ui.scanPlanningWindow1,
+            self.ui.scanPlanningWindow2,
+            self.ui.scanPlanningWindow3,
+        ]
+
+        for viewer in viewers:
+            if viewer is not None:
+                viewer.setColorScale(ColorScale.get_color_scale())
+                log.debug(f"Color mapping changed to {mapping} for {viewer}.")
+
+        log.debug(f"Color mapping changed to {mapping} globally.")
 
     def handle_viewingPortExport_triggered(self, index: int):
         if index not in range(0, 4):
