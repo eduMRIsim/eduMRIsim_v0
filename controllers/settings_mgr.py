@@ -17,11 +17,23 @@ class SettingsManager:
             cls._instance = super(SettingsManager, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, scanner: Scanner, main_ctrl, main_view, file_name: str):
+    def __init__(self, scanner: Scanner, main_ctrl, main_view, file_name: str = None):
         if not hasattr(self, "initialized"):
             self.scanner = scanner
             self.main_controller = main_ctrl
-            self.file_name = file_name
+
+            if file_name is None:
+                file_name = os.path.join(
+                    QStandardPaths.writableLocation(
+                        QStandardPaths.DocumentsLocation
+                    ),
+                    "eduMRIsim",
+                    "sessions",
+                    "settings.ini",
+                )
+            else:
+                self.file_name = file_name
+
             self.main_view = main_view
             self.settings = QSettings(file_name, QSettings.Format.IniFormat)
             self.initialized = True
@@ -68,11 +80,6 @@ class SettingsManager:
 
             if scan_list_items is not None:
                 for i in range(len(scan_list_items)):
-                    # self.scanner.scanlist.add_scanlist_element(
-                    #     scan_list_items[i], scan_list_params[i]
-                    # )
-                    # scanlist params are stored now as a list
-                    # print("LEN SCAN LIST ITEMS " + str(len(scan_list_params[i])))
                     self.scanner.scanlist.add_scanlist_element_multi(
                         scan_list_items[i], scan_list_params[i]
                     )
