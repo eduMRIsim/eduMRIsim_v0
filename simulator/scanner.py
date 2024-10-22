@@ -17,7 +17,7 @@ import datetime
 
 
 class Scanner(QObject):
-    scan_progress = pyqtSignal(float)
+    scan_progress = pyqtSignal(float, float)
     scan_started_signal = pyqtSignal()
     scan_finished_signal = pyqtSignal()
     scan_completed = pyqtSignal()
@@ -67,9 +67,14 @@ class Scanner(QObject):
         remaining_time = self.scan_time - self.scan_elapsed_time
         if remaining_time < 0:
             remaining_time = 0
+        
+        if self.scan_time > 0:
+            progress_percentage = (self.scan_elapsed_time / self.scan_time) * 100
+        else:
+            progress_percentage = 0.0
 
         # Emit progress signal
-        self.scan_progress.emit(remaining_time)
+        self.scan_progress.emit(remaining_time, progress_percentage)
 
         if remaining_time <= 0:
             # Stop the timer
