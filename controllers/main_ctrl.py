@@ -287,9 +287,7 @@ class MainController:
 
     def export_examination(self):
         default_filename = f"session-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.ini"
-        # options = (
-        #     QFileDialog.FileMode.Options()
-        # )  # Use native dialog for a more modern look
+
         file_path, _ = QFileDialog.getSaveFileName(
             self.ui, "Save Session", default_filename
         )
@@ -569,6 +567,8 @@ class MainController:
         log.info(
             f"Item {self.scanner.active_scanlist_element.scan_item.name} parameters exported"
         )
+
+        self.ui._savedItemsTab.populate_list(None)
 
     def handle_scanParametersSaveChangesButton_clicked(self):
         scan_parameters = self.ui.parameterFormLayout.get_parameters()

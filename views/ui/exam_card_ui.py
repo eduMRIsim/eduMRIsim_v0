@@ -1,3 +1,4 @@
+from PyQt5.QtCore import QStandardPaths
 from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QFileSystemModel
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QListView
@@ -34,7 +35,12 @@ class SavedItemsTab(QWidget):
         self.layout.addWidget(self._importScanItemButton)
 
 
-    def populate_list(self, directory_path):
+    def populate_list(self, directory_path=None):
+        if directory_path is None:
+            directory_path = QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.DocumentsLocation
+            ) + "/eduMRIsim/scan_items"
+
         model = QFileSystemModel()
         model.setRootPath(directory_path)
         model.setFilter(QDir.Filter.Files)
