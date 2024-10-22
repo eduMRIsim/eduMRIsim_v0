@@ -17,11 +17,23 @@ class SettingsManager:
             cls._instance = super(SettingsManager, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, scanner: Scanner, main_ctrl, main_view, file_name: str):
+    def __init__(self, scanner: Scanner, main_ctrl, main_view, file_name: str = None):
         if not hasattr(self, "initialized"):
             self.scanner = scanner
             self.main_controller = main_ctrl
-            self.file_name = file_name
+
+            if file_name is None:
+                file_name = os.path.join(
+                    QStandardPaths.writableLocation(
+                        QStandardPaths.DocumentsLocation
+                    ),
+                    "eduMRIsim",
+                    "sessions",
+                    "settings.ini",
+                )
+            else:
+                self.file_name = file_name
+
             self.main_view = main_view
             self.settings = QSettings(file_name, QSettings.Format.IniFormat)
             self.initialized = True

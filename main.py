@@ -37,7 +37,7 @@ class App(QApplication):
             scanner=self.scanner,
             main_ctrl=self.main_controller,
             main_view=self.main_view,
-            file_name="settings.ini",
+            file_name=None,
         )
 
         # Show the starting screen
