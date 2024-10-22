@@ -154,12 +154,6 @@ class MainController:
             self.handle_scanParametersResetButton_clicked
         )
 
-        # Signals related to scanning
-        # self.ui.startScanButton.clicked.connect(self.scanner.scan)
-
-        # Connect scanner signals to slots
-        self.scanner.scan_progress.connect(self.update_scan_progress)
-
         # Signals related to scan planning windows
         self.ui.scanPlanningWindow1.dropEventSignal.connect(
             self.handle_scanPlanningWindow1_dropped
@@ -411,18 +405,6 @@ class MainController:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
 
-    # Sync progress bar to scan progress
-    def update_scan_progress(self, remaining_time: float):
-        """Update the progress bar during scanning."""
-        if remaining_time <= 0:
-            # Scan is complete
-            self.ui.scanEtaLabel.setText("Scan Complete")
-        else:
-            seconds_remaining = int(round(remaining_time / 1000))
-            # Format the time as mm:ss
-            minutes, seconds = divmod(seconds_remaining, 60)
-            eta_display = f"Time Remaining: {minutes:02d}:{seconds:02d}"
-            self.ui.scanEtaLabel.setText(eta_display)
 
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
