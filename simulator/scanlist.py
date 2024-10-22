@@ -652,14 +652,22 @@ class ScanItem:
 
         # Validate scan parameters
         for param in scan_params_copy[0]:
-            if param != 'ScanPlane' and param != 'Rotation_lock' and param != 'ScanTechnique':
-                if not isinstance(scan_params_copy[0][param], int) or not isinstance(scan_params_copy[0][param], float):
+            if (
+                param != "ScanPlane"
+                and param != "Rotation_lock"
+                and param != "ScanTechnique"
+            ):
+                if not isinstance(scan_params_copy[0][param], int) or not isinstance(
+                    scan_params_copy[0][param], float
+                ):
                     try:
                         scan_params_copy[0][param] = float(scan_params_copy[0][param])
                     except:
                         ScanParamErrorPopup.show_error_message(param)
-                        scan_params_copy[0][param] = self._scan_parameters_original[0][param]
-        
+                        scan_params_copy[0][param] = self._scan_parameters_original[0][
+                            param
+                        ]
+
         self.scan_parameters = scan_params_copy
 
         if self.valid == True:

@@ -24,9 +24,7 @@ class SavedItemsTab(QWidget):
         self._savedItemsListView.setSelectionMode(
             QListView.SelectionMode.ExtendedSelection
         )
-        self._savedItemsListView.setEditTriggers(
-            QListView.EditTrigger.NoEditTriggers
-        )
+        self._savedItemsListView.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
         self.layout.addWidget(self._savedItemsListView)
 
         self.populate_list(directory_path)
@@ -34,12 +32,14 @@ class SavedItemsTab(QWidget):
         self._importScanItemButton = PrimaryActionButton("Import Scan")
         self.layout.addWidget(self._importScanItemButton)
 
-
     def populate_list(self, directory_path=None):
         if directory_path is None:
-            directory_path = QStandardPaths.writableLocation(
-                QStandardPaths.StandardLocation.DocumentsLocation
-            ) + "/eduMRIsim/scan_items"
+            directory_path = (
+                QStandardPaths.writableLocation(
+                    QStandardPaths.StandardLocation.DocumentsLocation
+                )
+                + "/eduMRIsim/scan_items"
+            )
 
         model = QFileSystemModel()
         model.setRootPath(directory_path)
@@ -72,6 +72,7 @@ class ExamCardTab(QWidget):
     @property
     def examCardListView(self):
         return self._examCardListView
+
 
 class CustomListView(QListView):
     def __init__(self, parent=None):

@@ -31,7 +31,6 @@ from views.ui.view_model_dialog_ui import ViewModelDialog
 from PyQt6 import QtGui
 
 
-
 class MainController:
     """
     The MainController class defines what happens when the user interacts with the UI. It also defines in its update() method what happens when the scanner notifies the controller of changes, e.g., when a scan item is added to the scanlist, when the active scan item is changed, when the status of a scan item is changed, when the parameters of a scan item are changed, etc.
@@ -131,7 +130,9 @@ class MainController:
         # Signals related to scanlist
         self.ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
         self.ui.scanlistListWidget.dropEventSignal.connect(self.handle_add_to_scanlist)
-        self.ui.scanlistListWidget.fileDroppedEventSignal.connect(self.handle_add_to_scanlist_from_saved)
+        self.ui.scanlistListWidget.fileDroppedEventSignal.connect(
+            self.handle_add_to_scanlist_from_saved
+        )
         self.ui.scanlistListWidget.itemClicked.connect(
             self.handle_scanlistListWidget_clicked
         )
@@ -340,7 +341,6 @@ class MainController:
             log.error("Invalid file format")
             return
 
-
     def handle_add_to_scanlist(self, selected_indexes):
         # Executed when the user drags and drops items from the examCardListView to the scanlistListWidget.
         for index in selected_indexes:
@@ -419,15 +419,14 @@ class MainController:
                 list_item.setIcon(
                     QIcon("resources/icons/checkmark-circle-2-outline.png")
                 )
-            if idx in self.scan_indices_queue[self.current_scan_index:]:
+            if idx in self.scan_indices_queue[self.current_scan_index :]:
                 # Highlight ongoing queue scanitems
-                list_item.setBackground(QtGui.QColor('#BFBFBF'))
+                list_item.setBackground(QtGui.QColor("#BFBFBF"))
             self.ui.scanlistListWidget.addItem(list_item)
         active_idx = self.scanner.scanlist.active_idx
         if active_idx is not None:
             current_list_item = self.ui.scanlistListWidget.item(active_idx)
             self.ui.scanlistListWidget.setCurrentItem(current_list_item)
-
 
     def handle_scanlistListWidget_clicked(self, item):
         index = self.ui.scanlistListWidget.row(item)
@@ -518,14 +517,16 @@ class MainController:
 
         for row in self.ui.gridViewingWindow.grid_cells:
             for cell in row:
-                cell.checkbox.stateChanged.connect(lambda state, cell=cell: self.handle_check_uncheck(state,cell))
+                cell.checkbox.stateChanged.connect(
+                    lambda state, cell=cell: self.handle_check_uncheck(state, cell)
+                )
 
     def handle_check_uncheck(self, state, cell):
         # used to connect/disconnect a cell depending on if it is checked or not;
         # stateChanged ouputs 2 for checked and 0 for unchecked
         if state == 2:
             self.ui.gridViewingWindow.connect_cell(cell)
-        elif state == 0: #
+        elif state == 0:  #
             self.ui.gridViewingWindow.disconnect_cell(cell)
 
     def handle_stop_contrastLinking(self):

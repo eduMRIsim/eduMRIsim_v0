@@ -278,8 +278,18 @@ class Ui_MainWindow(QMainWindow):
 
         self._examCardTab = ExamCardTab()
         self._scanParametersWidget = ScanParametersWidget()
-        self._savedItemsTab = SavedItemsTab(os.path.join(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation), "eduMRIsim", "scan_items"))
-        self._examCardTabWidget = ExamCardTabWidget(self._examCardTab, self._savedItemsTab)
+        self._savedItemsTab = SavedItemsTab(
+            os.path.join(
+                QStandardPaths.writableLocation(
+                    QStandardPaths.StandardLocation.DocumentsLocation
+                ),
+                "eduMRIsim",
+                "scan_items",
+            )
+        )
+        self._examCardTabWidget = ExamCardTabWidget(
+            self._examCardTab, self._savedItemsTab
+        )
         self._editingStackedLayout = EditingStackedLayout(
             self._scanParametersWidget, self._examCardTabWidget
         )

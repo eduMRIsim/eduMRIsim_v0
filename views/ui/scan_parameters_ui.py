@@ -165,6 +165,7 @@ class ParameterTab(QScrollArea):
     def parameterFormLayout(self):
         return self._parameterFormLayout
 
+
 class ParameterFormLayout(QVBoxLayout):
     formActivatedSignal = pyqtSignal()
 

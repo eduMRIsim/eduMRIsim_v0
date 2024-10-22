@@ -114,7 +114,7 @@ class gridViewingWindowLayout(QFrame):
                     log.debug(f"Checkbox is checked in cell [{i},{j}]")
 
         return checked_cells
-    
+
     def update_checked_cells(self):
         """Updates the list of checked cells and synchronizes the new list of cells;
         for when a scan is checked while contrast linking is done."""
@@ -165,12 +165,16 @@ class gridViewingWindowLayout(QFrame):
             except Exception as e:
                 pass
 
-        for i,j in linked_cells:
+        for i, j in linked_cells:
             cell_ij = self.grid_cells[i][j]
             for x, y in linked_cells:
                 cell_xy = self.grid_cells[x][y]
                 # connect all cells to the same signal
-                if cell_ij != cell_xy and cell_xy.checkbox.isChecked() and cell_ij.checkbox.isChecked():
+                if (
+                    cell_ij != cell_xy
+                    and cell_xy.checkbox.isChecked()
+                    and cell_ij.checkbox.isChecked()
+                ):
                     cell_ij.contrastChanged.connect(
                         lambda window_center, window_width, cell=cell_xy: self.synchronize_window_levelling(
                             window_center, window_width, cell

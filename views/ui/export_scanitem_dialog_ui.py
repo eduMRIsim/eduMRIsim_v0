@@ -17,18 +17,26 @@ class ExportScanItemDialog(QDialog):
             file_name, _ = QFileDialog.getSaveFileName(
                 self,
                 "Choose location to save scan item",
-                os.path.join(QStandardPaths.writableLocation(
-                    QStandardPaths.StandardLocation.DocumentsLocation
-                ), "eduMRIsim", "scan_items"),
+                os.path.join(
+                    QStandardPaths.writableLocation(
+                        QStandardPaths.StandardLocation.DocumentsLocation
+                    ),
+                    "eduMRIsim",
+                    "scan_items",
+                ),
                 "json (*.json);;All Files (*)",
             )
         else:
             file_name, _ = QFileDialog.getOpenFileName(
                 self,
                 "Choose the scan item file",
-                os.path.join(QStandardPaths.writableLocation(
-                    QStandardPaths.StandardLocation.DocumentsLocation
-                ), "eduMRIsim", "scan_items"),
+                os.path.join(
+                    QStandardPaths.writableLocation(
+                        QStandardPaths.StandardLocation.DocumentsLocation
+                    ),
+                    "eduMRIsim",
+                    "scan_items",
+                ),
                 "json (*.json);;All Files (*)",
             )
         if file_name is not None:

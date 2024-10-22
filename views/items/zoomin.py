@@ -98,7 +98,7 @@ class ZoomableView(QGraphicsView):
             super().keyReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
-        
+
         super().mouseMoveEvent(event)
 
         if not self.measure.is_measuring and not self.leveling_key_pressed:
@@ -159,8 +159,8 @@ class ZoomableView(QGraphicsView):
                 self.window_width = max(1, self.window_width)  # Min window width is 1
 
                 self._displayArray(self.window_center, self.window_width)
-                
-                if hasattr(self, 'updateColorScale'):
+
+                if hasattr(self, "updateColorScale"):
                     self.updateColorScale(self.window_center, self.window_width)
 
                 self.contrastChanged.emit(self.window_center, self.window_width)
