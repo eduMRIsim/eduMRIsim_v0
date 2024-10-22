@@ -1,7 +1,10 @@
+from operator import index
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QListWidget
 
+from utils.logger import log
 from views.styled_widgets import PrimaryActionButton
 
 
@@ -19,11 +22,9 @@ class ScanlistInfoFrame(QFrame):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self._addScanItemButton = PrimaryActionButton("Add Scan Item")
-        self._importScanItemButton = PrimaryActionButton("Import Scan")
         self._scanlistListWidget = ScanlistListWidget()
         self.layout.addWidget(self._scanlistListWidget)
         self.layout.addWidget(self._addScanItemButton)
-        self.layout.addWidget(self._importScanItemButton)
 
     @property
     def addScanItemButton(self):
@@ -40,6 +41,7 @@ class ScanlistInfoFrame(QFrame):
 
 class ScanlistListWidget(QListWidget):
     dropEventSignal = pyqtSignal(list)
+    fileDroppedEventSignal = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -65,9 +67,15 @@ class ScanlistListWidget(QListWidget):
     def dropEvent(self, e: QDropEvent):
         # Get the widget that received the drop event
         widget = e.source()
+        log.info(f"widget: {widget.__class__.__name__}")
         # do not accept drops from itself
         if widget == self:
             e.ignore()
+        elif widget.__class__.__name__ == 'CustomListView':
+            index = widget.selectedIndexes()
+            for i in index:
+                self.fileDroppedEventSignal.emit(widget.model().filePath(i))
+            e.accept()
         else:
             selected_indexes = widget.selectedIndexes()
             self.dropEventSignal.emit(selected_indexes)

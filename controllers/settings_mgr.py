@@ -1,4 +1,8 @@
 import glob
+import os
+from utils.logger import log
+
+from PyQt5.QtCore import QStandardPaths
 from PyQt6.QtCore import QSettings
 from events import EventEnum
 from simulator.scanner import Scanner
@@ -22,11 +26,23 @@ class SettingsManager:
             self.settings = QSettings(file_name, QSettings.Format.IniFormat)
             self.initialized = True
 
+            self.os_settings_dir = QStandardPaths.writableLocation(
+                QStandardPaths.DocumentsLocation) + "/eduMRIsim/"
+
+            os.makedirs(self.os_settings_dir, exist_ok=True)
+            log.info(f"SETTINGSDIR={self.os_settings_dir}")
+
+            os.makedirs(self.os_settings_dir + "/sessions/", exist_ok=True)
+            log.info(f"SESSIONDIR={self.os_settings_dir}/sessions/")
+
+            os.makedirs(self.os_settings_dir + "/scan_items/", exist_ok=True)
+            log.info(f"SCANITEMDIR={self.os_settings_dir}/scan_items/")
+
     def setup_settings(self, settings_file: str = None) -> None:
         # The settings file are for now saved in the working directory.
         # This might change in the future to a more appropriate location such as native app data directory.
         if settings_file is None:
-            settings_file = "./settings.ini"
+            settings_file = os.path.join(self.os_settings_dir, "sessions", "settings.ini")
 
         self.settings = QSettings(settings_file, QSettings.Format.IniFormat)
 
@@ -101,10 +117,7 @@ class SettingsManager:
         self.main_view.restore_settings()
 
     def is_previous_session(self) -> bool:
-        # Scan current working directory for settings files
-        settings_files = glob.glob("settings.ini")
-
-        from utils.logger import log
+        settings_files = glob.glob(self.os_settings_dir + "/sessions/*.ini")
 
         log.info(f"settings_files: {settings_files}")
 

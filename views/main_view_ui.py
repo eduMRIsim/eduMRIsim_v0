@@ -1,4 +1,6 @@
-from PyQt6.QtCore import QByteArray
+import os
+
+from PyQt6.QtCore import QByteArray, QStandardPaths
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsView,
@@ -29,7 +31,7 @@ from views.UI_MainWindowState import (
     ScanCompleteState,
     IdleState,
 )
-from views.ui.exam_card_ui import ExamCardTabWidget, ExamCardTab
+from views.ui.exam_card_ui import ExamCardTabWidget, ExamCardTab, SavedItemsTab
 from views.ui.examination_info_ui import (
     ExaminationInfoStackedLayout,
     PreExaminationInfoFrame,
@@ -132,7 +134,7 @@ class Ui_MainWindow(QMainWindow):
 
     @property
     def importScanItemButton(self):
-        return self._scanlistInfoFrame.importScanItemButton
+        return self._savedItemsTab._importScanItemButton
 
     @property
     def scanlistListWidget(self):
@@ -276,7 +278,8 @@ class Ui_MainWindow(QMainWindow):
 
         self._examCardTab = ExamCardTab()
         self._scanParametersWidget = ScanParametersWidget()
-        self._examCardTabWidget = ExamCardTabWidget(self._examCardTab)
+        self._savedItemsTab = SavedItemsTab(os.path.join(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation), "eduMRIsim", "scan_items"))
+        self._examCardTabWidget = ExamCardTabWidget(self._examCardTab, self._savedItemsTab)
         self._editingStackedLayout = EditingStackedLayout(
             self._scanParametersWidget, self._examCardTabWidget
         )

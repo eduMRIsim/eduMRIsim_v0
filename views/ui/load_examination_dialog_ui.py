@@ -1,3 +1,5 @@
+import os
+from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtWidgets import QDialog, QFileDialog
 
 from controllers.settings_mgr import SettingsManager
@@ -13,7 +15,9 @@ class LoadExaminationDialog(QDialog):
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             "Choose INI File",
-            "",
+            os.path.join(QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.DocumentsLocation
+            ), "eduMRIsim", "sessions"),
             "INI Files (*.ini);;All Files (*)",
         )
         if file_name:

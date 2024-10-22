@@ -1,7 +1,9 @@
+import os
 from datetime import datetime
 import json
 
 import numpy as np
+from PyQt5.QtCore import QStandardPaths
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtWidgets import QListWidgetItem
@@ -129,6 +131,7 @@ class MainController:
         # Signals related to scanlist
         self.ui.addScanItemButton.clicked.connect(self.handle_addScanItemButton_clicked)
         self.ui.scanlistListWidget.dropEventSignal.connect(self.handle_add_to_scanlist)
+        self.ui.scanlistListWidget.fileDroppedEventSignal.connect(self.handle_add_to_scanlist_from_saved)
         self.ui.scanlistListWidget.itemClicked.connect(
             self.handle_scanlistListWidget_clicked
         )
@@ -329,6 +332,23 @@ class MainController:
         self.exam_card_qmodel = DictionaryModel(exam_card_data)
         self.ui.examCardListView.setModel(self.exam_card_qmodel)
 
+    def handle_add_to_scanlist_from_saved(self, file_path):
+        log.warning("File path: " + file_path)
+        if file_path.endswith(".json"):
+            log.info("File path: " + file_path)
+            file_path = file_path
+            # check if file is json and is valid path
+            if not os.path.exists(file_path):
+                log.error("Invalid file path")
+                return
+            scan_parameters = load_json(file_path)
+            file_name = file_path.split("/")[-1].split(".")[0]
+            self.scanner.scanlist.add_scanlist_element(file_name, scan_parameters[0])
+        else:
+            log.error("Invalid file format")
+            return
+
+
     def handle_add_to_scanlist(self, selected_indexes):
         # Executed when the user drags and drops items from the examCardListView to the scanlistListWidget.
         for index in selected_indexes:
@@ -462,18 +482,9 @@ class MainController:
     def handle_importScanItemButton_clicked(self):
         path = self.export_scanitem_dialog.open_file_dialog(save=False)
 
-        # get filename from path
-        filename = path.split("/")[-1].split(".")[0]
-
-        with open(path, "r") as f:
-            scan_parameters = json.load(f)
-
-        self.scanner.scanlist.add_scanlist_element(filename, scan_parameters[0])
-
-        log.info(f"ScanItem {filename} imported")
-
-    def handle_importScanItemButton_clicked(self):
-        path = self.export_scanitem_dialog.open_file_dialog(save=False)
+        if path is None or path == "":
+            log.info("No file selected")
+            return
 
         # get filename from path
         filename = path.split("/")[-1].split(".")[0]
