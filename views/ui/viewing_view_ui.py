@@ -114,6 +114,26 @@ class gridViewingWindowLayout(QFrame):
                     log.debug(f"Checkbox is checked in cell [{i},{j}]")
 
         return checked_cells
+    
+    def update_checked_cells(self):
+        """Updates the list of checked cells and synchronizes the new list of cells;
+        for when a scan is checked while contrast linking is done."""
+        self.current_cells = self.get_checked_cells()
+        self.synchronize_cells(self.current_cells)
+
+    def connect_cell(self, cell):
+        if cell not in self.linked_cells:
+            self.linked_cells.append(cell)
+        self.synchronize_cells(self.get_checked_cells())
+
+    def disconnect_cell(self, cell):
+        if cell in self.linked_cells:
+            self.linked_cells.remove(cell)
+        try:
+            cell.contrastChanged.disconnect()
+        except TypeError:
+            pass
+        self.synchronize_cells(self.get_checked_cells())
 
     def start_contrast_linking(self):
         """Synchronizes window_levelling for the checked cells."""
@@ -128,16 +148,34 @@ class gridViewingWindowLayout(QFrame):
         else:
             log.info(f"Contrast linking will be done for cells: {linked_cells}")
 
-        for cell_i in self.linked_cells:
-            for cell_j in self.linked_cells:
+        self.update_checked_cells()
+        self.synchronize_cells(linked_cells)
+
+    def synchronize_cells(self, linked_cells):
+        """Synchronizes a list of cells for contrast linking."""
+
+        if not linked_cells:
+            log.warn("There are no cells to link.")
+            return
+
+        for i, j in linked_cells:
+            cell_ij = self.grid_cells[i][j]
+            try:
+                cell_ij.contrastChanged.disconnect()
+            except Exception as e:
+                pass
+
+        for i,j in linked_cells:
+            cell_ij = self.grid_cells[i][j]
+            for x, y in linked_cells:
+                cell_xy = self.grid_cells[x][y]
                 # connect all cells to the same signal
-                if cell_j != cell_i:
-                    cell_i.contrastChanged.connect(
-                        lambda window_center, window_width, cell=cell_j: self.synchronize_window_levelling(
+                if cell_ij != cell_xy and cell_xy.checkbox.isChecked() and cell_ij.checkbox.isChecked():
+                    cell_ij.contrastChanged.connect(
+                        lambda window_center, window_width, cell=cell_xy: self.synchronize_window_levelling(
                             window_center, window_width, cell
                         )
                     )
-
         log.info(f"Cells {len(linked_cells)} are contrast linked.")
 
     def synchronize_window_levelling(self, window_center, window_width, cell):
