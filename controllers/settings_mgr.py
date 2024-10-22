@@ -1,7 +1,7 @@
 import glob
 import os
 
-from PyQt5.QtCore import QStandardPaths
+from PyQt6.QtCore import QStandardPaths
 from PyQt6.QtCore import QSettings
 
 from events import EventEnum
