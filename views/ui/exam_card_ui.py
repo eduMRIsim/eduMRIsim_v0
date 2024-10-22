@@ -1,8 +1,7 @@
-from PyQt6.QtCore import QDir, pyqtSignal
-from PyQt6.QtGui import QFileSystemModel, QDropEvent
+from PyQt6.QtCore import QDir
+from PyQt6.QtGui import QFileSystemModel
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QListView
 
-from utils.logger import log
 from views.styled_widgets import PrimaryActionButton
 
 
@@ -39,6 +38,8 @@ class SavedItemsTab(QWidget):
         model = QFileSystemModel()
         model.setRootPath(directory_path)
         model.setFilter(QDir.Filter.Files)
+        model.setNameFilters(["*.json"])
+
         self._savedItemsListView.setModel(model)
         self._savedItemsListView.setRootIndex(model.index(directory_path))
 
@@ -67,18 +68,6 @@ class ExamCardTab(QWidget):
         return self._examCardListView
 
 class CustomListView(QListView):
-    # fileDropped = pyqtSignal(str)
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setDragEnabled(True)
-        # self.setAcceptDrops(True)
-
-    # def dropEvent(self, event: QDropEvent):
-    #     index = self.indexAt(event.position().toPoint())
-    #     if index.isValid():
-    #         file_path = self.model().filePath(index)
-    #         if file_path:
-    #             log.info(f"File dropped: {file_path}")
-    #             self.fileDropped.emit(file_path)
-    #     super().dropEvent(event)

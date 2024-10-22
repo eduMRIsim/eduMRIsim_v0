@@ -78,7 +78,6 @@ class ScanlistListWidget(QListWidget):
             e.accept()
         else:
             selected_indexes = widget.selectedIndexes()
-            # path = e.source().indexAt(e.pos()).data()
             self.dropEventSignal.emit(selected_indexes)
             e.accept()
 
