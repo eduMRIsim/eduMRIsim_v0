@@ -979,6 +979,8 @@ class ScanVolume:
         self.scanPlane = None
         self.TR_ms = 0
 
+        self.initial_geometry_set = False
+
         # Angle radians to be used for rotation
         self.RLAngle_rad = 0.0
         self.APAngle_rad = 0.0
@@ -1030,6 +1032,8 @@ class ScanVolume:
         )
 
     def set_scan_volume_geometry(self, scan_parameters: dict):
+        self.initial_geometry_set = True
+
         self.N_slices = int(float(scan_parameters["NSlices"]))
         self.TR_ms = int(float(scan_parameters["TR_ms"]))
         self.slice_gap_mm = float(scan_parameters["SliceGap_mm"])
@@ -1538,6 +1542,8 @@ class ScanVolume:
             observer.update(event)
 
     def remove_observer(self, observer):
+        if observer not in self.observers:
+            return
         self.observers.remove(observer)
         log.debug(f"Observer {observer}, removed from {self}")
 

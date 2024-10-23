@@ -788,6 +788,9 @@ class AcquiredSeriesViewer2D(ZoomableView):
             scan_item_volume = self.get_scan_volume_for_stack_index(
                 stack_item.stack_index
             )
+            if not scan_item_volume.initial_geometry_set:
+                return
+            
             (
                 intersection_volume_edges_in_pixmap_coords,
                 intersection_middle_edges_in_pixamp_coords,
