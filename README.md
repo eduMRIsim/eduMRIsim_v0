@@ -1,6 +1,7 @@
 # Welcome to eduMRIsim!
 
 eduMRIsim is an educational MRI simulator software application. It is currently being devoloped as part of a design PhD project (start date February 2023) by Stephanie Gonzalez at Eindhoven Technical University under the supervision of Marcel Breeuwer and Alexander Raaijmakers. 
+
 ![eduMRIsim_screenshot](https://github.com/user-attachments/assets/d10727a6-fc21-4a23-a16b-c7b984eef4d5)
 
 
